@@ -35,8 +35,7 @@ class AirExportService
 
             if (isset($data['charges'])) {
                 foreach ($data['charges'] as $chargeData) {
-                    $chargeData['charge_name'] = $chargeData['charge_name'] ?? ($chargeData['description'] ?? '');
-                    $airExport->charges()->create($chargeData);
+                    $this->createCharge($airExport, $chargeData);
                 }
             }
 
@@ -77,11 +76,21 @@ class AirExportService
             $airExport->hbls()->whereNotIn('id', $submittedHblIds)->delete();
 
             if (isset($data['charges'])) {
-                $airExport->charges()->delete();
+                $submittedChargeIds = collect($data['charges'])->pluck('id')->filter()->toArray();
+                $airExport->charges()->whereNotIn('id', $submittedChargeIds)->delete();
+
                 foreach ($data['charges'] as $chargeData) {
-                    $chargeData['charge_name'] = $chargeData['charge_name'] ?? ($chargeData['description'] ?? '');
-                    $airExport->charges()->create($chargeData);
+                    if (!empty($chargeData['id'])) {
+                        $charge = Charge::find($chargeData['id']);
+                        if ($charge) {
+                            $this->updateCharge($charge, $chargeData);
+                        }
+                    } else {
+                        $this->createCharge($airExport, $chargeData);
+                    }
                 }
+            } else {
+                $airExport->charges()->delete();
             }
 
             $airExport->statusLogs()->create([
@@ -97,36 +106,95 @@ class AirExportService
 
     public function createCharge(AirExport $airExport, array $data)
     {
+        $currencyId = null;
+        if (isset($data['currency'])) {
+            $currency = \App\Models\Currency::where('code', $data['currency'])->first();
+            $currencyId = $currency ? $currency->id : null;
+        } elseif (isset($data['currency_id'])) {
+            $currencyId = $data['currency_id'];
+        }
+
+        $type = (isset($data['pr']) && $data['pr'] === 'Pay') ? 'AP' : ($data['type'] ?? 'AR');
+        $pc = (isset($data['ppc']) && $data['ppc'] === 'Prepaid') ? 'PREPAID' : 'COLLECT';
+
+        $rate = floatval($data['rate'] ?? 0);
+        $qty = floatval($data['qty'] ?? 1);
+        $roe = floatval($data['roe'] ?? 1.0);
+        $amount = $rate * $qty * $roe;
+        $taxPercent = floatval($data['vat'] ?? 0);
+        $taxAmount = $amount * ($taxPercent / 100);
+        $totalAmount = $amount + $taxAmount;
+
+        $partyNameId = !empty($data['party_name_id']) ? $data['party_name_id'] : null;
+
         return $airExport->charges()->create([
-            'type' => $data['type'] ?? 'AR',
-            'charge_code' => $data['charge_code'] ?? '',
-            'charge_name' => $data['charge_name'] ?? '',
-            'rate' => $data['rate'] ?? 0,
-            'qty' => $data['qty'] ?? 1,
-            'amount' => ($data['rate'] ?? 0) * ($data['qty'] ?? 1),
-            'currency_id' => $data['currency_id'] ?? null,
-            'pc' => $data['pc'] ?? 'COLLECT',
-            'vendor_id' => $data['vendor_id'] ?? null,
-            'bill_to_id' => $data['bill_to_id'] ?? null,
-            'unit' => $data['unit'] ?? 'B/L',
-            'remark' => $data['remark'] ?? '',
+            'type' => $type,
+            'charge_code' => $data['chrg_code'] ?? ($data['charge_code'] ?? ''),
+            'charge_name' => !empty($data['charge_name']) ? $data['charge_name'] : ($data['chrg_code'] ?? 'Charge'),
+            'party' => $data['party'] ?? 'Custom',
+            'sal' => $data['sal'] ?? 'Air',
+            'pc' => $pc,
+            'qty' => $qty,
+            'unit' => $data['qty_type'] ?? ($data['unit'] ?? 'B/L'),
+            'currency_id' => $currencyId,
+            'rate' => $rate,
+            'roe' => $roe,
+            'amount' => $amount,
+            'tax_percent' => $taxPercent,
+            'tax_amount' => $taxAmount,
+            'total_amount' => $totalAmount,
+            'bill_to_id' => ($type === 'AR') ? ($partyNameId ?? ($data['bill_to_id'] ?? null)) : ($data['bill_to_id'] ?? null),
+            'vendor_id' => ($type === 'AP') ? ($partyNameId ?? ($data['vendor_id'] ?? null)) : ($data['vendor_id'] ?? null),
+            'invoice_no' => $data['inv_no'] ?? ($data['invoice_no'] ?? null),
+            'invoice_date' => !empty($data['financial_date']) ? $data['financial_date'] : null,
+            'remark' => $data['eq_bl_no'] ?? ($data['remark'] ?? null),
         ]);
     }
 
     public function updateCharge(Charge $charge, array $data)
     {
+        $currencyId = $charge->currency_id;
+        if (isset($data['currency'])) {
+            $currency = \App\Models\Currency::where('code', $data['currency'])->first();
+            if ($currency) $currencyId = $currency->id;
+        } elseif (isset($data['currency_id'])) {
+            $currencyId = $data['currency_id'];
+        }
+
+        $type = (isset($data['pr']) && $data['pr'] === 'Pay') ? 'AP' : ($data['type'] ?? $charge->type);
+        $pc = (isset($data['ppc']) && $data['ppc'] === 'Prepaid') ? 'PREPAID' : 'COLLECT';
+
+        $rate = floatval($data['rate'] ?? $charge->rate);
+        $qty = floatval($data['qty'] ?? $charge->qty);
+        $roe = floatval($data['roe'] ?? $charge->roe ?? 1.0);
+        $amount = $rate * $qty * $roe;
+        $taxPercent = floatval($data['vat'] ?? $charge->tax_percent ?? 0);
+        $taxAmount = $amount * ($taxPercent / 100);
+        $totalAmount = $amount + $taxAmount;
+
+        $partyNameId = !empty($data['party_name_id']) ? $data['party_name_id'] : null;
+
         $charge->update([
-            'charge_code' => $data['charge_code'] ?? $charge->charge_code,
-            'charge_name' => $data['charge_name'] ?? $charge->charge_name,
-            'rate' => $data['rate'] ?? $charge->rate,
-            'qty' => $data['qty'] ?? $charge->qty,
-            'amount' => ($data['rate'] ?? $charge->rate) * ($data['qty'] ?? $charge->qty),
-            'currency_id' => $data['currency_id'] ?? $charge->currency_id,
-            'pc' => $data['pc'] ?? $charge->pc,
-            'vendor_id' => $data['vendor_id'] ?? $charge->vendor_id,
-            'bill_to_id' => $data['bill_to_id'] ?? $charge->bill_to_id,
-            'unit' => $data['unit'] ?? $charge->unit,
-            'remark' => $data['remark'] ?? $charge->remark,
+            'type' => $type,
+            'charge_code' => $data['chrg_code'] ?? ($data['charge_code'] ?? $charge->charge_code),
+            'charge_name' => !empty($data['charge_name']) ? $data['charge_name'] : $charge->charge_name,
+            'party' => $data['party'] ?? $charge->party,
+            'sal' => $data['sal'] ?? $charge->sal,
+            'pc' => $pc,
+            'qty' => $qty,
+            'unit' => $data['qty_type'] ?? ($data['unit'] ?? $charge->unit),
+            'currency_id' => $currencyId,
+            'rate' => $rate,
+            'roe' => $roe,
+            'amount' => $amount,
+            'tax_percent' => $taxPercent,
+            'tax_amount' => $taxAmount,
+            'total_amount' => $totalAmount,
+            'bill_to_id' => ($type === 'AR') ? ($partyNameId ?? $charge->bill_to_id) : $charge->bill_to_id,
+            'vendor_id' => ($type === 'AP') ? ($partyNameId ?? $charge->vendor_id) : $charge->vendor_id,
+            'invoice_no' => $data['inv_no'] ?? ($data['invoice_no'] ?? $charge->invoice_no),
+            'invoice_date' => !empty($data['financial_date']) ? $data['financial_date'] : $charge->invoice_date,
+            'remark' => $data['eq_bl_no'] ?? ($data['remark'] ?? $charge->remark),
         ]);
 
         return $charge;

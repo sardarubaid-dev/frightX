@@ -107,7 +107,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -116,16 +116,17 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV/Excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             {{-- TOOLBAR --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
+                        <a href="{{ route('air-import.create') }}" class="btn-tool green" title="New Shipment"><i class="fa fa-plus"></i></a>
                         <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()">
                             <i class="fa fa-trash"></i>
                         </button>
@@ -149,8 +150,7 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:160px;"
-                           placeholder="Quick search..." oninput="quickSearch(this.value)" value="{{ request('search') }}">
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;" placeholder="Quick search..." oninput="quickSearch(this.value)" value="{{ request('search') }}">
                 </div>
             </div>
 

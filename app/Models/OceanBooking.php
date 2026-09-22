@@ -55,15 +55,37 @@ class OceanBooking extends Model
         'status',
         'color',
         'ref_no',
+        'is_hold',
+        'hold_by_id',
+        'is_freight_released',
+        'freight_released_by_id',
+        'buying_freight',
+        'selling_freight',
+        'customs_broker_id',
+        'por_etd',
+        'sales_type',
+        'on_board_date',
+        'lc_no',
+        'lc_issue_bank',
+        'lc_issue_date',
+        'is_express_bl',
+        'show_preferences',
     ];
 
     protected $casts = [
         'booking_date' => 'date',
         'etd'          => 'date',
         'eta'          => 'date',
+        'por_etd'      => 'date',
+        'on_board_date'=> 'date',
+        'lc_issue_date'=> 'date',
         'pkg_qty'      => 'decimal:2',
         'weight_kg'    => 'decimal:3',
         'measure_cbm'  => 'decimal:3',
+        'is_hold'      => 'boolean',
+        'is_freight_released' => 'boolean',
+        'is_express_bl' => 'boolean',
+        'show_preferences' => 'boolean',
     ];
 
     public function customer()
@@ -169,5 +191,25 @@ class OceanBooking extends Model
     public function trucker()
     {
         return $this->belongsTo(TradePartner::class, 'trucker_id');
+    }
+
+    public function invoices()
+    {
+        return $this->morphMany(Invoice::class, 'invoiceable');
+    }
+
+    public function customsBroker()
+    {
+        return $this->belongsTo(TradePartner::class, 'customs_broker_id');
+    }
+
+    public function holdBy()
+    {
+        return $this->belongsTo(User::class, 'hold_by_id');
+    }
+
+    public function freightReleasedBy()
+    {
+        return $this->belongsTo(User::class, 'freight_released_by_id');
     }
 }

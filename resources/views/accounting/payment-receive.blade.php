@@ -172,7 +172,7 @@
                     @if($payment)
                     <a href="{{ route('accounting.payment-receive') }}" class="btn-default-gf" target="_blank"><i class="fa fa-plus"></i> NEW PAYMENT</a>
                     @endif
-                    <button type="button" class="btn-gofreight" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($payment) UPDATE @else SAVE @endif</button>
+                    <button type="button" class="btn-freightx" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($payment) UPDATE @else SAVE @endif</button>
                     <a href="{{ route('accounting.payment-received-list') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>
@@ -346,10 +346,18 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="font-size:10px;color:#64748b;">Filtered By:</span>
-                            <span style="font-size:9px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:3px;font-weight:600;">Type: {{ $type ?? 'AR Invoice' }}</span>
+                            <span style="font-size:9px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:3px;font-weight:600;">Type: {{ $type === 'RECEIVED' ? 'AR Invoice' : 'AP Invoice' }}</span>
                             <span style="font-size:9px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:3px;font-weight:600;">Status: Outstanding</span>
-                            <span style="font-size:9px;background:#3b82f6;color:#fff;padding:2px 8px;border-radius:3px;font-weight:600;">Office: {{ $payment?->office?->code ?? 'All' }}</span>
+                            <select class="form-control-gf" style="height:20px;font-size:9px;padding:0 4px;width:auto;display:inline-block;" onchange="filterByOffice(this.value)">
+                                <option value="">Office: All</option>
+                                @foreach($offices as $office)
+                                    <option value="{{ $office->id }}" {{ (isset($selectedOfficeId) && $selectedOfficeId == $office->id) ? 'selected' : '' }}>
+                                        Office: {{ $office->code }}
+                                    </option>
+                                @endforeach
+                            </select>
                             <button type="button" class="btn-tool" style="margin-left:6px;" @click="loadMoreInvoices()"><i class="fa fa-angle-double-down"></i> Show More Invoice(s)</button>
+                        </div>
                             <button type="button" class="btn-tool-icon" @click="showConfigModal = true" title="Config"><i class="fa fa-cog"></i></button>
                         </div>
                     </div>
@@ -700,10 +708,44 @@
                 ],
 
                 init() {
+                    // If editing existing payment, populate invoice
                     @if($payment && $payment->invoice_id)
                     this.allocationAmounts[{{ $payment->invoice_id }}] = {{ $payment->amount ?? 0 }};
                     this.selectedInvoices.push({ id: {{ $payment->invoice_id }}, inv_no: '{{ $payment->invoice->invoice_no ?? "" }}' });
                     this.recalcTotal();
+                    @endif
+
+                    // If creating new payment from invoice list, auto-select and populate
+                    @if(!$payment && isset($selectedInvoiceId) && $selectedInvoiceId)
+                    const selectedInvoiceId = {{ $selectedInvoiceId }};
+                    const selectedInvoice = @json($invoices->firstWhere('id', $selectedInvoiceId));
+                    
+                    if (selectedInvoice) {
+                        // Pre-select the invoice
+                        this.selectedInvoices.push({ 
+                            id: selectedInvoice.id, 
+                            inv_no: selectedInvoice.invoice_no 
+                        });
+                        
+                        // Auto-fill payment details from invoice
+                        this.form.trade_partner_id = String(selectedInvoice.bill_to_id || '');
+                        this.form.currency_id = String(selectedInvoice.currency_id || '');
+                        
+                        // Set allocation amount to invoice balance
+                        const balanceAmount = parseFloat(selectedInvoice.balance_amount || selectedInvoice.total_amount || 0);
+                        this.allocationAmounts[selectedInvoice.id] = balanceAmount.toFixed(2);
+                        
+                        // Update total
+                        this.recalcTotal();
+                        
+                        // Auto-check the checkbox in the table
+                        this.$nextTick(() => {
+                            const checkbox = document.querySelector(`input[type="checkbox"][value="${selectedInvoice.id}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
                     @endif
                 },
 
@@ -983,6 +1025,19 @@
             t.innerHTML = '<i class="fa fa-' + icons[type] + '"></i> ' + msg;
             container.appendChild(t);
             setTimeout(() => t.remove(), 3000);
+        }
+
+        /* Filter by Office */
+        function filterByOffice(officeId) {
+            const url = new URL(window.location.href);
+            if (officeId) {
+                url.searchParams.set('office_id', officeId);
+            } else {
+                url.searchParams.delete('office_id');
+            }
+            // Preserve invoice_id if it exists
+            const currentInvoiceId = url.searchParams.get('invoice_id');
+            window.location.href = url.toString();
         }
     </script>
     @endpush

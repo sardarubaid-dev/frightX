@@ -15,6 +15,7 @@ use App\Models\Quotation;
 use App\Models\User;
 use App\Models\OceanBooking;
 use App\Services\OceanExportService;
+use App\Services\ShipmentMemoAutoPopulationService;
 use App\Http\Requests\StoreOceanExportRequest;
 use App\Http\Requests\UpdateOceanExportRequest;
 use Illuminate\Http\Request;
@@ -148,7 +149,7 @@ class OceanExportController extends Controller
         $serviceTerms = ServiceTerm::all();
         
         $page = $request->segment(2);
-        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])->latest()->get();
+        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'agent', 'office', 'items.currency'])->forModule('Ocean Export')->latest()->get();
         $history = [];
         $chargesList = [];
 
@@ -356,6 +357,38 @@ class OceanExportController extends Controller
     {
         $oceanExport->load(['hbls.customer', 'hbls.shipper', 'hbls.consignee', 'containers.containerType', 'charges.currency', 'documents', 'statusLogs.user']);
         
+        // Format container data for frontend input compatibility
+        $oceanExport->containers = $oceanExport->containers->map(function($container) {
+            $data = $container->toArray();
+            
+            $data['is_dg'] = $container->is_dg ? 1 : 0;
+            $data['is_carrier_release'] = $container->is_carrier_release ? 1 : 0;
+            $data['is_avail_pickup'] = $container->is_avail_pickup ? 1 : 0;
+            $data['is_complete'] = $container->is_complete ? 1 : 0;
+            $data['is_customs_hold'] = $container->is_customs_hold ? 1 : 0;
+            $data['is_an_sent'] = $container->is_an_sent ? 1 : 0;
+            $data['is_do_sent'] = $container->is_do_sent ? 1 : 0;
+
+            $dateFields = [
+                'lfd', 'fdd', 'storage_start_date', 'storage_end_date',
+                'unload_vessel_date', 'gate_in_date', 'rail_start_date',
+                'pod_eta', 'appointment_date', 'pickup_date', 'gate_out_date',
+                'fdest_eta', 'eta_door', 'ata_door', 'empty_conf_date',
+                'empty_ret_date', 'an_sent_date', 'do_sent_date'
+            ];
+            foreach ($dateFields as $field) {
+                if (!empty($container->$field)) {
+                    $data[$field] = $container->$field instanceof \DateTimeInterface 
+                        ? $container->$field->format('Y-m-d') 
+                        : substr((string)$container->$field, 0, 10);
+                } else {
+                    $data[$field] = null;
+                }
+            }
+            
+            return (object) $data;
+        });
+        
         $offices = Office::where('is_active', true)->get();
         $ports = Port::all();
         $vessels = Vessel::all();
@@ -366,7 +399,7 @@ class OceanExportController extends Controller
         $incoterms = \App\Models\Incoterm::all();
         $currencies = Currency::all();
         $serviceTerms = ServiceTerm::all();
-        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])->latest()->get();
+        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Ocean Export')->latest()->get();
         $page = request()->segment(2);
         $history = $oceanExport->statusLogs && $oceanExport->statusLogs->count()
             ? $oceanExport->statusLogs->map(function($log) {
@@ -820,6 +853,109 @@ class OceanExportController extends Controller
     }
 
     // ========================================================================
+    // HBL PRINT
+    // ========================================================================
+
+    public function hblPrint($id, $hblIndex)
+    {
+        $shipment = OceanExport::with([
+            'hbls.shipper', 'hbls.consignee', 'hbls.notifyParty',
+            'hbls.placeOfDischarge', 'hbls.placeOfDelivery', 'hbls.finalDestination', 'hbls.placeOfReceipt', 'hbls.placeOfLoading',
+            'hbls.deliveryLocation', 'hbls.customer', 'hbls.containers',
+            'portOfLoading', 'portOfDischarge', 'placeOfDelivery', 'finalDestination', 'placeOfReceipt',
+            'vessel', 'forwardingAgent', 'carrier',
+            'containers.containerType',
+        ])->findOrFail($id);
+
+        $hblIndex = (int) $hblIndex;
+        $hbls = $shipment->hbls->values();
+
+        if ($hblIndex < 0 || $hblIndex >= $hbls->count()) {
+            abort(404, 'HBL index not found.');
+        }
+
+        $hbl = $hbls[$hblIndex];
+
+        // Resolve all display values from IDs
+        $data = [
+            'hbl_number'        => $hbl->hbl_no ?? '',
+            'booking_number'    => $shipment->booking_no ?: ($shipment->mbl_no ?? ''),
+            'mbl_number'        => $shipment->mbl_no ?? '',
+            'quotation_no'      => $hbl->quotation_no ?? '',
+            'sc_no'             => $hbl->sc_no ?? '',
+            'lc_no'             => $hbl->lc_no ?? '',
+            'po_no'             => $hbl->po_no ?? '',
+            'export_references' => $shipment->sub_bl_no ?: ($hbl->po_no ?: ''),
+            'shipper'           => $hbl->shipper?->name ?? '',
+            'consignee'         => $hbl->consignee?->name ?? '',
+            'notify_party'      => $hbl->notifyParty?->name ?? '',
+            'delivery_agent'    => $hbl->deliveryLocation?->name ?? '',
+            'forwarding_agent'  => $shipment->forwardingAgent?->name ?? '',
+            'vessel'            => $hbl->vessel_name ?: ($shipment->vessel?->name ?? ''),
+            'voyage'            => $hbl->voyage_no ?: ($shipment->voyage ?? ''),
+            'port_of_loading'   => $hbl->placeOfLoading?->name ?: ($shipment->portOfLoading?->name ?? ''),
+            'port_of_discharge' => $hbl->placeOfDischarge?->name ?: ($shipment->portOfDischarge?->name ?? ''),
+            'place_of_receipt'  => $hbl->placeOfReceipt?->name ?: ($shipment->placeOfReceipt?->name ?? ''),
+            'place_of_delivery' => $hbl->placeOfDelivery?->name ?: ($shipment->placeOfDelivery?->name ?? ''),
+            'final_destination' => $hbl->finalDestination?->name ?: ($shipment->finalDestination?->name ?? ''),
+            'pre_carriage_by'   => $hbl->pre_carriage_by ?? '',
+            'service_term'      => $hbl->service_term ?? '',
+            'ship_mode'         => $hbl->ship_mode ?? '',
+            'cargo_type'        => $hbl->cargo_type ?? '',
+            'shipped_on_board'  => ($hbl->vessel_name ?: ($shipment->vessel?->name ?? '')) . ($hbl->voyage_no ? ' / ' . $hbl->voyage_no : ($shipment->voyage ? ' / ' . $shipment->voyage : '')),
+            'on_board_date'     => $hbl->date_of_issue ? $hbl->date_of_issue->format('Y-m-d') : ($shipment->post_date ? $shipment->post_date->format('Y-m-d') : ''),
+            'freight_payable_at'=> $hbl->freight_payable_at ?? '',
+            'currency'          => 'USD',
+            'prepaid_amount'    => strtolower($hbl->freight_payable_at ?? '') === 'prepaid' ? 'PREPAID' : '',
+            'collect_amount'    => strtolower($hbl->freight_payable_at ?? '') === 'collect' ? 'COLLECT' : '',
+            'date_of_issue'     => $hbl->date_of_issue ? $hbl->date_of_issue->format('Y-m-d') : ($shipment->post_date ? $shipment->post_date->format('Y-m-d') : ''),
+            'incoterms'         => $hbl->incoterms_id ?? '',
+            'hbl_remark'        => $hbl->hbl_remark ?? '',
+            'marks_numbers'     => '',
+            'no_of_packages'    => '',
+            'description'       => '',
+            'gross_weight'      => '',
+            'measurement'       => '',
+        ];
+
+        // Aggregate container data for marks, packages, weight, measurement
+        $containers = $shipment->containers;
+        if ($containers && $containers->count() > 0) {
+            $marks = [];
+            $totalPkg = 0;
+            $totalWeight = 0;
+            $totalMeasure = 0;
+            $descriptions = [];
+
+            foreach ($containers as $c) {
+                $containerInfo = ($c->container_no ?? '') . ' / ' . ($c->seal_no ?? '');
+                if (trim($containerInfo, ' /')) {
+                    $marks[] = trim($containerInfo, ' /');
+                }
+                $totalPkg += (float)($c->pkg_qty ?? 0);
+                $totalWeight += (float)($c->weight_kg ?? 0);
+                $totalMeasure += (float)($c->measure_cbm ?? 0);
+            }
+
+            $data['marks_numbers'] = implode("\n", $marks);
+            $data['no_of_packages'] = $totalPkg > 0 ? number_format($totalPkg) : '';
+            $data['gross_weight'] = $totalWeight > 0 ? number_format($totalWeight, 2) . ' KGS' : '';
+            $data['measurement'] = $totalMeasure > 0 ? number_format($totalMeasure, 3) . ' CBM' : '';
+        }
+
+        // Template list
+        $templates = [
+            ['key' => 'ntg_air', 'name' => 'NTG AIR', 'pages' => 2, 'size' => 'A4'],
+            ['key' => 'united_american', 'name' => 'UNITED AMERICAN LINE', 'pages' => 1, 'size' => 'A4'],
+            ['key' => 'ocean_blue', 'name' => 'OCEAN BLUE EXPRESS', 'pages' => 2, 'size' => 'letter'],
+            ['key' => 'silk_container', 'name' => 'SILK CONTAINER LINES', 'pages' => 1, 'size' => 'A4'],
+            ['key' => 'transamerica', 'name' => 'TRANSAMERICA LOGISTICS', 'pages' => 1, 'size' => 'A4'],
+        ];
+
+        return view('ocean-export.hbl-print', compact('data', 'templates', 'shipment', 'hbl', 'hblIndex'));
+    }
+
+    // ========================================================================
     // CHARGE OPERATIONS
     // ========================================================================
 
@@ -1091,16 +1227,34 @@ class OceanExportController extends Controller
     {
         OceanExport::findOrFail($oceanExportId);
 
-        $charges = Charge::where('chargeable_type', 'App\Models\OceanExport')
-            ->where('chargeable_id', $oceanExportId)
-            ->where('is_invoiced', false)
-            ->get();
+        $query = Charge::where('chargeable_type', 'App\Models\OceanExport')
+            ->where('chargeable_id', $oceanExportId);
 
-        if ($charges->count() == 0) {
-            return response()->json(['success' => false, 'message' => 'No uninvoiced charges found.'], 400);
+        if ($request->has('ids') && is_array($request->ids) && count($request->ids) > 0) {
+            $query->whereIn('id', $request->ids);
+        } else {
+            $query->where(function($q) {
+                $q->where('is_invoiced', false)->orWhereNull('invoice_no');
+            });
         }
 
-        $invNo = 'INV-' . strtoupper(uniqid());
+        $charges = $query->get();
+
+        if ($charges->count() == 0) {
+            $allChargesCount = Charge::where('chargeable_type', 'App\Models\OceanExport')->where('chargeable_id', $oceanExportId)->count();
+            if ($allChargesCount > 0) {
+                $existingInv = Charge::where('chargeable_type', 'App\Models\OceanExport')->where('chargeable_id', $oceanExportId)->whereNotNull('invoice_no')->pluck('invoice_no')->first();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Charges are already invoiced (' . ($existingInv ?? 'Invoiced') . '). Opening Freight Invoice...',
+                    'invoice_no' => $existingInv ?? 'INV-EXISTING',
+                    'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'ocean-export', 'id' => $oceanExportId])
+                ]);
+            }
+            return response()->json(['success' => false, 'message' => 'No charges found for this shipment. Please add charges first.'], 400);
+        }
+
+        $invNo = 'SCL' . sprintf('%08d', $oceanExportId);
         foreach ($charges as $charge) {
             $charge->update([
                 'is_invoiced' => true,
@@ -1109,9 +1263,27 @@ class OceanExportController extends Controller
             ]);
         }
 
+        // === AUTO-POPULATION INTEGRATION ===
+        $shipment = OceanExport::with([
+            'forwardingAgent', 'carrier', 'dmShipper', 'dmConsignee', 'dmNotify', 
+            'deliveryAgent', 'salesPerson', 'dmCustomer', 'hbls'
+        ])->find($oceanExportId);
+
+        $autoPopService = new ShipmentMemoAutoPopulationService();
+        $autoPopulatedData = [
+            'master_bl' => $autoPopService->getAutoPopulatedData('ocean-export', $shipment, 'master_bl'),
+            'house_bl' => $autoPopService->getAutoPopulatedData('ocean-export', $shipment, 'house_bl'),
+            'enabled_fields' => [
+                'master_bl' => $autoPopService->getEnabledFields('ocean-export', 'master_bl'),
+                'house_bl' => $autoPopService->getEnabledFields('ocean-export', 'house_bl'),
+            ],
+        ];
+
         return response()->json([
             'success' => true,
             'invoice_no' => $invNo,
+            'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'ocean-export', 'id' => $oceanExportId]),
+            'auto_populated_data' => $autoPopulatedData
         ]);
     }
 
@@ -1181,7 +1353,7 @@ class OceanExportController extends Controller
         $ports = Port::all();
         $users = User::all();
         $statuses = Quotation::select('status')->distinct()->whereNotNull('status')->pluck('status');
-        $quotations = Quotation::with(['customer:id,name', 'salesPerson:id,name', 'pol:id,name', 'pod:id,name', 'items'])->latest()->get();
+        $quotations = Quotation::with(['customer:id,name', 'salesPerson:id,name', 'pol:id,name', 'pod:id,name', 'carrier:id,name', 'op:id,name', 'items'])->forModule('Ocean Export')->latest()->get();
         $latestBooking = OceanBooking::latest()->value('booking_no');
         $nextBookingNo = $latestBooking ? 'OBE-' . str_pad((int) substr($latestBooking, 4) + 1, 6, '0', STR_PAD_LEFT) : 'OBE-000001';
         $quotationsData = $quotations->map(function ($q) {
@@ -1218,5 +1390,151 @@ class OceanExportController extends Controller
         });
 
         return view('ocean-export.create-quote-booking', compact('customers', 'ports', 'users', 'statuses', 'quotationsData', 'nextBookingNo'));
+    }
+
+    public function profitSummaryView($id, Request $request)
+    {
+        $shipment = OceanExport::with([
+            'office', 'operator', 'carrier', 'vessel',
+            'portOfLoading', 'portOfDischarge',
+            'containers', 'hbls', 'charges.currency'
+        ])->findOrFail($id);
+
+        return view('ocean-export.profit-summary', compact('shipment'));
+    }
+
+    public function profitDetailView($id, Request $request)
+    {
+        $shipment = OceanExport::with([
+            'office', 'operator', 'carrier', 'vessel',
+            'portOfLoading', 'portOfDischarge',
+            'containers', 'hbls', 'charges.currency'
+        ])->findOrFail($id);
+
+        return view('ocean-export.profit-detail', compact('shipment'));
+    }
+
+    public function deliveryOrderView($id, Request $request)
+    {
+        $shipment = OceanExport::with([
+            'office', 'operator', 'carrier', 'vessel',
+            'portOfLoading', 'portOfDischarge',
+            'containers', 'hbls'
+        ])->findOrFail($id);
+
+        return view('ocean-export.profit-summary', compact('shipment'));
+    }
+
+    public function batchPrintView($id, Request $request)
+    {
+        $shipment = OceanExport::with([
+            'office', 'operator', 'carrier', 'vessel',
+            'portOfLoading', 'portOfDischarge',
+            'containers', 'hbls' => function($q) {
+                $q->with(['shipper', 'consignee', 'notifyParty', 'placeOfReceipt', 'placeOfDischarge', 'placeOfDelivery', 'hblTemplate']);
+            }
+        ])->findOrFail($id);
+
+        $templates = \App\Models\HblTemplate::where('is_active', true)->orderBy('name')->get();
+
+        return view('ocean-export.batch-print-view', compact('shipment', 'templates'));
+    }
+
+    public function devSegView($id, Request $request)
+    {
+        $shipment = OceanExport::with([
+            'office', 'operator', 'carrier', 'vessel',
+            'portOfLoading', 'portOfDischarge',
+            'containers', 'hbls'
+        ])->findOrFail($id);
+
+        return view('ocean-export.profit-summary', compact('shipment'));
+    }
+
+    public function renderHblHtml(Request $request, $shipmentId, $hblId)
+    {
+        try {
+            $hbl = \App\Models\OceanExportHbl::with([
+                'shipper', 'consignee', 'notifyParty', 'placeOfReceipt', 'placeOfDischarge', 'placeOfDelivery',
+                'containers' => function($q) {
+                    $q->with(['containerType']);
+                },
+                'oceanExport' => function($q) {
+                    $q->with(['office', 'operator', 'carrier', 'portOfLoading', 'portOfDischarge', 'forwardingAgent', 'overseaAgent', 'containers']);
+                }
+            ])->findOrFail($hblId);
+
+            if ($hbl->containers->count() === 0 && $hbl->oceanExport && $hbl->oceanExport->containers->count() > 0) {
+                $hbl->setRelation('containers', $hbl->oceanExport->containers);
+            }
+
+            $templateId = $request->input('template_id');
+            if ($templateId) {
+                $template = \App\Models\HblTemplate::find($templateId);
+            } else {
+                $template = $hbl->hblTemplate ?: \App\Models\HblTemplate::where('is_active', true)->first();
+            }
+
+            if (!$template) {
+                return response()->json([
+                    'html' => '<div style="padding:40px;text-align:center;color:#ef4444;font-weight:bold;">No active HBL templates found. Go to Settings > HBL Templates to configure them.</div>',
+                    'css' => ''
+                ]);
+            }
+
+            // Map template names to their respective isolated Blade files
+            $mapping = [
+                'SILK CONTAINER LINES' => 'ocean-export.hbl-templates.silk',
+                'NTG AIR' => 'ocean-export.hbl-templates.ntg-air',
+                'OCEAN BLUE EXPRESS INC.' => 'ocean-export.hbl-templates.ocean-blue',
+                'TRANSAMERICA LOGISTIC' => 'ocean-export.hbl-templates.transamerica',
+                'UNITED AMERICAN LINE' => 'ocean-export.hbl-templates.united-american',
+            ];
+
+            $viewName = $mapping[$template->name] ?? null;
+
+            if ($viewName && view()->exists($viewName)) {
+                // Render the specific isolated Blade file
+                $html = view($viewName, [
+                    'hbl' => $hbl,
+                    'date' => date('m/d/Y')
+                ])->render();
+            } else {
+                // Fallback to database content rendering if specific view not found
+                $html = \Illuminate\Support\Facades\Blade::render($template->content, ['hbl' => $hbl, 'date' => date('m/d/Y')]);
+            }
+
+            return response()->json([
+                'html' => $html,
+                'css' => $template->css ?? '',
+                'template_id' => $template->id,
+                'template_name' => $template->name
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'html' => '<div style="padding:40px;color:#ef4444;"><h4>Blade Compilation Error</h4><pre style="white-space:pre-wrap;font-family:monospace;font-size:11px;">' . e($e->getMessage()) . '</pre></div>',
+                'css' => ''
+            ], 500);
+        }
+    }
+
+    public function saveSelectedTemplate(Request $request, $hblId)
+    {
+        try {
+            $hbl = \App\Models\OceanExportHbl::findOrFail($hblId);
+            $hbl->update([
+                'hbl_template_id' => $request->input('template_id')
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'HBL template selection saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

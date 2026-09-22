@@ -24,7 +24,11 @@
     </style>
 </head>
 <body>
-    <button class="btn-print" onclick="window.print()">Print Invoice</button>
+    <div style="float: right; margin-bottom: 20px;">
+        <a href="{{ route('shipments.freight-invoice', ['type' => 'ocean-export', 'id' => $shipment->id]) }}" class="btn-print" style="text-decoration:none; margin-right: 10px; display: inline-block;" target="_blank">Generate Freight Invoice</a>
+        <button class="btn-print" onclick="window.print()" style="display: inline-block;">Print Invoice</button>
+    </div>
+    <div style="clear: both;"></div>
     <div class="invoice-box">
         <div class="header">
             <div>

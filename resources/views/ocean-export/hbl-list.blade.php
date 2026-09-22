@@ -2,41 +2,270 @@
     @push('styles')
     <x-list-styles />
     <style>
-        /* Mobile Responsive Enhancements */
+        /* Button Group Styling - Better Alignment */
+        .btn-group {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .btn-group .btn-tool:not(:first-child) {
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-group .btn-tool {
+            border-radius: 0;
+            margin: 0;
+        }
+        
+        .btn-group .btn-tool:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .btn-group .btn-tool:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .portlet-tool {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Mobile Responsive Enhancements - FIXED SCROLLING */
         @media (max-width: 768px) {
-            .page-content { padding: 2px !important; overflow-x: hidden !important; }
-            .portlet.light { margin: 0 !important; border-radius: 0 !important; overflow: hidden !important; }
-            .portlet-title { flex-direction: column !important; align-items: flex-start !important; padding: 6px !important; gap: 6px; }
+            .page-content { 
+                padding: 2px !important; 
+                overflow-x: hidden !important;
+            }
+            .portlet.light { 
+                margin: 0 !important; 
+                border-radius: 0 !important; 
+                overflow: hidden !important;
+            }
+            
+            /* Portlet Title - Stack on mobile */
+            .portlet-title { 
+                flex-direction: column !important; 
+                align-items: flex-start !important; 
+                padding: 6px !important;
+                gap: 6px;
+            }
             .portlet-title .caption { width: 100%; }
-            .portlet-title .actions { width: 100%; flex-wrap: wrap; gap: 3px !important; }
-            .btn-action-round { font-size: 9px !important; padding: 0 6px !important; height: 18px !important; }
-            .portlet-tool { flex-direction: column !important; align-items: flex-start !important; padding: 6px !important; gap: 6px !important; }
+            .portlet-title .actions { 
+                width: 100%; 
+                flex-wrap: wrap; 
+                gap: 3px !important;
+            }
+            .btn-action-round { 
+                font-size: 9px !important; 
+                padding: 0 6px !important; 
+                height: 18px !important;
+            }
+            
+            /* Toolbar - Stack on mobile */
+            .portlet-tool { 
+                flex-direction: column !important; 
+                align-items: flex-start !important; 
+                padding: 6px !important;
+                gap: 6px !important;
+            }
             .portlet-tool > div, .portlet-tool > form { width: 100%; }
-            .btn-group { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
-            .btn-tool { font-size: 8px !important; padding: 0 6px !important; height: 20px !important; flex: 0 1 auto; }
-            .input-inline, .select-tool { width: 100% !important; font-size: 9px !important; }
-            .portlet-body { padding: 0 !important; overflow: hidden !important; }
-            .grid-container { width: 100% !important; overflow: hidden !important; }
-            .grid-wrapper { width: 100% !important; height: calc(100vh - 350px) !important; min-height: 200px !important; overflow-x: auto !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
-            .grid-table { font-size: 8px !important; width: auto !important; min-width: 1800px !important; }
-            .grid-table th, .grid-table td { padding: 2px 4px !important; height: 22px !important; }
-            .sticky-col { font-size: 8px !important; }
+            .btn-group { 
+                width: 100%; 
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+            .btn-tool { 
+                font-size: 8px !important; 
+                padding: 0 6px !important;
+                height: 20px !important;
+                flex: 0 1 auto;
+            }
+            .input-inline, .select-tool { 
+                width: 100% !important; 
+                font-size: 9px !important;
+            }
+            
+            /* CRITICAL FIX: Table scrolling on mobile */
+            .portlet-body {
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+            
+            .grid-container { 
+                width: 100% !important;
+                overflow: hidden !important;
+                background: #fff;
+                position: relative;
+            }
+            
+            .grid-wrapper { 
+                width: 100% !important;
+                height: calc(100vh - 350px) !important;
+                min-height: 200px !important;
+                overflow-x: auto !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                position: relative;
+            }
+            
+            .grid-table { 
+                font-size: 8px !important;
+                width: auto !important;
+                min-width: 1800px !important;
+                table-layout: auto !important;
+            }
+            
+            .grid-table th, .grid-table td { 
+                padding: 2px 4px !important;
+                height: 22px !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Keep only 2 sticky columns on mobile */
+            .sticky-col { 
+                font-size: 8px !important;
+                position: sticky !important;
+                z-index: 5 !important;
+                background: #fff !important;
+            }
+            
+            .grid-table th:nth-child(1), .grid-table td:nth-child(1) { 
+                left: 0 !important; 
+            }
+            .grid-table th:nth-child(2), .grid-table td:nth-child(2) { 
+                left: 25px !important; 
+            }
+            /* Remove sticky from other columns */
+            .grid-table th:nth-child(3), .grid-table td:nth-child(3),
             .grid-table th:nth-child(4), .grid-table td:nth-child(4),
             .grid-table th:nth-child(5), .grid-table td:nth-child(5),
-            .grid-table th:nth-child(6), .grid-table td:nth-child(6) { position: static !important; left: auto !important; }
-            .filter-input { height: 18px !important; font-size: 8px !important; }
-            .portlet-tool.bottom { flex-direction: column !important; gap: 6px; }
+            .grid-table th:nth-child(6), .grid-table td:nth-child(6) {
+                position: static !important;
+                left: auto !important;
+            }
+            
+            .filter-input { 
+                height: 18px !important; 
+                font-size: 8px !important;
+                padding: 0 3px !important;
+            }
+            
+            /* Modals on mobile */
+            .modal-box, .confirm-box { 
+                margin: 10px;
+                width: calc(100% - 20px);
+                max-width: 100%;
+                min-width: 0 !important;
+            }
+            .modal-body { 
+                padding: 8px !important;
+                min-width: 0 !important;
+            }
+            .confirm-box { padding: 16px !important; }
+            
+            /* Config Panel on mobile */
+            .config-panel {
+                right: 0;
+                left: 0;
+                top: 22px;
+                max-width: 100%;
+                max-height: 250px;
+            }
+            
+            /* Pagination on mobile */
+            .portlet-tool.bottom { 
+                flex-direction: column !important; 
+                gap: 6px;
+            }
             .portlet-tool.bottom > div { width: 100% !important; }
+            .pagination { 
+                justify-content: center;
+                font-size: 9px !important;
+            }
+            .tp-page-btn {
+                min-width: 20px !important;
+                height: 18px !important;
+                padding: 0 4px !important;
+                font-size: 8px !important;
+            }
+            
+            /* Toast on mobile */
+            .toast-container { 
+                top: 10px; 
+                right: 10px;
+                left: 10px;
+            }
+            .toast { 
+                font-size: 10px !important;
+                padding: 6px 10px !important;
+            }
+            
+            /* Breadcrumbs on mobile */
+            .page-bar { 
+                padding: 6px 10px !important;
+                margin-bottom: 8px !important;
+            }
+            .page-breadcrumb li { font-size: 10px !important; }
+            
+            #sel-badge { font-size: 8px !important; }
         }
+        
         @media (max-width: 480px) {
-            .grid-table { font-size: 7px !important; min-width: 1600px !important; }
+            .grid-table { 
+                font-size: 7px !important; 
+                min-width: 1600px !important;
+            }
+            .grid-table th, .grid-table td { 
+                padding: 2px 3px !important;
+                height: 20px !important;
+            }
+            .btn-action-round, .btn-tool { 
+                font-size: 8px !important;
+                padding: 0 4px !important;
+            }
+            
+            /* Keep only checkbox sticky on very small screens */
             .grid-table th:nth-child(2), .grid-table td:nth-child(2),
-            .grid-table th:nth-child(3), .grid-table td:nth-child(3) { position: static !important; left: auto !important; }
+            .grid-table th:nth-child(3), .grid-table td:nth-child(3) {
+                position: static !important;
+                left: auto !important;
+            }
         }
+        
+        @media (max-width: 768px) and (orientation: landscape) {
+            .grid-wrapper { 
+                height: calc(100vh - 200px) !important;
+            }
+        }
+        
+        /* Touch-friendly targets */
         @media (hover: none) and (pointer: coarse) {
-            .btn-tool, .btn-action-round { min-height: 28px !important; touch-action: manipulation; }
-            .filter-input, .select-tool { min-height: 24px !important; }
-            input[type="checkbox"] { width: 18px; height: 18px; }
+            .btn-tool, .btn-action-round, .tp-page-btn {
+                min-height: 28px !important;
+                touch-action: manipulation;
+            }
+            .filter-input, .select-tool {
+                min-height: 24px !important;
+                touch-action: manipulation;
+            }
+            input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+                touch-action: manipulation;
+            }
+            .grid-wrapper {
+                -webkit-overflow-scrolling: touch !important;
+                scroll-behavior: smooth;
+            }
         }
     </style>
     @endpush
@@ -84,7 +313,7 @@
                     <button class="btn-action-round" onclick="toggleFilter()" id="btn-filter" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -93,43 +322,35 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="exportExcel()" title="Export to CSV" id="btn-excel">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                    <button class="btn-action-round white" onclick="exportExcel()" title="Download as CSV/Excel" id="btn-excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             {{-- ── TOOLBAR ── --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
-                        <button class="btn-tool" id="btn-delete"   disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                        <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()">
+                            <i class="fa fa-files-o"></i>
+                        </button>
+                        <button class="btn-tool" id="btn-delete"   disabled title="Delete Selected" onclick="confirmDelete()">
+                            <i class="fa fa-trash"></i>
+                        </button>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn-tool" id="btn-profit"  disabled><i class="fa fa-file-text-o"></i> Profit Report</button>
-                        <button class="btn-tool" id="btn-arrival" disabled><i class="fa fa-file-text-o"></i> Arrival Notice</button>
-                    </div>
-                    <div class="btn-group">
-                        <select class="select-tool" id="sel-sales" disabled>
-                            <option value="">Change Sales</option>
-                        </select>
-                        <select class="select-tool" id="sel-op" disabled>
-                            <option value="">Change OP</option>
-                        </select>
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
                 </div>
                 <form method="GET" action="{{ route('ocean-export.hbl-list') }}" style="display:flex;align-items:center;gap:6px;margin:0;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" name="search" id="quick-search" class="input-inline" style="width:150px;"
+                    <input type="text" name="search" id="quick-search" class="input-inline" style="width:160px;"
                            placeholder="Quick search..." value="{{ request('search') }}"
                            oninput="quickSearch(this.value)" onkeyup="if(event.key === 'Enter') this.blur()">
                     @if(request()->has('search'))
-                        <a href="{{ route('ocean-export.hbl-list') }}" style="font-size:10px;color:#3b82f6;text-decoration:none;" target="_blank">
+                        <a href="{{ route('ocean-export.hbl-list') }}" style="font-size:10px;color:#3b82f6;text-decoration:none;">
                             <i class="fa fa-times-circle"></i>
                         </a>
                     @endif
@@ -188,7 +409,7 @@
                         <button type="submit" class="btn-tool green" style="height:20px;font-size:9px;padding:0 10px;">
                             <i class="fa fa-search"></i> Filter
                         </button>
-                        <a href="{{ route('ocean-export.hbl-list') }}" class="btn-tool" style="height:20px;font-size:9px;padding:0 10px;" target="_blank">
+                        <a href="{{ route('ocean-export.hbl-list') }}" class="btn-tool" style="height:20px;font-size:9px;padding:0 10px;">
                             <i class="fa fa-undo"></i> Clear
                         </a>
                     </div>
@@ -250,14 +471,16 @@
             </div>
 
             {{-- ── PAGINATION ── --}}
-            <div class="portlet-tool bottom">
-                <div style="font-size:10px;color:#64748b;">
-                    Showing <span id="stat-first">{{ $hbls->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $hbls->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $hbls->total() }}</span> records
-                </div>
-                <div id="pagination-container">
-                    {{ $hbls->appends(request()->query())->links('vendor.pagination.custom') }}
-                </div>
-            </div>
+                                 <div class="portlet-tool bottom">
+                                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                                         <div id="pagination-container">
+                                             {{ $hbls->appends(request()->query())->links('vendor.pagination.custom') }}
+                                         </div>
+                                         <div style="font-size:10px;color:#64748b;">
+                                             Showing <span id="stat-first">{{ $hbls->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $hbls->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $hbls->total() }}</span> records
+                                         </div>
+                                     </div>
+                                 </div>
 
         </div>
     </div>

@@ -173,7 +173,27 @@ class OceanBookingController extends Controller
             'weight_kg'           => 'nullable|numeric',
             'measure_cbm'         => 'nullable|numeric',
             'status'              => 'required|in:OPEN,CONFIRMED,CANCELLED,COMPLETED',
+            'is_hold'             => 'nullable|boolean',
+            'hold_by_id'          => 'nullable|exists:users,id',
+            'is_freight_released' => 'nullable|boolean',
+            'freight_released_by_id' => 'nullable|exists:users,id',
+            'buying_freight'      => 'nullable|string|max:50',
+            'selling_freight'     => 'nullable|string|max:50',
+            'customs_broker_id'   => 'nullable|exists:trade_partners,id',
+            'por_etd'             => 'nullable|date',
+            'sales_type'          => 'nullable|string|max:50',
+            'on_board_date'       => 'nullable|date',
+            'lc_no'               => 'nullable|string|max:100',
+            'lc_issue_bank'       => 'nullable|string|max:255',
+            'lc_issue_date'       => 'nullable|date',
+            'is_express_bl'       => 'nullable|boolean',
+            'show_preferences'    => 'nullable|boolean',
         ]);
+
+        $validated['is_hold'] = $request->boolean('is_hold');
+        $validated['is_freight_released'] = $request->boolean('is_freight_released');
+        $validated['is_express_bl'] = $request->boolean('is_express_bl');
+        $validated['show_preferences'] = $request->boolean('show_preferences');
 
         $booking = OceanBooking::create($validated);
 
@@ -183,7 +203,7 @@ class OceanBookingController extends Controller
 
     public function edit($id)
     {
-        $booking = OceanBooking::findOrFail($id);
+        $booking = OceanBooking::with('invoices.billTo')->findOrFail($id);
         $offices = Office::where('is_active', true)->get();
         $tradePartners = TradePartner::all();
         $carriers = TradePartner::whereIn('type', ['CR', 'CARRIER'])->get();
@@ -244,7 +264,27 @@ class OceanBookingController extends Controller
             'weight_kg'           => 'nullable|numeric',
             'measure_cbm'         => 'nullable|numeric',
             'status'              => 'required|in:OPEN,CONFIRMED,CANCELLED,COMPLETED',
+            'is_hold'             => 'nullable|boolean',
+            'hold_by_id'          => 'nullable|exists:users,id',
+            'is_freight_released' => 'nullable|boolean',
+            'freight_released_by_id' => 'nullable|exists:users,id',
+            'buying_freight'      => 'nullable|string|max:50',
+            'selling_freight'     => 'nullable|string|max:50',
+            'customs_broker_id'   => 'nullable|exists:trade_partners,id',
+            'por_etd'             => 'nullable|date',
+            'sales_type'          => 'nullable|string|max:50',
+            'on_board_date'       => 'nullable|date',
+            'lc_no'               => 'nullable|string|max:100',
+            'lc_issue_bank'       => 'nullable|string|max:255',
+            'lc_issue_date'       => 'nullable|date',
+            'is_express_bl'       => 'nullable|boolean',
+            'show_preferences'    => 'nullable|boolean',
         ]);
+
+        $validated['is_hold'] = $request->boolean('is_hold');
+        $validated['is_freight_released'] = $request->boolean('is_freight_released');
+        $validated['is_express_bl'] = $request->boolean('is_express_bl');
+        $validated['show_preferences'] = $request->boolean('show_preferences');
 
         $booking->update($validated);
 

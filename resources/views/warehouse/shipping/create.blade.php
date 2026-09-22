@@ -38,10 +38,30 @@
         .modal-header { padding: 10px 15px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: #0f172a; }
         .modal-body { padding: 15px; max-height: 75vh; overflow-y: auto; }
         .modal-footer { padding: 10px 15px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: right; }
+        .nav-tabs-custom { margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; gap: 4px; background: #fff; padding: 4px 8px 0 8px; border-radius: 2px 2px 0 0; }
+        .nav-tabs-custom .tab-item { padding: 6px 14px; font-size: 11px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+        .nav-tabs-custom .tab-item:hover { color: #2563eb; background: #f8fafc; }
+        .nav-tabs-custom .tab-item.active { color: #2563eb; font-weight: 700; border-bottom-color: #2563eb; background: #eff6ff; }
     </style>
     @endpush
 
     <div class="page-content" x-data="shippingCreateApp()">
+        {{-- TOP TABS --}}
+        <div class="nav-tabs-custom">
+            <a href="{{ route('receiving.create') }}" class="tab-item {{ request()->routeIs('receiving.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Receiving
+            </a>
+            <a href="{{ route('receiving.list') }}" class="tab-item {{ request()->routeIs('receiving.list') || request()->routeIs('receiving.index') ? 'active' : '' }}">
+                <i class="fa fa-list"></i> Receiving List
+            </a>
+            <a href="{{ route('shipping.create') }}" class="tab-item {{ request()->routeIs('shipping.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Shipping
+            </a>
+            <a href="{{ route('shipping.list') }}" class="tab-item {{ request()->routeIs('shipping.list') || request()->routeIs('shipping.index') ? 'active' : '' }}">
+                <i class="fa fa-truck"></i> Shipping List
+            </a>
+        </div>
+
         <form id="shippingForm" action="{{ isset($shipping) ? route('shipping.update', $shipping->id) : route('shipping.store') }}" method="POST">
             @csrf
             @if(isset($shipping)) @method('PUT') @endif
@@ -76,7 +96,7 @@
                     <i class="fa fa-truck"></i> Warehouse Shipping — {{ isset($shipping) ? 'Edit' : 'New Entry' }}
                 </h1>
                 <div style="display:flex;gap:4px;">
-                    <button type="button" class="btn-gofreight" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if(isset($shipping)) UPDATE @else SAVE @endif</button>
+                    <button type="button" class="btn-freightx" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if(isset($shipping)) UPDATE @else SAVE @endif</button>
                     <a href="{{ route('shipping.index') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>
@@ -292,7 +312,7 @@
                     <div class="portlet-title">
                         <span class="caption-subject"><i class="fa fa-calculator"></i> Invoices & Costs</span>
                         <div style="display:flex;gap:4px;">
-                            <button type="button" class="btn-gofreight" style="padding:2px 8px;font-size:9px;" @click="createInvoice()"><i class="fa fa-file-text-o"></i> Create Invoice</button>
+                            <button type="button" class="btn-freightx" style="padding:2px 8px;font-size:9px;" @click="createInvoice()"><i class="fa fa-file-text-o"></i> Create Invoice</button>
                             <button type="button" class="btn-default-gf" style="padding:2px 8px;font-size:9px;" @click="createDcNote()"><i class="fa fa-exchange"></i> Create D/C Note</button>
                             <button type="button" class="btn-default-gf" style="padding:2px 8px;font-size:9px;" @click="createCost()"><i class="fa fa-dollar"></i> Create Cost</button>
                         </div>
@@ -465,7 +485,7 @@
                     <div class="portlet-title">
                         <span class="caption-subject"><i class="fa fa-folder-open"></i> Document Center</span>
                         <div style="display:flex;gap:4px;">
-                            <label class="btn-gofreight" style="padding:2px 8px;font-size:9px;cursor:pointer;">
+                            <label class="btn-freightx" style="padding:2px 8px;font-size:9px;cursor:pointer;">
                                 <i class="fa fa-upload"></i> Upload
                                 <input type="file" x-ref="docInput" style="display:none;" @change="uploadDocument($event)">
                             </label>

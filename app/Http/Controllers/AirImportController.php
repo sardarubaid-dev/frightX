@@ -12,6 +12,7 @@ use App\Models\ContainerType;
 use App\Models\Currency;
 use App\Models\ShipmentStatusLog;
 use App\Services\AirImportService;
+use App\Services\ShipmentMemoAutoPopulationService;
 use App\Http\Requests\StoreAirImportRequest;
 use App\Http\Requests\UpdateAirImportRequest;
 use Illuminate\Http\Request;
@@ -165,7 +166,7 @@ class AirImportController extends Controller
         if ($coloaders->isEmpty()) $coloaders = $allAgents;
         
         $page = $request->route()->getName();
-        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])->latest()->get();
+        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Air Import')->latest()->get();
         
         $chargesData = collect();
         
@@ -224,7 +225,7 @@ class AirImportController extends Controller
         if ($forwarders->isEmpty()) $forwarders = $allAgents;
         if ($coloaders->isEmpty()) $coloaders = $allAgents;
         
-        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])->latest()->get();
+        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Air Import')->latest()->get();
         
         $chargesData = $airImport->charges->isNotEmpty()
             ? $airImport->charges->map(fn($c) => [
@@ -384,12 +385,23 @@ class AirImportController extends Controller
         return response()->json(['success' => true, 'message' => count($request->ids) . ' shipment(s) deleted.']);
     }
 
-    public function updateColor(Request $request, $id)
+    public function updateColor(Request $request, AirImport $airImport)
     {
-        $shipment = AirImport::findOrFail($id);
-        $request->validate(['color' => 'nullable|string|max:20']);
-        $shipment->update(['color' => $request->color]);
-        return response()->json(['success' => true]);
+        try {
+            $request->validate(['color' => 'nullable|string|max:20']);
+            $airImport->update(['color' => $request->color]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Color updated successfully',
+                'color' => $airImport->color
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update color: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function bulkChangeOp(Request $request)
@@ -744,5 +756,91 @@ class AirImportController extends Controller
     {
         $doc = \App\Models\Document::findOrFail($documentId);
         return \Illuminate\Support\Facades\Storage::disk('public')->download($doc->file_path, $doc->file_name);
+    }
+
+    public function createInvoiceFromCharges(Request $request, $airImportId)
+    {
+        AirImport::findOrFail($airImportId);
+
+        $query = Charge::where('chargeable_type', 'App\Models\AirImport')
+            ->where('chargeable_id', $airImportId);
+
+        if ($request->has('ids') && is_array($request->ids) && count($request->ids) > 0) {
+            $query->whereIn('id', $request->ids);
+        } else {
+            $query->where(function($q) {
+                $q->where('is_invoiced', false)->orWhereNull('invoice_no');
+            });
+        }
+
+        $charges = $query->get();
+
+        if ($charges->count() == 0) {
+            $allChargesCount = Charge::where('chargeable_type', 'App\Models\AirImport')->where('chargeable_id', $airImportId)->count();
+            if ($allChargesCount > 0) {
+                $existingInv = Charge::where('chargeable_type', 'App\Models\AirImport')->where('chargeable_id', $airImportId)->whereNotNull('invoice_no')->pluck('invoice_no')->first();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Charges are already invoiced (' . ($existingInv ?? 'Invoiced') . '). Opening Freight Invoice...',
+                    'invoice_no' => $existingInv ?? 'INV-EXISTING',
+                    'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'air-import', 'id' => $airImportId])
+                ]);
+            }
+            return response()->json(['success' => false, 'message' => 'No charges found for this shipment. Please add charges first.'], 400);
+        }
+
+        $invNo = 'SCL' . sprintf('%08d', $airImportId);
+        foreach ($charges as $charge) {
+            $charge->update([
+                'is_invoiced' => true,
+                'invoice_no' => $invNo,
+                'invoice_date' => now(),
+            ]);
+        }
+
+        // === AUTO-POPULATION INTEGRATION ===
+        $shipment = AirImport::with([
+            'forwardingAgent', 'carrier', 'dmShipper', 'dmConsignee', 'dmNotify', 
+            'deliveryAgent', 'salesPerson', 'dmCustomer', 'hbls'
+        ])->find($airImportId);
+
+        $autoPopService = new ShipmentMemoAutoPopulationService();
+        $autoPopulatedData = [
+            'master_bl' => $autoPopService->getAutoPopulatedData('air-import', $shipment, 'master_bl'),
+            'house_bl' => $autoPopService->getAutoPopulatedData('air-import', $shipment, 'house_bl'),
+            'enabled_fields' => [
+                'master_bl' => $autoPopService->getEnabledFields('air-import', 'master_bl'),
+                'house_bl' => $autoPopService->getEnabledFields('air-import', 'house_bl'),
+            ],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'invoice_no' => $invNo,
+            'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'air-import', 'id' => $airImportId]),
+            'auto_populated_data' => $autoPopulatedData
+        ]);
+    }
+
+    public function profitSummaryView($id, Request $request)
+    {
+        $shipment = AirImport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'hbls', 'charges.currency'
+        ])->findOrFail($id);
+
+        return view('air-import.profit-summary', compact('shipment'));
+    }
+
+    public function profitDetailView($id, Request $request)
+    {
+        $shipment = AirImport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'hbls', 'charges.currency'
+        ])->findOrFail($id);
+
+        return view('air-import.profit-detail', compact('shipment'));
     }
 }

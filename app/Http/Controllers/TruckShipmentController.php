@@ -37,7 +37,13 @@ class TruckShipmentController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('file_no', 'like', "%{$search}%")
                   ->orWhere('mbl_no', 'like', "%{$search}%")
-                  ->orWhere('hbl_no', 'like', "%{$search}%");
+                  ->orWhere('hbl_no', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function($c) use ($search) {
+                      $c->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('trucker', function($t) use ($search) {
+                      $t->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -45,11 +51,27 @@ class TruckShipmentController extends Controller
         if ($request->filter_file_no) {
             $query->where('file_no', 'like', '%' . $request->filter_file_no . '%');
         }
+        if ($request->filter_post_date) {
+            $query->whereDate('post_date', 'like', '%' . $request->filter_post_date . '%');
+        }
+        if ($request->filter_customer) {
+            $query->where(function($q) use ($request) {
+                $q->where('customer_id', $request->filter_customer)
+                  ->orWhereHas('customer', function($c) use ($request) {
+                      $c->where('name', 'like', '%' . $request->filter_customer . '%');
+                  });
+            });
+        }
+        if ($request->filter_trucker) {
+            $query->whereHas('trucker', function($t) use ($request) {
+                $t->where('name', 'like', '%' . $request->filter_trucker . '%');
+            });
+        }
         if ($request->filter_mbl_no) {
             $query->where('mbl_no', 'like', '%' . $request->filter_mbl_no . '%');
         }
-        if ($request->filter_customer) {
-            $query->where('customer_id', $request->filter_customer);
+        if ($request->filter_hbl_no) {
+            $query->where('hbl_no', 'like', '%' . $request->filter_hbl_no . '%');
         }
 
         $sortField = $request->sort ?? 'created_at';
@@ -58,7 +80,10 @@ class TruckShipmentController extends Controller
         if (!in_array($sortField, $allowedSorts)) $sortField = 'created_at';
         if (!in_array($sortDir, ['asc', 'desc'])) $sortDir = 'desc';
 
-        $shipments = $query->orderBy($sortField, $sortDir)->paginate($request->per_page ?? 20);
+        $perPage = (int) ($request->per_page ?? 20);
+        if ($perPage < 1) $perPage = 20;
+
+        $shipments = $query->orderBy($sortField, $sortDir)->paginate($perPage)->withQueryString();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -141,10 +166,7 @@ class TruckShipmentController extends Controller
         $agents = TradePartner::all();
         $users = \App\Models\User::all();
         $packageUnits = \App\Models\PackageUnit::all();
-        $quotations = Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])
-            ->where('transport_mode', 'TRUCK')
-            ->latest()
-            ->get();
+        $quotations = Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Truck')->latest()->get();
         $locations = TradePartner::whereIn('type', ['CF', 'CY', 'WH', 'WAREHOUSE', 'CFS'])
             ->orWhere('type', 'LOCATION')
             ->get();
@@ -189,10 +211,7 @@ class TruckShipmentController extends Controller
         $agents = TradePartner::all();
         $users = \App\Models\User::all();
         $packageUnits = \App\Models\PackageUnit::all();
-        $quotations = Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])
-            ->where('transport_mode', 'TRUCK')
-            ->latest()
-            ->get();
+        $quotations = Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Truck')->latest()->get();
         $locations = TradePartner::whereIn('type', ['CF', 'CY', 'WH', 'WAREHOUSE', 'CFS'])
             ->orWhere('type', 'LOCATION')
             ->get();
@@ -364,6 +383,55 @@ class TruckShipmentController extends Controller
         return response()->streamDownload($callback, 'truck-shipments-' . date('Y-m-d') . '.csv', $headers);
     }
 
+    public function myShipmentListPrint(Request $request)
+    {
+        $query = TruckShipment::with([
+            'office', 'operator', 'customer', 'shipper', 'consignee', 'trucker', 'pol', 'pod',
+            'finalDestination', 'billTo', 'packageUnit', 'charges', 'containers'
+        ]);
+
+        // Filter to current user's shipments (OP or Sales), or unassigned
+        $query->where(function ($q) {
+            $q->where('op_id', auth()->id())
+              ->orWhere('sales_id', auth()->id())
+              ->orWhere(function ($sub) {
+                  $sub->whereNull('op_id')->whereNull('sales_id');
+              });
+        });
+
+        // Quick search
+        if ($search = $request->search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('file_no', 'like', "%{$search}%")
+                  ->orWhere('mbl_no', 'like', "%{$search}%")
+                  ->orWhere('hbl_no', 'like', "%{$search}%");
+            });
+        }
+
+        // Column filters
+        if ($request->filter_file_no) {
+            $query->where('file_no', 'like', '%' . $request->filter_file_no . '%');
+        }
+        if ($request->filter_customer) {
+            $query->where('customer_id', $request->filter_customer);
+        }
+        if ($request->filter_post_date) {
+            $query->whereDate('post_date', 'like', '%' . $request->filter_post_date . '%');
+        }
+
+        // Sorting
+        $sortField = $request->sort ?? 'created_at';
+        $sortDir = $request->dir ?? 'desc';
+        $allowedSorts = ['file_no', 'post_date', 'created_at', 'mbl_no', 'pkg_qty', 'weight_kg'];
+        if (!in_array($sortField, $allowedSorts)) $sortField = 'created_at';
+        if (!in_array($sortDir, ['asc', 'desc'])) $sortDir = 'desc';
+
+        // Get all records for print (no pagination limit, but reasonable cap)
+        $shipments = $query->orderBy($sortField, $sortDir)->paginate(500);
+
+        return view('truck.my-shipment-list-print', compact('shipments'));
+    }
+
     // ========== Document Management ==========
 
     public function uploadDocument(Request $request, TruckShipment $truckShipment)
@@ -426,11 +494,13 @@ class TruckShipmentController extends Controller
         $request->validate([
             'subject' => 'required|string|max:255',
             'content' => 'nullable|string',
+            'has_alert' => 'nullable|boolean',
         ]);
 
         $memo = $truckShipment->memos()->create([
             'subject' => $request->subject,
             'content' => $request->content,
+            'has_alert' => $request->boolean('has_alert'),
             'user_id' => auth()->id(),
         ]);
 
@@ -439,24 +509,26 @@ class TruckShipmentController extends Controller
         return response()->json($memo);
     }
 
-    public function updateMemo(Request $request, $memo)
+    public function updateMemo(Request $request, $truck_shipment, $memo)
     {
         $memo = \App\Models\TruckShipmentMemo::findOrFail($memo);
 
         $request->validate([
             'subject' => 'required|string|max:255',
             'content' => 'nullable|string',
+            'has_alert' => 'nullable|boolean',
         ]);
 
         $memo->update([
             'subject' => $request->subject,
             'content' => $request->content,
+            'has_alert' => $request->boolean('has_alert'),
         ]);
 
         return response()->json($memo);
     }
 
-    public function deleteMemo($memo)
+    public function deleteMemo($truck_shipment, $memo)
     {
         $memo = \App\Models\TruckShipmentMemo::findOrFail($memo);
         $memo->delete();
@@ -527,10 +599,20 @@ class TruckShipmentController extends Controller
         $charges = $truckShipment->charges()->where('is_invoiced', false)->get();
 
         if ($charges->count() === 0) {
-            return response()->json(['success' => false, 'message' => 'No uninvoiced charges found.'], 400);
+            $allChargesCount = $truckShipment->charges()->count();
+            if ($allChargesCount > 0) {
+                $existingInv = $truckShipment->charges()->whereNotNull('invoice_no')->pluck('invoice_no')->first();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Charges are already invoiced (' . ($existingInv ?? 'Invoiced') . '). Opening Freight Invoice...',
+                    'invoice_no' => $existingInv ?? 'INV-EXISTING',
+                    'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'ocean-export', 'id' => $truckShipment->id])
+                ]);
+            }
+            return response()->json(['success' => false, 'message' => 'No charges found for this shipment. Please add charges first.'], 400);
         }
 
-        $invNo = 'INV-' . strtoupper(uniqid());
+        $invNo = 'SCL' . sprintf('%08d', $truckShipment->id);
         foreach ($charges as $charge) {
             $charge->update([
                 'is_invoiced' => true,
@@ -543,6 +625,37 @@ class TruckShipmentController extends Controller
             'success' => true,
             'invoice_no' => $invNo,
             'message' => "Created invoice {$invNo} for " . $charges->count() . " charges.",
+            'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'ocean-export', 'id' => $truckShipment->id])
         ]);
+    }
+
+    public function pickupDeliveryOrder(TruckShipment $truckShipment)
+    {
+        $truckShipment->load(['customer', 'shipper', 'consignee', 'trucker', 'pol', 'pod', 'containers']);
+        return view('truck.pickup-delivery-order', compact('truckShipment'));
+    }
+
+    public function bolPrint(TruckShipment $truckShipment)
+    {
+        $truckShipment->load(['customer', 'shipper', 'consignee', 'trucker', 'pol', 'pod', 'containers']);
+        return view('truck.bol-print', compact('truckShipment'));
+    }
+
+    public function profitReportSummary(TruckShipment $truckShipment)
+    {
+        $truckShipment->load(['customer', 'charges']);
+        return view('truck.profit-report-summary', compact('truckShipment'));
+    }
+
+    public function profitReportDetail(TruckShipment $truckShipment)
+    {
+        $truckShipment->load(['customer', 'charges']);
+        return view('truck.profit-report-detail', compact('truckShipment'));
+    }
+
+    public function cargoManifestStatus(TruckShipment $truckShipment)
+    {
+        $truckShipment->load(['customer', 'containers']);
+        return view('truck.cargo-manifest-status', compact('truckShipment'));
     }
 }

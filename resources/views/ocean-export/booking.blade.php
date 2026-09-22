@@ -7,17 +7,9 @@
     <script>
         window.oceanExportBookingModule = function() {
             return {
-                activeTab: 'basic',
+                activeTab: new URLSearchParams(window.location.search).get('tab') || 'basic',
                 workOrders: [],
-                init() {
-                    console.log('Ocean Export Booking Module Started');
-                    this.syncWorkOrders();
 
-                    // Polling every 2 seconds
-                    setInterval(() => {
-                        this.syncWorkOrders();
-                    }, 2000);
-                },
                 async syncWorkOrders() {
                     const bookingId = @json($booking->id ?? null);
                     if (!bookingId) {
@@ -35,7 +27,29 @@
                     }
                 },
                 clearWorkOrders() {
-                    alert('Use the individual Delete button on each row to remove work orders.');
+                    this.showToast('info', 'Use the individual Delete button on each row to remove work orders.');
+                },
+                async downloadWorkOrder(wo) {
+                    this.showToast('info', 'Preparing Excel download...');
+                    try {
+                        const response = await fetch(`/ocean-export/work-order/${wo.id}/export-excel`);
+                        if (!response.ok) throw new Error('Download failed');
+                        
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = `WorkOrder_${wo.work_order_no}.csv`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(downloadUrl);
+                        
+                        this.showToast('success', 'Excel file downloaded successfully');
+                    } catch (e) {
+                        console.error('Failed to download Excel:', e);
+                        this.showToast('error', 'Failed to export Excel file');
+                    }
                 },
                 async deleteWorkOrder(id) {
                     if (confirm('Are you sure you want to delete this work order?')) {
@@ -61,6 +75,13 @@
                 showTpSzCard: false,
                 tpSzForm: { type_id: '', qty: 1 },
                 init() {
+                    console.log('Ocean Export Booking Module Started');
+                    this.syncWorkOrders();
+                    
+                    setInterval(() => {
+                        this.syncWorkOrders();
+                    }, 2000);
+                    
                     this.$watch('form.containers', () => {
                         this.form.container_no = this.form.containers.map(c => c.code + ' x ' + c.qty).join(', ');
                     });
@@ -138,13 +159,63 @@
                     bl_cancelled: false,
                     bl_cancelled_date: '',
                     bl_cancelled_reason: '',
+                    is_hold: @json(old('is_hold', $booking->is_hold ?? false)),
+                    hold_by_id: @json(old('hold_by_id', $booking->hold_by_id ?? '')),
+                    is_freight_released: @json(old('is_freight_released', $booking->is_freight_released ?? false)),
+                    freight_released_by_id: @json(old('freight_released_by_id', $booking->freight_released_by_id ?? '')),
+                    buying_freight: @json(old('buying_freight', $booking->buying_freight ?? '')),
+                    selling_freight: @json(old('selling_freight', $booking->selling_freight ?? '')),
+                    customs_broker_id: @json(old('customs_broker_id', $booking->customs_broker_id ?? '')),
+                    por_etd: @json(old('por_etd', isset($booking) && $booking->por_etd ? $booking->por_etd->format('Y-m-d') : '')),
+                    sales_type: @json(old('sales_type', $booking->sales_type ?? '')),
+                    on_board_date: @json(old('on_board_date', isset($booking) && $booking->on_board_date ? $booking->on_board_date->format('Y-m-d') : '')),
+                    lc_no: @json(old('lc_no', $booking->lc_no ?? '')),
+                    lc_issue_bank: @json(old('lc_issue_bank', $booking->lc_issue_bank ?? '')),
+                    lc_issue_date: @json(old('lc_issue_date', isset($booking) && $booking->lc_issue_date ? $booking->lc_issue_date->format('Y-m-d') : '')),
+                    is_express_bl: @json(old('is_express_bl', $booking->is_express_bl ?? false)),
+                    show_preferences: @json(old('show_preferences', $booking->show_preferences ?? false)),
                     containers: [],
                     commodities: [],
                     warehouse_receipts: []
                 },
+                showPreferencesModal: false,
                 memoExpand: true,
                 saveBooking() {
-                    // Handled by native form submit
+                    if (this.validateForm()) {
+                        document.getElementById('oceanBookingForm').submit();
+                    }
+                },
+                showToast(type, message) {
+                    if(typeof window.showToast === 'function') {
+                        window.showToast(type, message);
+                    } else {
+                        alert(type.toUpperCase() + ': ' + message);
+                    }
+                },
+                validateForm() {
+                    this.form.booking_no = this.form.booking_no ? this.form.booking_no.trim() : '';
+                    if (!this.form.booking_no) {
+                        this.showToast('error', 'Booking No. is required');
+                        return false;
+                    }
+                    if (!this.form.booking_date) {
+                        this.showToast('error', 'Booking Date is required');
+                        return false;
+                    }
+                    if (!this.form.office_id) {
+                        this.showToast('error', 'Office is required');
+                        return false;
+                    }
+                    return true;
+                },
+                openAddNewModal(module, selectName) {
+                    if (module === 'trade-partner') {
+                        window.open('/trade-partner/create', '_blank');
+                    } else if (module === 'port') {
+                        window.open('/port/create', '_blank');
+                    } else if (module === 'vessel') {
+                        window.open('/vessel/create', '_blank');
+                    }
                 },
                 addCommodity() {
                     this.form.commodities.push({
@@ -200,7 +271,7 @@
 
                 loadSelectedWarehouseReceipts() {
                     const selected = this.wrSearchResults.filter(r => r.selected);
-                    if (!selected.length) { alert('Please select at least one warehouse receipt.'); return; }
+                    if (!selected.length) { this.showToast('error', 'Please select at least one warehouse receipt.'); return; }
                     selected.forEach(s => {
                         const exists = this.form.warehouse_receipts.some(r => r.receipt_no === s.receipt_no);
                         if (!exists) {
@@ -235,24 +306,55 @@
                         measurement: 0,
                         remarks: 'Manually created'
                     });
-                    alert('New item "' + newNo + '" created and linked. Fill in the details in the Receiving table.');
+                    this.showToast('success', 'New item "' + newNo + '" created and linked. Fill in the details in the Receiving table.');
                 },
 
                 // ===== ACCOUNTING DUMMY STATE =====
-                invoices: [],
+                @php
+                $invoiceData = [];
+                if(isset($booking) && $booking->invoices) {
+                    $invoiceData = $booking->invoices->map(fn($inv) => [
+                        'id' => $inv->id,
+                        'no' => $inv->invoice_no,
+                        'type' => $inv->type,
+                        'party' => $inv->billTo ? $inv->billTo->name : 'TBD',
+                        'revenue' => in_array($inv->type, ['AR', 'DC']) ? $inv->total_amount : 0,
+                        'cost' => in_array($inv->type, ['AP', 'DC']) ? $inv->total_amount : 0,
+                        'balance' => $inv->balance_amount,
+                        'status' => $inv->status,
+                        'post_date' => $inv->created_at ? $inv->created_at->format('Y-m-d') : '',
+                        'invoice_date' => $inv->invoice_date ? $inv->invoice_date->format('Y-m-d') : ''
+                    ])->toArray();
+                }
+                @endphp
+                invoices: @json($invoiceData),
                 addInvoice(type) {
-                    const newInv = {
-                        no: 'INV-' + Date.now().toString().slice(-5),
-                        type: type,
-                        party: 'TBD',
-                        revenue: type.includes('Revenue') ? (Math.random() * 500 + 100).toFixed(2) : 0,
-                        cost: type.includes('Cost') ? (Math.random() * 300 + 50).toFixed(2) : 0,
-                        status: 'Draft',
-                        post_date: new Date().toISOString().split('T')[0],
-                        invoice_date: new Date().toISOString().split('T')[0]
-                    };
-                    newInv.balance = (parseFloat(newInv.revenue) - parseFloat(newInv.cost)).toFixed(2);
-                    this.invoices.push(newInv);
+                    if(!this.saved) {
+                        this.showToast('warning', 'Please save the booking first.');
+                        return;
+                    }
+                    const baseUrl = '{{ route("accounting.invoices.create") }}';
+                    const params = `?type=${type}&invoiceable_type=App\\Models\\OceanBooking&invoiceable_id={{ $booking->id ?? "" }}`;
+                    window.open(baseUrl + params, '_blank');
+                },
+                deleteInvoice(id) {
+                    if(!confirm('Are you sure you want to delete this invoice?')) return;
+                    fetch('/accounting/invoice/' + id, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) {
+                            this.showToast('success', 'Invoice deleted.');
+                            this.invoices = this.invoices.filter(i => i.id !== id);
+                        } else {
+                            this.showToast('error', data.message || 'Failed to delete invoice.');
+                        }
+                    });
                 },
                 get totalRevenue() {
                     return this.invoices.reduce((sum, inv) => sum + parseFloat(inv.revenue || 0), 0).toFixed(2);
@@ -296,10 +398,13 @@
 
 
         <!-- Toolbar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h1 style="font-size: 18px; margin: 0; font-weight: 400; color: #444;">Create Ocean Export Booking</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h1 class="caption-subject" style="font-size: 18px;">{{ isset($booking) ? 'Edit' : 'Create' }} Ocean Export Booking</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" form="oceanBookingForm" class="btn-gofreight"><i class="fa fa-save"></i> SAVE BOOKING</button>
+                <button type="button" class="btn-freightx" @click="saveBooking" style="background:#f59e0b;">
+                    <i class="fa fa-save"></i>
+                    <span>SAVE BOOKING</span>
+                </button>
                 <a href="{{ route('ocean-bookings.index') }}" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -326,7 +431,7 @@
                         <span class="caption-subject">Booking Entry</span>
                     </div>
                     <div class="actions">
-                        <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 8px; font-size: 10px;" onclick="alert('Opening Preferences...')"><i
+                        <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 8px; font-size: 10px;" @click="showPreferencesModal = true"><i
                                 class="fa fa-sliders"></i> Preference</button>
                     </div>
                 </div>
@@ -412,7 +517,7 @@
                                                 <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                             @endforeach
                                         @endif
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'carrier_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Ship Mode</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -452,7 +557,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select> <button type="button" class="btn-gf-tool" onclick="alert('Edit Shipping Agent...')"><i class="fa fa-edit"></i></button></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'actual_shipper_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button> </div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Customer</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -467,7 +572,7 @@
                                                 <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                             @endforeach
                                         @endif
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'customer_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Bill To</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -476,7 +581,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'bill_to_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Consignee</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -485,7 +590,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'consignee_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Notify</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -494,7 +599,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'notify_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Shipping Agent</label>
                                 <div class="form-input-container"><input type="text" class="form-control-gf"
@@ -507,7 +612,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'hbl_agent_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Forwarding Agent</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -516,7 +621,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'forwarding_agent_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Co-Loader</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -525,7 +630,7 @@
                                         @foreach($tradePartners as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'co_loader_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                         </div>
 
@@ -570,7 +675,7 @@
                                         @foreach($vessels as $v)
                                             <option value="{{ $v->id }}">{{ $v->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('vessel', 'vessel_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">Voyage</label>
                                 <div class="form-input-container"><input type="text" name="voyage" class="form-control-gf"
@@ -580,8 +685,7 @@
                                 <div class="form-input-container">
                                     <input type="text" class="form-control-gf" name="container_no"
                                         x-model="form.container_no" readonly style="background:#f5f5f5;">
-                                    <button type="button" class="btn-gf-tool" @click="showTpSzCard = !showTpSzCard"><i
-                                            class="fa fa-plus"></i></button>
+                                    <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="showTpSzCard = !showTpSzCard"><i class="fa fa-plus" style="font-size:9px;"></i></button>
                                 </div>
                                 <div x-show="showTpSzCard" @click.away="showTpSzCard = false"
                                     style="position: absolute; top: 100%; left: 110px; right: 0; z-index: 1000; background: #fff; border: 1px solid #ccc; border-radius: 3px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 2px;">
@@ -601,7 +705,7 @@
                                             <input type="number" x-model="tpSzForm.qty" min="1" max="99" value="1" style="width:100%;height:26px;font-size:11px;border:1px solid #ccc;border-radius:2px;padding:2px 4px;">
                                         </div>
                                         <div>
-                                            <button type="button" class="btn-gofreight" @click="addTpSz()" style="height:26px; padding:0 10px; font-size:11px;">Add</button>
+                                            <button type="button" class="btn-freightx" @click="addTpSz()" style="height:26px; padding:0 10px; font-size:11px;">Add</button>
                                         </div>
                                     </div>
                                     <div style="margin-top: 6px;">
@@ -624,7 +728,7 @@
                                         @foreach($ports as $p)
                                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'por_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">POL</label>
                                 <div class="form-input-container"><select class="form-control-gf" name="pol_id" x-model="form.pol_id">
@@ -632,7 +736,7 @@
                                         @foreach($ports as $p)
                                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'pol_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">POD</label>
                                 <div class="form-input-container"><select class="form-control-gf" name="pod_id" x-model="form.pod_id">
@@ -640,7 +744,7 @@
                                         @foreach($ports as $p)
                                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'pod_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">DEL</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -649,7 +753,7 @@
                                         @foreach($ports as $p)
                                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'del_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                             <div class="form-group-gf"><label class="form-label-gf">F. Dest</label>
                                 <div class="form-input-container"><select class="form-control-gf"
@@ -658,7 +762,7 @@
                                         @foreach($ports as $p)
                                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                                         @endforeach
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'fdest_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                         </div>
 
@@ -688,7 +792,7 @@
                                                 <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                             @endforeach
                                         @endif
-                                    </select></div>
+                                    </select> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'trucker_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div>
                             </div>
                        
                             <div class="form-group-gf"><label class="form-label-gf"><span style="color:red">*</span>
@@ -709,6 +813,124 @@
                     </div>
 
                     <div style="height: 15px;"></div>
+
+                    <!-- Preferences Block -->
+                    <div x-show="form.show_preferences" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                            <span class="color-remark-tag" style="background: #eab308; display: inline-block; width: 4px; height: 14px; margin-right: 8px;"></span>
+                            <span style="font-size: 13px; font-weight: 700; color: #333;">Additional Preferences</span>
+                        </div>
+                        <input type="hidden" name="show_preferences" :value="form.show_preferences ? 1 : 0">
+                        <div class="form-grid-4">
+                            <!-- Hold & Freight Released -->
+                            <div class="flex flex-col" style="gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="hidden" name="is_hold" value="0">
+                                    <input type="checkbox" id="is_hold" name="is_hold" value="1" x-model="form.is_hold">
+                                    <label for="is_hold" style="font-size:12px; margin:0; cursor:pointer;">Hold</label>
+                                </div>
+                                <div class="form-group-gf">
+                                    <label class="form-label-gf">Hold By</label>
+                                    <div class="form-input-container">
+                                        <select class="form-control-gf" name="hold_by_id" x-model="form.hold_by_id">
+                                            <option value="">-- Select --</option>
+                                            @foreach($users ?? [] as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col" style="gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="hidden" name="is_freight_released" value="0">
+                                    <input type="checkbox" id="is_freight_released" name="is_freight_released" value="1" x-model="form.is_freight_released">
+                                    <label for="is_freight_released" style="font-size:12px; margin:0; cursor:pointer;">Freight Released</label>
+                                </div>
+                                <div class="form-group-gf">
+                                    <label class="form-label-gf">Released By</label>
+                                    <div class="form-input-container">
+                                        <select class="form-control-gf" name="freight_released_by_id" x-model="form.freight_released_by_id">
+                                            <option value="">-- Select --</option>
+                                            @foreach($users ?? [] as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Freight Settings -->
+                            <div class="flex flex-col">
+                                <div class="form-group-gf"><label class="form-label-gf">Buying Freight</label>
+                                    <div class="form-input-container">
+                                        <select class="form-control-gf" name="buying_freight" x-model="form.buying_freight">
+                                            <option value="">-- Select --</option>
+                                            <option value="COLLECT">COLLECT</option>
+                                            <option value="PREPAID">PREPAID</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group-gf"><label class="form-label-gf">Selling Freight</label>
+                                    <div class="form-input-container">
+                                        <select class="form-control-gf" name="selling_freight" x-model="form.selling_freight">
+                                            <option value="">-- Select --</option>
+                                            <option value="COLLECT">COLLECT</option>
+                                            <option value="PREPAID">PREPAID</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group-gf"><label class="form-label-gf">Customs Broker</label>
+                                    <div class="form-input-container">
+                                        <select class="form-control-gf" name="customs_broker_id" x-model="form.customs_broker_id">
+                                            <option value="">-- Select --</option>
+                                            @foreach($tradePartners as $tp)
+                                                <option value="{{ $tp->id }}">{{ $tp->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- L/C & Express B/L -->
+                            <div class="flex flex-col">
+                                <div class="form-group-gf"><label class="form-label-gf">L/C No.</label>
+                                    <div class="form-input-container"><input type="text" name="lc_no" class="form-control-gf" x-model="form.lc_no"></div>
+                                </div>
+                                <div class="form-group-gf"><label class="form-label-gf">L/C Issue Bank</label>
+                                    <div class="form-input-container"><input type="text" name="lc_issue_bank" class="form-control-gf" x-model="form.lc_issue_bank"></div>
+                                </div>
+                                <div class="form-group-gf"><label class="form-label-gf">L/C Issue Date</label>
+                                    <div class="form-input-container"><input type="date" name="lc_issue_date" class="form-control-gf" x-model="form.lc_issue_date"></div>
+                                </div>
+                            </div>
+
+                            <!-- Dates & Settings -->
+                            <div class="flex flex-col">
+                                <div class="form-group-gf"><label class="form-label-gf">Place of Receipt ETD</label>
+                                    <div class="form-input-container"><input type="date" name="por_etd" class="form-control-gf" x-model="form.por_etd"></div>
+                                </div>
+                                <div class="form-group-gf"><label class="form-label-gf">On Board Date</label>
+                                    <div class="form-input-container"><input type="date" name="on_board_date" class="form-control-gf" x-model="form.on_board_date"></div>
+                                </div>
+                                <div class="form-group-gf"><label class="form-label-gf">Sales Type</label>
+                                    <div class="form-input-container">
+                                        <select class="form-control-gf" name="sales_type" x-model="form.sales_type">
+                                            <option value="">-- Select --</option>
+                                            <option value="NOMINATION">NOMINATION</option>
+                                            <option value="FREEHAND">FREEHAND</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 5px; margin-top:15px; margin-left:5px;">
+                                    <input type="hidden" name="is_express_bl" value="0">
+                                    <input type="checkbox" id="is_express_bl" name="is_express_bl" value="1" x-model="form.is_express_bl">
+                                    <label for="is_express_bl" style="font-size:12px; margin:0; cursor:pointer;">Express B/L (Yes/No)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- PO & Containers -->
                     <div>
@@ -778,7 +1000,7 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                             <span style="font-size: 13px; font-weight: 700; color: #32c5d2;">Commodity</span>
                             <div style="display: flex; gap: 5px;">
-                                <button type="button" class="btn-gofreight" style="padding: 2px 6px; font-size: 10px;" @click="addCommodity"><i class="fa fa-plus"></i> Add</button>
+                                <button type="button" class="btn-freightx" style="padding: 2px 6px; font-size: 10px;" @click="addCommodity"><i class="fa fa-plus"></i> Add</button>
                                 <button type="button" class="btn-default-gf" style="padding: 2px 6px; font-size: 10px; color: #e7505a;" disabled><i class="fa fa-trash"></i> Remove</button>
                             </div>
                         </div>
@@ -856,6 +1078,8 @@
                     </div>
                 </div>
             </div>
+
+
         </div>
         <div x-show="activeTab === 'accounting'" x-cloak>
             <div class="portlet light">
@@ -865,28 +1089,28 @@
                         <span class="caption-subject" x-text="'Booking ' + form.booking_no"></span>
                     </div>
                     <div class="actions">
-                        <hc-accounting-instruction-video-btn><button type="button" class="btn btn-default btn-sm" onclick="alert('Opening Instruction Video...')"
+                        <hc-accounting-instruction-video-btn><button type="button" class="btn btn-default btn-sm" onclick="showToast('info', 'Instruction video not available.')"
                                 style="padding: 2px 8px; height: 24px;"><i
                                     class="fa fa-info"></i></button></hc-accounting-instruction-video-btn>
                         <div class="btn-group" style="display: inline-block; margin-left: 5px;">
-                            <button type="button" class="btn-default-gf" style="height: 24px; padding: 0 10px; font-size: 11px;" onclick="alert('Accounting Tools Menu Opening...')"><i
+                            <button type="button" class="btn-default-gf" style="height: 24px; padding: 0 10px; font-size: 11px;" onclick="showToast('info', 'Tools menu is disabled in Booking mode.')"><i
                                     class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
                         </div>
                     </div>
                 </div>
                 <div class="portlet-body" style="padding: 15px; background: #fdfdfd;">
                     <div style="display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap;">
-                        <button type="button" class="btn-gofreight" @click="addInvoice('Origin Revenue (Invoice/AR)')"
+                        <button type="button" class="btn-freightx" @click="addInvoice('AR')"
                             style="background: #4b77be; border-radius: 2px !important; font-size: 11px;">Origin Revenue
                             (Invoice/AR)</button>
-                        <button type="button" class="btn-gofreight" @click="addInvoice('Destination Revenue/Cost (D/C Note)')"
+                        <button type="button" class="btn-freightx" @click="addInvoice('DC')"
                             style="background: #4b77be; border-radius: 2px !important; font-size: 11px;">Destination
                             Revenue/Cost (D/C Note)</button>
                         <div style="display: flex;">
-                            <button type="button" class="btn-gofreight" @click="addInvoice('Origin Cost (AP)')"
+                            <button type="button" class="btn-freightx" @click="addInvoice('AP')"
                                 style="background: #4b77be; border-radius: 2px 0 0 2px !important; font-size: 11px;">Origin
                                 Cost (AP)</button>
-                            <button type="button" class="btn-gofreight"
+                            <button type="button" class="btn-freightx"
                                 style="background: #4b77be; border-radius: 0 2px 2px 0 !important; border-left: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 11px;"><i
                                     class="fa fa-angle-down"></i></button>
                         </div>
@@ -923,7 +1147,7 @@
                                 <tr>
                                     <td style="text-align: center;"><i class="fa fa-file-text-o" style="color: #337ab7;"></i></td>
                                     <td style="text-align: center;"><input type="checkbox"></td>
-                                    <td><a href="#" style="color: #32c5d2; font-weight: 600;" x-text="inv.no"></a></td>
+                                    <td><a :href="'/accounting/invoice/' + inv.id + '/edit'" target="_blank" style="color: #32c5d2; font-weight: 600;" x-text="inv.no"></a></td>
                                     <td x-text="inv.party"></td>
                                     <td style="text-align: right;" x-text="inv.revenue"></td>
                                     <td style="text-align: right;" x-text="inv.cost"></td>
@@ -932,7 +1156,10 @@
                                     <td style="text-align: right;" x-text="inv.post_date"></td>
                                     <td style="text-align: right;" x-text="inv.invoice_date"></td>
                                     <td style="text-align: center;"><button type="button" class="btn btn-xs btn-default"><i class="fa fa-envelope-o"></i></button></td>
-                                    <td style="text-align: center;"><button type="button" class="btn btn-xs btn-danger" @click="invoices.splice(index, 1)"><i class="fa fa-trash"></i></button></td>
+                                    <td style="text-align: center;">
+                                        <button type="button" class="btn btn-xs btn-default" @click="window.open('/accounting/invoice/' + inv.id + '/edit', '_blank')"><i class="fa fa-pencil"></i></button>
+                                        <button type="button" class="btn btn-xs btn-danger" @click="deleteInvoice(inv.id)"><i class="fa fa-trash"></i></button>
+                                    </td>
                                 </tr>
                             </template>
                         </tbody>
@@ -1032,7 +1259,7 @@
                     </div>
                     <div class="actions">
                         <div class="btn-group" style="display: inline-block;">
-                            <button type="button" class="btn-default-gf" style="height: 24px; padding: 0 10px; font-size: 11px;" onclick="alert('Doc Center Tools Menu Opening...')"><i
+                            <button type="button" class="btn-default-gf" style="height: 24px; padding: 0 10px; font-size: 11px;" onclick="showToast('info', 'Tools menu is disabled in Booking mode.')"><i
                                     class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
                         </div>
                     </div>
@@ -1045,13 +1272,13 @@
                             <button type="button" class="btn green"
                                 style="background: #32c5d2; color: #fff; border: none; height: 26px; padding: 0 12px; border-radius: 2px !important;"
                                 title="New"
-                                onclick="window.open('{{ route('ocean-export.work-order.create', ['workable_type' => 'App\Models\OceanBooking', 'workable_id' => $booking->id]) }}', '_blank')"><i
+                                onclick="window.open('{{ route('ocean-export.work-order.create', ['workable_type' => 'App\Models\OceanBooking', 'workable_id' => $booking->id, 'source' => 'ocean_booking', 'source_id' => $booking->id]) }}', '_self')"><i
                                     class="fa fa-plus"></i></button>
                             @else
                             <button type="button" class="btn green" disabled
                                 style="background: #e1e5ec; color: #777; border: none; height: 26px; padding: 0 12px; border-radius: 2px !important; cursor: not-allowed;"
                                 title="Please save booking first"
-                                onclick="alert('Please save the booking first to create a work order.')"><i
+                                onclick="showToast('warning', 'Please save the booking first to create a work order.')"><i
                                     class="fa fa-plus"></i></button>
                             @endif
                             <button type="button" class="btn btn-default"
@@ -1082,24 +1309,23 @@
                             <template x-for="wo in workOrders" :key="wo.id">
                                 <tr>
                                     <td style="text-align: center;"><input type="checkbox" style="margin:0;"></td>
-                                    <td style="text-align: center;" x-text="wo.no"></td>
-                                    <td style="text-align: center;" x-text="wo.type"></td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td x-text="wo.trucker"></td>
-                                    <td style="text-align: center;" x-text="wo.date"></td>
+                                    <td style="text-align: center;" x-text="wo.work_order_no"></td>
+                                    <td style="text-align: center;" x-text="wo.subject"></td>
+                                    <td x-text="wo.freight_pickup_location_name || '-'"></td>
+                                    <td x-text="wo.empty_return_location_name || '-'"></td>
+                                    <td x-text="wo.vendor_name || '-'"></td>
+                                    <td style="text-align: center;" x-text="wo.updated_at || wo.created_at || '-'"></td>
                                     <td style="text-align: center;">
                                         <div style="display: flex; gap: 5px; justify-content: center;">
                                             <button type="button" class="btn btn-xs"
-                                                style="background: #39cccc; color: #fff; border: none; height: 20px; padding: 0 10px; font-size: 10px;"
-                                                onclick="alert('Downloading...')"><i class="fa fa-download"></i>
-                                                Download</button>
+                                                style="background: #39cccc; color: #fff; border: none; height: 22px; padding: 0 8px; font-size: 11px; white-space: nowrap; display: flex; align-items: center; gap: 4px;"
+                                                @click="downloadWorkOrder(wo)"><i class="fa fa-file-excel-o"></i> Excel</button>
                                             <button type="button" class="btn btn-xs btn-primary"
-                                                style="height: 20px; padding: 0 10px; font-size: 10px;"
-                                                @click="window.open('/ocean-export/work-order/' + wo.id + '/edit', '_blank')"><i
+                                                style="height: 22px; padding: 0 8px; font-size: 11px; white-space: nowrap; display: flex; align-items: center; gap: 4px;"
+                                                @click="window.open('/ocean-export/work-order/' + wo.id + '/edit?source=ocean_booking&source_id=' + {{ $booking->id ?? 'null' }}, '_self')"><i
                                                     class="fa fa-pencil"></i> Edit</button>
                                             <button type="button" class="btn btn-xs btn-danger"
-                                                style="background: #ec7063; color: #fff; border: none; height: 20px; padding: 0 10px; font-size: 10px;"
+                                                style="background: #ec7063; color: #fff; border: none; height: 22px; padding: 0 8px; font-size: 11px; white-space: nowrap; display: flex; align-items: center; gap: 4px;"
                                                 @click="deleteWorkOrder(wo.id)"><i
                                                     class="fa fa-trash"></i> Delete</button>
                                         </div>
@@ -1127,10 +1353,10 @@
                 </div>
                 <div class="portlet-body" style="padding: 15px; background: #fdfdfd;">
                     <div style="margin-bottom: 15px; display: flex; gap: 8px;">
-                        <button type="button" class="btn-gofreight" style="background: #4b77be;" onclick="alert('Opening Document Upload Modal...')"><i class="fa fa-upload"></i>
+                        <button type="button" class="btn-freightx" style="background: #4b77be;" onclick="showToast('info', 'Document upload is disabled in Booking mode.')"><i class="fa fa-upload"></i>
                             Upload Document</button>
-                        <button type="button" class="btn-default-gf" onclick="alert('Downloading selected files...')"><i class="fa fa-download"></i> Batch Download</button>
-                        <button type="button" class="btn-default-gf" onclick="alert('Opening Email Composer...')"><i class="fa fa-envelope-o"></i> Email</button>
+                        <button type="button" class="btn-default-gf" onclick="showToast('info', 'Downloading selected files...')"><i class="fa fa-download"></i> Batch Download</button>
+                        <button type="button" class="btn-default-gf" onclick="showToast('info', 'Email Composer is disabled in Booking mode.')"><i class="fa fa-envelope-o"></i> Email</button>
                     </div>
 
                     <table class="table-gf" style="background: #fff; border: 1px solid #ddd;">
@@ -1243,7 +1469,7 @@
                 <!-- Search Bar -->
                 <div style="padding: 10px 15px; border-bottom: 1px solid #eee; display: flex; gap: 8px;">
                     <input type="text" class="form-control-gf" x-model="wrSearchQuery" placeholder="Search by receipt no, description..." style="flex: 1;" @keyup.enter="searchWarehouseList()">
-                    <button type="button" class="btn-gofreight" style="padding: 0 12px; font-size: 11px;" @click="searchWarehouseList()">
+                    <button type="button" class="btn-freightx" style="padding: 0 12px; font-size: 11px;" @click="searchWarehouseList()">
                         <i class="fa fa-search"></i> Search
                     </button>
                 </div>
@@ -1283,7 +1509,7 @@
                 <!-- Footer -->
                 <div style="padding: 10px 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px; background: #f8f9fa;">
                     <button type="button" class="btn-default-gf" style="padding: 4px 12px; font-size: 11px;" @click="showWrModal = false">Cancel</button>
-                    <button type="button" class="btn-gofreight" style="padding: 4px 12px; font-size: 11px;" @click="loadSelectedWarehouseReceipts()">
+                    <button type="button" class="btn-freightx" style="padding: 4px 12px; font-size: 11px;" @click="loadSelectedWarehouseReceipts()">
                         <i class="fa fa-check"></i> Load Selected
                     </button>
                 </div>
@@ -1291,5 +1517,44 @@
             </div>  {{-- close flex centering wrapper --}}
         </div>  {{-- close overlay --}}
 
+        <!-- Preferences Modal -->
+        <div class="modal-overlay" x-show="showPreferencesModal" style="display: none;" @click.self="showPreferencesModal = false">
+            <div class="modal-content" style="max-width: 450px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                <div class="modal-header" style="background: #3b82f6; padding: 12px 20px; color: white;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 500; display:flex; align-items:center; gap:8px;">
+                        <i class="fa fa-sliders"></i> Booking Preferences
+                    </h3>
+                    <button type="button" @click="showPreferencesModal = false" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 15px; align-items:center; text-align:center;">
+                        <i class="fa fa-question-circle" style="font-size: 36px; color: #3b82f6;"></i>
+                        <p style="margin: 0; font-size: 14px; color: #4b5563;">Would you like to show additional preferences and fields for this booking (Hold, Freight, L/C, etc)?</p>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" @click="form.show_preferences = false; showPreferencesModal = false" style="padding: 6px 12px; border: 1px solid #d1d5db; background: white; border-radius: 4px; font-size: 13px; cursor: pointer;">No, Hide Them</button>
+                    <button type="button" @click="form.show_preferences = true; showPreferencesModal = false" style="padding: 6px 12px; border: none; background: #3b82f6; color: white; border-radius: 4px; font-size: 13px; cursor: pointer;">Yes, Show Fields</button>
+                </div>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        function showToast(type, msg) {
+            const icons = { success: 'check-circle', error: 'times-circle', info: 'info-circle', warning: 'exclamation-triangle' };
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.innerHTML = '<i class="fa fa-' + (icons[type] || 'info-circle') + '"></i> ' + msg;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => {
+                t.style.opacity = '0';
+                setTimeout(() => t.remove(), 300);
+            }, 3000);
+        }
+    </script>
 </x-layout>

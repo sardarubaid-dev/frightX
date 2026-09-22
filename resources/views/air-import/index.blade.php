@@ -17,14 +17,68 @@
             border-color: #999;
         }
         .btn-filter-active {
-            background: #4b77be;
-            border: 1px solid #4b77be;
+            background: #2563eb;
+            border: 1px solid #2563eb;
             padding: 6px 15px;
             font-size: 12px;
             border-radius: 4px;
             cursor: pointer;
             color: #fff;
             font-weight: 600;
+        }
+        /* Ocean Import Consistent Theme Overrides */
+        .btn-gf-inline {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #2563eb !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            transition: all 0.15s ease-in-out !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+            text-decoration: none !important;
+        }
+        .btn-gf-inline:hover {
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #ffffff !important;
+        }
+        .btn-default-gf, .btn-default-gf.dark {
+            background: #ffffff !important;
+            color: #334155 !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            transition: all 0.15s ease-in-out !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+            text-decoration: none !important;
+        }
+        .btn-default-gf:hover, .btn-default-gf.dark:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        .oi-tools-item {
+            display:flex;align-items:center;gap:8px;width:100%;padding:7px 16px;
+            font-size:12px;color:#374151;background:transparent;border:none;cursor:pointer;text-align:left;
+            transition:background 0.15s;
+        }
+        .oi-tools-item:hover {
+            background:#f1f5f9;
+        }
+        h4, .portlet-title .caption-subject {
+            color: #2563eb !important;
         }
     </style>
     @endpush
@@ -269,6 +323,12 @@
                 
                 // Charge management functions
                 addCharge() {
+                    let initialPr = 'Rec';
+                    if (this.activeChargeFilter === 'AP') {
+                        initialPr = 'Pay';
+                    } else if (this.activeChargeFilter === 'DC') {
+                        initialPr = 'DC';
+                    }
                     this.form.charges.push({
                         id: null,
                         selected: false,
@@ -276,7 +336,7 @@
                         party: 'Custom',
                         party_name_id: '',
                         sal: 'Air',
-                        pr: 'Rec',
+                        pr: initialPr,
                         ppc: 'Colle',
                         chrg_code: '',
                         charge_name: '',
@@ -319,16 +379,25 @@
                         eta_door_date: '',
                         ata_door_date: '',
                         measurement_cft: '',
-                        remarks: '',
                         internal_remarks: '',
                         empty_confirmed_date: '',
                         empty_return_date: '',
                         complete: false
                     });
+                    const tabLabel = initialPr === 'Pay' ? 'A/P' : (initialPr === 'DC' ? 'D/C' : 'A/R');
+                    if (typeof showToast === 'function') showToast('success', `New ${tabLabel} charge row added.`);
                 },
-                deleteCharge(idx) {
-                    if (confirm('Delete this charge?')) {
-                        this.form.charges.splice(idx, 1);
+                deleteCharge(chargeOrIdx) {
+                    if (!confirm('Delete this charge row?')) return;
+                    if (typeof chargeOrIdx === 'object' && chargeOrIdx !== null) {
+                        const index = (this.form.charges || []).indexOf(chargeOrIdx);
+                        if (index > -1) {
+                            this.form.charges.splice(index, 1);
+                            if (typeof showToast === 'function') showToast('success', 'Charge row removed.');
+                        }
+                    } else if (typeof chargeOrIdx === 'number') {
+                        this.form.charges.splice(chargeOrIdx, 1);
+                        if (typeof showToast === 'function') showToast('success', 'Charge row removed.');
                     }
                 },
                 deleteSelectedCharges() {
@@ -399,16 +468,34 @@
                     alert('Applied standard Air Import Charge Template (3 charges added).');
                 },
                 createInvoice() {
-                    const uninvoiced = this.form.charges.filter(c => !c.inv_no);
-                    if (uninvoiced.length === 0) {
-                        alert('No uninvoiced charges available to create an invoice.');
+                    const id = '{{ $airImport->id ?? "" }}';
+                    if (!id) {
+                        alert('Please save the shipment first before creating an invoice.');
                         return;
                     }
-                    const newInvNo = 'INV-AI-' + Math.floor(100000 + Math.random() * 900000);
-                    uninvoiced.forEach(c => {
-                        c.inv_no = newInvNo;
-                    });
-                    alert(`Invoice ${newInvNo} created successfully for ${uninvoiced.length} charge(s)!`);
+                    const selected = this.form.charges.filter(c => c.selected && c.id).map(c => c.id);
+                    fetch(`/air-import/${id}/charges/invoice`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ ids: selected })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (data.freight_invoice_url) {
+                                window.open(data.freight_invoice_url, '_blank');
+                            }
+                            if (data.message && typeof showToast === 'function') {
+                                showToast('success', data.message);
+                            }
+                        } else {
+                            alert(data.message || 'Error generating invoice.');
+                        }
+                    })
+                    .catch(err => alert('Failed to create invoice: ' + err.message));
                 },
                 exportCharges() {
                     if (this.form.charges.length === 0) {
@@ -753,6 +840,11 @@
                     if (q.gross_weight_lb) setVal('gross_weight_lb', q.gross_weight_lb);
                     if (q.volume_cbm)      setVal('volume_cbm', q.volume_cbm);
 
+                    // Airline Carrier
+                    if (q.carrier_id) setVal('carrier_id', q.carrier_id);
+                    if (q.commodity) setVal('commodity', q.commodity);
+                    if (q.commodity) this.hawb.commodity = q.commodity;
+
                     // HAWB reactive weight fields
                     if (q.gross_weight_kg) this.hawb.gross_weight_kg = q.gross_weight_kg;
                     if (q.gross_weight_lb) this.hawb.gross_weight_lb = q.gross_weight_lb;
@@ -822,6 +914,10 @@
                         'amount' => (float)$i->amount,
                     ])->values()->toArray()) !!},
                     @endforeach
+                },
+                openTrackTrace() {
+                    const mawb = document.querySelector('[name="mawb_no"]')?.value || (this.hawbs && this.hawbs.length > 0 ? this.hawbs[0].hbl_no : '');
+                    window.openTrackTrace({ type: 'aircargo', number: mawb });
                 }
             }
         }
@@ -833,28 +929,43 @@
             @if(isset($airImport)) @method('PUT') @endif
 
         <!-- Breadcrumbs -->
-        <div style="font-size: 11px; color: #8e9eae; margin-bottom: 15px;">
-            <a href="/" style="color: #8e9eae; text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#337ab7';" onmouseout="this.style.color='#8e9eae';" target="_blank"><i class="fa fa-home"></i> Home</a> <i class="fa fa-angle-right" style="margin: 0 5px;"></i> 
-            <a href="/air-import/list" style="color: #8e9eae; text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#337ab7';" onmouseout="this.style.color='#8e9eae';">Air Import</a> <i class="fa fa-angle-right" style="margin: 0 5px;"></i> 
-            <span style="color: #333; font-weight: 700;">New Shipment</span>
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                <li><i class="fa fa-home"></i> <a href="/">Home</a> <i class="fa fa-angle-right"></i></li>
+                <li><a href="/air-import/list">Air Import</a> <i class="fa fa-angle-right"></i></li>
+                <li><span style="color: #333; font-weight: 700;">{{ isset($airImport) ? 'Edit Shipment: ' . $airImport->file_no : 'New Shipment' }}</span></li>
+            </ul>
         </div>
 
         <!-- Toolbar -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-            <h1 class="caption-subject" style="font-size: 18px;">Create Air Import Shipment</h1>
-            <div style="display: flex; gap: 8px;">
-                <button type="submit" form="air-import-form" class="btn-gofreight"><i class="fa fa-save"></i> SAVE SHIPMENT</button>
+            <h1 class="caption-subject" style="font-size: 18px; text-transform: uppercase;">{{ isset($airImport) ? 'Edit' : 'New' }} Air Import Shipment</h1>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="submit" form="air-import-form" class="btn-gf-inline"><i class="fa fa-save"></i> SAVE SHIPMENT</button>
                 <a href="/air-import/list" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
 
-        <!-- Main Tabs -->
-        <ul class="gf-tabs">
-            <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Main</a></li>
-            <li :class="[activeTab === 'charges' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'charges' : null"><a>Charges</a></li>
-            <li :class="[activeTab === 'history' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'history' : null"><a>History</a></li>
-            <li :class="[activeTab === 'filing' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'filing' : null"><a>Filing</a></li>
-        </ul>
+        <!-- Main Tabs + Tools Dropdown -->
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #e2e8f0;margin-bottom:12px;">
+            <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;flex:1;display:flex;">
+                <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Main</a></li>
+                <li :class="[activeTab === 'charges' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'charges' : null"><a>Charges</a></li>
+                <li :class="[activeTab === 'history' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'history' : null"><a>History</a></li>
+                <li :class="[activeTab === 'filing' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'filing' : null"><a>Filing</a></li>
+            </ul>
+            <!-- Tools Dropdown -->
+            <div x-data="{ toolsOpen: false }" style="position:relative;display:flex;align-items:center;padding:0 8px;" @click.away="toolsOpen = false">
+                <button type="button" @click="toolsOpen = !toolsOpen" class="btn-default-gf" style="height:26px;">
+                    <i class="fa fa-cogs" style="color:#6b7280;"></i> Tools <i class="fa fa-angle-down" style="font-size:10px;color:#9ca3af;" :style="toolsOpen ? 'transform:rotate(180deg)' : ''"></i>
+                </button>
+                <div x-show="toolsOpen" x-cloak style="position:absolute;right:8px;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:9999;min-width:200px;padding:6px 0;">
+                    <button type="button" class="oi-tools-item" @click="toolsOpen = false; openTrackTrace()">
+                        <i class="fa fa-map-marker" style="color:#6366f1;width:16px;"></i> Open in Track-Trace
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div style="padding-bottom: 50px;">
             <!-- BASIC TAB -->
@@ -1448,7 +1559,7 @@
                                     <template x-for="(com, ci) in hawb.commodities" :key="ci">
                                         <tr :style="com.selected ? 'background:#fef9e7;' : ''">
                                             <td style="text-align: center; border:1px solid #eee;"><input type="checkbox" x-model="com.selected"></td>
-                                            <td style="border:1px solid #eee; padding:2px;"><input type="text" class="form-control-gf" x-model="com.description" style="border:none;" placeholder="Commodity description..."></td>
+                                            <td style="border:1px solid #eee; padding:2px;"><textarea class="form-control-gf" x-model="com.description" style="border:none; min-height: 60px !important; height: 60px !important; width:100%; resize:vertical;" placeholder="Commodity description..."></textarea></td>
                                             <td style="border:1px solid #eee; padding:2px;"><input type="text" class="form-control-gf" x-model="com.po_no" style="border:none;"></td>
                                         </tr>
                                     </template>
@@ -1489,7 +1600,7 @@
                                             <td colspan="13" style="padding: 10px; border:1px solid #eee;">
                                                 <button type="button" class="btn-tool" style="background:#32c5d2; color:#fff; border:none; padding:4px 10px; margin-bottom: 5px; font-size:10px;" @click="showWrModal = true; searchWarehouseList()"><i class="fa fa-external-link-square"></i> Load from Warehouse</button>
                                                 <div style="display: flex; gap: 15px; font-size: 10px; align-items: center;">
-                                                    <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" checked> Auto-sync package, weight and measurements</label>
+                                                    <label style="display:none; align-items:center; gap:5px;"><input type="checkbox" checked> Auto-sync package, weight and measurements</label>
                                                     <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox"> Auto-sync dimensions</label>
                                                 </div>
                                             </td>
@@ -1530,7 +1641,7 @@
                 </template>
 
                 <div class="flex justify-end" style="margin-top: 5px; margin-bottom: 20px;">
-                    <button type="button" @click="addHbl" class="btn-gofreight" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HAWB</button>
+                    <button type="button" @click="addHbl" class="btn-freightx" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HAWB</button>
                 </div>
             </div>
 
@@ -1709,6 +1820,7 @@
                                                 <select :name="'charges['+idx+'][pr]'" x-model="charge.pr" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
                                                     <option value="Rec">Rec</option>
                                                     <option value="Pay">Pay</option>
+                                                    <option value="DC">D/C</option>
                                                 </select>
                                             </td>
                                             <td>
@@ -1745,7 +1857,7 @@
                                             <td><input type="date" :name="'charges['+idx+'][financial_date]'" x-model="charge.financial_date" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;"></td>
                                             <td><input type="text" :name="'charges['+idx+'][eq_bl_no]'" x-model="charge.eq_bl_no" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;"></td>
                                             <td style="text-align: center;">
-                                                <button type="button" @click="deleteCharge(idx)" class="btn-tool-icon" style="height: 20px; width: 20px; padding: 0; color: red; border-color: red;" title="Delete">
+                                                <button type="button" @click="deleteCharge(charge)" class="btn-tool-icon" style="height: 20px; width: 20px; padding: 0; color: red; border-color: red;" title="Delete">
                                                     <i class="fa fa-trash" style="font-size: 10px;"></i>
                                                 </button>
                                             </td>
@@ -2005,6 +2117,11 @@
                                 </tfoot>
                             </table>
                         </div>
+                        <div style="margin-top: 15px; display: flex; justify-content: flex-start; align-items: center; background: #f8fafc; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <button type="button" class="btn-freightx" style="background: #16a34a; color: white; border: none; padding: 7px 18px; font-weight: 600; border-radius: 4px; font-size: 11px; cursor: pointer;" @click.prevent="if(!form.id && !'{{ $airImport->id ?? '' }}'){ showToast('error','Please save shipment first.'); } else { window.open('/shipments/air-import/' + (form.id || '{{ $airImport->id ?? 0 }}') + '/freight-invoice', '_blank'); }">
+                                Generate Freight Invoice
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2016,16 +2133,8 @@
                         <span class="caption-subject"><i class="fa fa-history"></i> History</span>
                     </div>
                     <div class="portlet-body">
-                        <div style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border: 1px solid #eee; border-radius: 4px;">
-                            <div class="caption-subject" style="font-size: 11px; margin-bottom: 10px; font-weight: bold; color: #4b77be; text-transform: uppercase;">Shipment Status Logs</div>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <div style="background: #ebf5ff; color: #4b77be; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #4b77be;">BOOKING</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">MAWB SUBMIT</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">AMS SUBMIT</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">ISF SUBMIT</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">BL RELEASE</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">BL SURRENDERED</div>
-                            </div>
+                        <div style="margin-bottom: 12px; font-weight: bold; font-size: 11px; color: #4b77be; text-transform: uppercase;">
+                            <i class="fa fa-list-alt"></i> Shipment Status Logs
                         </div>
 
                         <!-- Add Status Form -->
@@ -2036,7 +2145,7 @@
                                     <label style="display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 5px;">Status Message</label>
                                     <input type="text" x-model="newStatusMessage" class="form-control-gf" placeholder="Enter status update message...">
                                 </div>
-                                <button type="button" @click="addStatusLog()" class="btn-gofreight" style="padding: 6px 20px; height: 30px;">
+                                <button type="button" @click="addStatusLog()" class="btn-freightx" style="padding: 6px 20px; height: 30px;">
                                     <i class="fa fa-plus"></i> Add Status
                                 </button>
                             </div>
@@ -2356,7 +2465,7 @@
                                 <div class="form-group-gf" style="margin-bottom: 5px;"><label class="form-label-gf" style="width: 80px; text-align: right; padding-right: 10px;">Quote No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="filters.quote_no" @keyup="applySearch()" placeholder="Search..."></div></div>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <div class="form-group-gf" style="margin-bottom: 5px;"><label class="form-label-gf" style="width: 80px; text-align: right; padding-right: 10px;">Valid Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="filters.valid_date" @change="applySearch()"> <i class="fa fa-calendar" style="margin-left: 5px; color: #888;"></i></div></div>
+                                <div class="form-group-gf" style="margin-bottom: 5px;"><label class="form-label-gf" style="width: 80px; text-align: right; padding-right: 10px;">Valid Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="filters.valid_date" @change="applySearch()"> <i class="fa fa-calendar cursor-pointer" style="margin-left: 5px; color: #888;" @click="$el.previousElementSibling.showPicker()"></i></div></div>
                                 <div class="form-group-gf" style="margin-bottom: 5px;"><label class="form-label-gf" style="width: 80px; text-align: right; padding-right: 10px;">Destination</label><div class="form-input-container">
                                     <select class="form-control-gf" x-model="filters.pod" @change="applySearch()">
                                         <option value="">Select...</option>
@@ -2426,24 +2535,26 @@
                                     </tr>
                                 </thead>
                                      @foreach($quotations as $quote)
-                                     <tr x-show="matchFilters({quote_no: '{{ $quote->quote_no }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}'})">
+                                     <tr x-show="matchFilters({quote_no: '{{ addslashes($quote->quote_no) }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}', op: '{{ $quote->op_id }}', commodity: '{{ addslashes($quote->commodity ?? '') }}'})">
                                          <td style="text-align: center;"><input type="radio" name="quote_sel" :checked="selectedQuote && selectedQuote.quote_no === '{{ $quote->quote_no }}'" 
                                              @click="selectQuote({
-    quote_no: '{{ $quote->quote_no }}',
-    mawb_no: 'MAWB-{{ $quote->quote_no }}',
-    hawb_no: 'HAWB-{{ $quote->quote_no }}',
+    quote_no: '{{ addslashes($quote->quote_no) }}',
+    mawb_no: 'MAWB-{{ addslashes($quote->quote_no) }}',
+    hawb_no: 'HAWB-{{ addslashes($quote->quote_no) }}',
     eta: '{{ $quote->expiry_date ? $quote->expiry_date->format('Y-m-d') : '' }}',
     etd: '{{ $quote->quote_date ? $quote->quote_date->format('Y-m-d') : '' }}',
     customer: '{{ addslashes($quote->customer->name ?? '') }}',
     customer_id: '{{ $quote->customer_id }}',
     sales: '{{ addslashes($quote->salesPerson->name ?? '') }}',
     sales_person_id: '{{ $quote->sales_person_id }}',
+    op: '{{ addslashes($quote->op->name ?? '') }}',
     op_id: '{{ $quote->op_id }}',
     pol_name: '{{ addslashes($quote->pol->name ?? '') }}',
     pod_name: '{{ addslashes($quote->pod->name ?? '') }}',
     pol_id: '{{ $quote->pol_id }}',
     pod_id: '{{ $quote->pod_id }}',
-    carrier_name: '',
+    carrier_name: '{{ addslashes($quote->carrier->name ?? '') }}',
+    carrier_id: '{{ $quote->carrier_id }}',
     oversea_agent_id: '{{ $quote->agent_id }}',
     service_term: '{{ addslashes($quote->service_term ?? '') }}',
     incoterms_id: '{{ $quote->incoterms_id }}',
@@ -2456,14 +2567,14 @@
 })"></td>
                                          <td><a href="#" style="color: #337ab7; text-decoration: none;">{{ $quote->quote_no }}</a></td>
                                          <td>{{ $quote->quote_date ? $quote->quote_date->format('m-d-Y') : '' }} ~ {{ $quote->expiry_date ? $quote->expiry_date->format('m-d-Y') : '' }}</td>
-                                         <td><span style="background: {{ $quote->status === 'ACCEPTED' ? '#26c281' : '#f3565d' }}; color: #fff; padding: 2px 5px; border-radius: 2px; font-size: 10px;">{{ $quote->status }}</span></td>
-                                         <td>{{ $quote->created_at->format('Y-m-d') }}</td>
-                                         <td>-</td>
-                                         <td>{{ $quote->pol->name ?? '' }}</td>
-                                         <td>{{ $quote->pod->name ?? '' }}</td>
-                                         <td>-</td>
-                                         <td>{{ $quote->salesPerson->name ?? '' }}</td>
-                                         <td>-</td>
+                                         <td><span style="background: {{ in_array(strtoupper($quote->status), ['WON', 'ACCEPTED']) ? '#26c281' : '#f3565d' }}; color: #fff; padding: 2px 5px; border-radius: 2px; font-size: 10px;">{{ $quote->status }}</span></td>
+                                         <td>{{ $quote->created_at ? $quote->created_at->format('Y-m-d') : '' }}</td>
+                                         <td>{{ $quote->commodity ?: '-' }}</td>
+                                         <td>{{ $quote->pol->name ?? '-' }}</td>
+                                         <td>{{ $quote->pod->name ?? '-' }}</td>
+                                         <td>{{ $quote->carrier->name ?? '-' }}</td>
+                                         <td>{{ $quote->salesPerson->name ?? '-' }}</td>
+                                         <td>{{ $quote->op->name ?? '-' }}</td>
                                      </tr>
                                      @endforeach
                                  </tbody>
@@ -2505,9 +2616,9 @@
                                 </tr>
                                 <tr>
                                     <td style="background: #f9f9f9;"><label class="form-label-gf" style="text-align: left; width: 100%; margin: 0;">Departure Date/Time</label></td>
-                                    <td><div style="display: flex;"><input type="date" class="form-control-gf" x-model="quoteForm.etd"> <div style="background: #eee; border: 1px solid #ccc; border-left: none; padding: 0 5px; display: flex; align-items: center;"><i class="fa fa-calendar" style="color: #666;"></i></div></div></td>
+                                    <td><div style="display: flex;"><input type="date" class="form-control-gf" x-model="quoteForm.etd"> <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; border-left: none; padding: 0 5px; display: flex; align-items: center;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar" style="color: #666;"></i></div></div></td>
                                     <td style="background: #f9f9f9;"><label class="form-label-gf" style="text-align: left; width: 100%; margin: 0;"><span style="color:red;">*</span>Arrival Date/Time</label></td>
-                                    <td><div style="display: flex;"><input type="date" class="form-control-gf" x-model="quoteForm.eta"> <div style="background: #eee; border: 1px solid #ccc; border-left: none; padding: 0 5px; display: flex; align-items: center;"><i class="fa fa-calendar" style="color: #666;"></i></div></div></td>
+                                    <td><div style="display: flex;"><input type="date" class="form-control-gf" x-model="quoteForm.eta"> <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; border-left: none; padding: 0 5px; display: flex; align-items: center;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar" style="color: #666;"></i></div></div></td>
                                 </tr>
                                 <tr>
                                     <td style="background: #f9f9f9;"><label class="form-label-gf" style="text-align: left; width: 100%; margin: 0;"><span style="color:red;">*</span>Customer</label></td>

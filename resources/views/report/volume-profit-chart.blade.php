@@ -11,20 +11,21 @@
         .rpt-row .rpt-label { min-width: 120px; max-width: 140px; flex-shrink: 0; }
         .rpt-row .rpt-input-wrap { flex: 1; min-width: 0; }
         .rpt-inline-label { font-size: 10px; color: #64748b; font-weight: 600; }
-        .rpt-radio-group { display: flex; gap: 10px; align-items: center; }
-        .rpt-radio-group label, .rpt-chk-group label { font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: #334155; white-space: nowrap; }
-        .rpt-radio-group input[type="radio"], .rpt-chk-group input[type="checkbox"] { width: 12px !important; height: 12px !important; accent-color: #3b82f6; }
+        .rpt-radio-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .rpt-radio-group label, .rpt-chk-group label { font-size: 10px; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #334155; white-space: nowrap; user-select: none; }
+        .rpt-radio-group input[type="radio"], .rpt-chk-group input[type="checkbox"] { width: 13px !important; height: 13px !important; accent-color: #3b82f6; cursor: pointer; }
         .rpt-chk-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .rpt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
         .rpt-filter-section { padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .rpt-view-btn { background: #3b82f6; color: #fff; border: none; padding: 6px 24px; font-size: 11px; font-weight: 700; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; transition: all 0.2s; }
         .rpt-view-btn:hover { background: #2563eb; }
         .rpt-view-btn:active { transform: translateY(1px); }
-        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: box-shadow 0.2s; }
-        .kpi-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.06); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s; }
+        .kpi-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.06); transform: translateY(-1px); }
         .kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
         .kpi-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
-        .kpi-icon { font-size: 20px; opacity: 0.15; }
+        .kpi-icon { font-size: 20px; opacity: 0.2; }
         .chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; }
         .chart-title { font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
         .btn-chart { background: #64748b; color: #fff; border: none; padding: 3px 10px; font-size: 10px; border-radius: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
@@ -35,10 +36,29 @@
         .lane-progress { margin-top: 10px; background: rgba(255,255,255,0.15); height: 4px; border-radius: 2px; }
         .lane-progress-bar { background: #fff; height: 100%; border-radius: 2px; }
         .lane-stats { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; margin-top: 5px; text-transform: uppercase; }
-        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 4px; }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 4px; backdrop-filter: blur(1px); }
         .spinner { width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .filter-tag { display: inline-flex; align-items: center; gap: 4px; background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 2px; font-size: 10px; font-weight: 600; }
+
+        .charts-grid-main { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .charts-grid-secondary { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .rpt-grid-2 { grid-template-columns: 1fr; gap: 8px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid-main { grid-template-columns: 1fr; }
+            .charts-grid-secondary { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .rpt-row { flex-direction: column; align-items: stretch; margin-bottom: 8px; }
+            .rpt-row .rpt-label { min-width: 100%; max-width: 100%; border-radius: 2px 2px 0 0; border-right: 1px solid #e2e8f0; height: 24px; }
+            .rpt-row .rpt-input-wrap { border-radius: 0 0 2px 2px; }
+            .table-custom { font-size: 10px; }
+            .table-custom thead th, .table-custom tbody td { padding: 6px 8px; }
+        }
     </style>
     @endpush
 
@@ -55,14 +75,14 @@
             </div>
 
             <div class="portlet light">
-                <div class="portlet-title">
+                <div class="portlet-title" style="flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa fa-bar-chart" style="color: #3b82f6; font-size: 12px;"></i>
-                        <span class="caption-subject">Volume & Profit Intelligence</span>
+                        <i class="fa fa-bar-chart" style="color: #3b82f6; font-size: 14px;"></i>
+                        <span class="caption-subject" style="font-weight: 700;">Volume & Profit Intelligence</span>
                     </div>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn-gofreight" @click="printReport()"><i class="fa fa-print"></i> PRINT</button>
-                        <button class="btn-gofreight" style="background: #10b981;" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> EXPORT</button>
+                    <div style="display: flex; gap: 6px; margin-left: auto;">
+                        <button class="btn-freightx" @click="printReport()"><i class="fa fa-print"></i> PRINT</button>
+                        <button class="btn-freightx" style="background: #10b981;" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> EXPORT</button>
                     </div>
                 </div>
 
@@ -73,14 +93,14 @@
                                 <div class="rpt-label">Period</div>
                                 <div class="rpt-input-wrap" style="flex-direction:column; align-items:stretch; gap:4px; padding:4px 6px;">
                                     <div class="rpt-radio-group">
-                                        <label><input type="radio" name="period_type" value="post_date" x-model="filters.period_type"> Post Date</label>
-                                        <label><input type="radio" name="period_type" value="etd" x-model="filters.period_type"> ETD</label>
-                                        <label><input type="radio" name="period_type" value="eta" x-model="filters.period_type"> ETA</label>
+                                        <label><input type="radio" name="period_type" value="post_date" x-model="filters.period_type" @change="fetchData()"> Post Date</label>
+                                        <label><input type="radio" name="period_type" value="etd" x-model="filters.period_type" @change="fetchData()"> ETD</label>
+                                        <label><input type="radio" name="period_type" value="eta" x-model="filters.period_type" @change="fetchData()"> ETA</label>
                                     </div>
                                     <div style="display:flex; gap:4px; align-items:center;">
-                                        <input type="date" x-model="filters.date_from" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_from" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                         <span style="font-size:10px; color:#64748b;">~</span>
-                                        <input type="date" x-model="filters.date_to" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_to" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                     </div>
                                 </div>
                             </div>
@@ -89,7 +109,7 @@
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-chk-group">
                                         @foreach($shippingTypes as $st)
-                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types"> {{ $st }}</label>
+                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types" @change="fetchData()"> {{ $st }}</label>
                                         @endforeach
                                     </div>
                                 </div>
@@ -97,7 +117,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Volume Unit</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.volume_unit" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.volume_unit" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         @foreach($volumeUnits as $vu)
                                         <option value="{{ $vu['value'] }}">{{ $vu['label'] }}</option>
                                         @endforeach
@@ -107,7 +127,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Chart Type (X-axis)</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.chart_type" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.chart_type" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         @foreach($chartTypes as $ct)
                                         <option value="{{ $ct['value'] }}">{{ $ct['label'] }}</option>
                                         @endforeach
@@ -119,8 +139,8 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Office</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.office_id" class="form-control-gf" style="width:100%;">
-                                        <option value="">Select...</option>
+                                    <select x-model="filters.office_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
+                                        <option value="">All Offices</option>
                                         @foreach($offices as $o)
                                         <option value="{{ $o->id }}">{{ $o->code }} - {{ $o->name }}</option>
                                         @endforeach
@@ -130,8 +150,8 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Sales</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.sales_person_id" class="form-control-gf" style="width:100%;">
-                                        <option value="">All</option>
+                                    <select x-model="filters.sales_person_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
+                                        <option value="">All Sales Persons</option>
                                         @foreach($salesPersons as $sp)
                                         <option value="{{ $sp->id }}">{{ $sp->name }}</option>
                                         @endforeach
@@ -141,7 +161,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Bar Segment</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.bar_segment" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.bar_segment" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         @foreach($barSegments as $bs)
                                         <option value="{{ $bs['value'] }}">{{ $bs['label'] }}</option>
                                         @endforeach
@@ -153,24 +173,25 @@
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-radio-group">
                                         @foreach($statuses as $s)
-                                        <label><input type="radio" name="status_filter" value="{{ strtolower($s) }}" x-model="filters.status_filter"> {{ $s }}</label>
+                                        <label><input type="radio" name="status_filter" value="{{ strtolower($s) }}" x-model="filters.status_filter" @change="fetchData()"> {{ $s }}</label>
                                         @endforeach
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div style="text-align:center; margin-top:4px;">
-                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> View</button>
+                    <div style="text-align:center; margin-top:6px;">
+                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Chart</button>
                     </div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px;">
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
                 <div class="kpi-card">
                     <div>
                         <div class="kpi-label">Total Gross Profit</div>
-                        <div class="kpi-value" x-text="'$' + formatNum(data.summary.gross_profit)"></div>
+                        <div class="kpi-value" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + formatNum(data.summary.gross_profit)"></div>
                     </div>
                     <i class="fa fa-money kpi-icon" style="color: #10b981;"></i>
                 </div>
@@ -197,7 +218,8 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <!-- Main Charts Grid -->
+            <div class="charts-grid-main">
                 <div class="chart-card">
                     <div class="chart-title">
                         <span><i class="fa fa-line-chart" style="margin-right: 4px;"></i> Monthly Revenue, Cost & Profit Trend</span>
@@ -239,7 +261,8 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <!-- Secondary Charts Grid -->
+            <div class="charts-grid-secondary">
                 <div class="chart-card">
                     <div class="chart-title"><i class="fa fa-building" style="margin-right: 4px;"></i> Profit by Office</div>
                     <div id="officeChart" style="height: 280px;"></div>
@@ -255,6 +278,7 @@
                 <div id="lanesChart" style="height: 300px;"></div>
             </div>
 
+            <!-- Monthly Table -->
             <div class="chart-card" style="margin-bottom: 14px;">
                 <div class="chart-title"><i class="fa fa-table" style="margin-right: 4px;"></i> Monthly Breakdown</div>
                 <div style="overflow-x: auto;">
@@ -284,11 +308,11 @@
                         <tfoot>
                             <tr class="total-row">
                                 <td class="total-label-cell" style="text-align:left;">TOTAL</td>
-                                <td class="total-val-cell" x-text="'$' + formatNum(data.summary.total_revenue)"></td>
-                                <td class="total-val-cell" x-text="'$' + formatNum(data.summary.total_cost)"></td>
-                                <td class="total-val-cell" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + formatNum(data.summary.gross_profit)"></td>
-                                <td class="total-val-cell" x-text="formatNum(data.summary.total_volume)"></td>
-                                <td class="total-val-cell" x-text="data.summary.shipment_count"></td>
+                                <td class="total-val-cell" style="text-align:right;" x-text="'$' + formatNum(data.summary.total_revenue)"></td>
+                                <td class="total-val-cell" style="text-align:right;" x-text="'$' + formatNum(data.summary.total_cost)"></td>
+                                <td class="total-val-cell" style="text-align:right;" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + formatNum(data.summary.gross_profit)"></td>
+                                <td class="total-val-cell" style="text-align:right;" x-text="formatNum(data.summary.total_volume)"></td>
+                                <td class="total-val-cell" style="text-align:center;" x-text="data.summary.shipment_count"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -309,7 +333,7 @@
             statusChart: null,
             lanesChart: null,
             filters: {
-                date_from: '{{ now()->subMonths(6)->startOfMonth()->format("Y-m-d") }}',
+                date_from: '2025-01-01',
                 date_to: '{{ now()->endOfMonth()->format("Y-m-d") }}',
                 period_type: 'post_date',
                 shipping_types: [],
@@ -334,6 +358,13 @@
 
             init() {
                 this.fetchData();
+                window.addEventListener('resize', () => {
+                    if (this.trendChart) this.trendChart.resize();
+                    if (this.typeChart) this.typeChart.resize();
+                    if (this.officeChart) this.officeChart.resize();
+                    if (this.statusChart) this.statusChart.resize();
+                    if (this.lanesChart) this.lanesChart.resize();
+                });
             },
 
             async fetchData() {

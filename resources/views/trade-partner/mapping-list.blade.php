@@ -37,7 +37,7 @@
             <div style="padding:10px 0;">
                 <div class="form-group" style="margin-bottom:10px;">
                     <label style="display:block;font-size:10px;font-weight:600;color:#475569;margin-bottom:3px;">Target <span style="color:#ef4444;">*</span></label>
-                    <input type="text" id="mapping-target" class="input-inline" style="width:100%;" placeholder="e.g. GOFREIGHT CO.">
+                    <input type="text" id="mapping-target" class="input-inline" style="width:100%;" placeholder="e.g. FREIGHTX CO.">
                 </div>
                 <div class="form-group" style="margin-bottom:10px;">
                     <label style="display:block;font-size:10px;font-weight:600;color:#475569;margin-bottom:3px;">Status</label>
@@ -55,7 +55,7 @@
                     </div>
                     <div class="form-group" style="flex:1;">
                         <label style="display:block;font-size:10px;font-weight:600;color:#475569;margin-bottom:3px;">Key</label>
-                        <input type="text" id="mapping-key" class="input-inline" style="width:100%;" placeholder="e.g. GOFREIGHT CO.">
+                        <input type="text" id="mapping-key" class="input-inline" style="width:100%;" placeholder="e.g. FREIGHTX CO.">
                     </div>
                 </div>
                 <div class="row" style="display:flex;gap:10px;margin-bottom:10px;">

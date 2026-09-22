@@ -1,6 +1,6 @@
 @props(['name', 'options' => [], 'valueField' => 'id', 'labelField' => 'name', 'xModel' => '', 'module' => '', 'class' => 'form-control-gf', 'required' => false, 'placeholder' => 'Select...', 'type' => ''])
 
-<div x-data="{
+<div style="flex: 1; min-width: 0; width: 100%; display: flex; align-items: center;" x-data="{
     openModal() {
         @if($module === 'trade-partner')
             window.open('/trade-partner/create', '_blank');

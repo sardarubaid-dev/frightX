@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Validator;
 
 class JournalEntryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $offices      = Office::where('is_active', true)->orderBy('name')->get();
         $currencies   = Currency::orderBy('code')->get();
@@ -29,6 +29,7 @@ class JournalEntryController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'entry_id'      => 'nullable|exists:journal_entries,id',
             'entry_date'    => 'required|date',
             'description'   => 'nullable|string',
             'remark'        => 'nullable|string',
@@ -62,15 +63,28 @@ class JournalEntryController extends Controller
         try {
             DB::beginTransaction();
 
-            $entry = AccountingJournal::create([
-                'entry_no'    => AccountingJournal::generateEntryNo(),
-                'entry_date'  => $request->entry_date,
-                'description' => $request->description,
-                'remark'      => $request->remark,
-                'office_id'   => $request->office_id,
-                'created_by'  => auth()->id(),
-                'status'      => 'POSTED',
-            ]);
+            if ($request->filled('entry_id')) {
+                $entry = AccountingJournal::findOrFail($request->entry_id);
+                $entry->update([
+                    'entry_date'  => $request->entry_date,
+                    'description' => $request->description,
+                    'remark'      => $request->remark,
+                    'office_id'   => $request->office_id,
+                ]);
+
+                // Delete existing lines and re-create
+                $entry->lines()->delete();
+            } else {
+                $entry = AccountingJournal::create([
+                    'entry_no'    => AccountingJournal::generateEntryNo(),
+                    'entry_date'  => $request->entry_date,
+                    'description' => $request->description,
+                    'remark'      => $request->remark,
+                    'office_id'   => $request->office_id,
+                    'created_by'  => auth()->id(),
+                    'status'      => 'POSTED',
+                ]);
+            }
 
             foreach ($request->lines as $idx => $line) {
                 $entry->lines()->create([
@@ -94,13 +108,44 @@ class JournalEntryController extends Controller
 
             return response()->json([
                 'success'  => true,
-                'message'  => 'Journal entry saved successfully.',
+                'message'  => 'Journal entry ' . ($request->filled('entry_id') ? 'updated' : 'saved') . ' successfully.',
                 'entry_id' => $entry->id,
                 'entry_no' => $entry->entry_no,
+                'next_entry_no' => AccountingJournal::generateEntryNo(),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error saving journal entry: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->merge(['entry_id' => $id]);
+        return $this->store($request);
+    }
+
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $entry = AccountingJournal::findOrFail($id);
+            $entry->lines()->delete();
+            $entry->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Journal Entry deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete Journal Entry: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -123,23 +168,44 @@ class JournalEntryController extends Controller
 
     public function list(Request $request)
     {
-        $query = AccountingJournal::with(['office', 'creator'])
+        $query = AccountingJournal::with(['office', 'creator', 'lines'])
             ->when($request->search, function ($q) use ($request) {
                 $term = $request->search;
                 $q->where(function ($qq) use ($term) {
                     $qq->where('entry_no', 'LIKE', "%{$term}%")
-                       ->orWhere('description', 'LIKE', "%{$term}%");
+                       ->orWhere('description', 'LIKE', "%{$term}%")
+                       ->orWhere('remark', 'LIKE', "%{$term}%");
                 });
             })
             ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->office_id, fn($q) => $q->where('office_id', $request->office_id))
             ->when($request->from_date, fn($q) => $q->where('entry_date', '>=', $request->from_date))
             ->when($request->to_date, fn($q) => $q->where('entry_date', '<=', $request->to_date))
             ->orderByDesc('entry_date')
             ->orderByDesc('id');
 
-        $entries = $query->paginate(25);
+        $entries = $query->paginate($request->per_page ?? 25);
 
-        return response()->json($entries);
+        $data = $entries->through(function ($entry) {
+            $totalDebit = $entry->lines->sum('local_debit');
+            $totalCredit = $entry->lines->sum('local_credit');
+            return [
+                'id' => $entry->id,
+                'entry_no' => $entry->entry_no,
+                'entry_date' => $entry->entry_date ? $entry->entry_date->format('Y-m-d') : '',
+                'description' => $entry->description,
+                'remark' => $entry->remark,
+                'office_name' => $entry->office ? ($entry->office->code ?? $entry->office->name) : 'N/A',
+                'status' => $entry->status ?? 'POSTED',
+                'total_debit' => (float)$totalDebit,
+                'total_credit' => (float)$totalCredit,
+                'lines_count' => $entry->lines->count(),
+                'creator_name' => $entry->creator ? $entry->creator->name : 'N/A',
+                'created_at' => $entry->created_at ? $entry->created_at->format('Y-m-d H:i') : '',
+            ];
+        });
+
+        return response()->json($data);
     }
 
     public function show($id)
@@ -149,4 +215,78 @@ class JournalEntryController extends Controller
 
         return response()->json($entry);
     }
+
+    public function exportExcel(Request $request)
+    {
+        $query = AccountingJournal::with(['office', 'creator', 'lines.glAccount', 'lines.tradePartner']);
+
+        if ($request->filled('search')) {
+            $term = $request->search;
+            $query->where(function ($qq) use ($term) {
+                $qq->where('entry_no', 'LIKE', "%{$term}%")
+                   ->orWhere('description', 'LIKE', "%{$term}%")
+                   ->orWhere('remark', 'LIKE', "%{$term}%");
+            });
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('from_date')) {
+            $query->where('entry_date', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->where('entry_date', '<=', $request->to_date);
+        }
+
+        $entries = $query->orderByDesc('entry_date')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="journal-entries-' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($entries) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Entry No', 'Entry Date', 'Office', 'Status', 'Line No', 'GL Code', 'GL Name', 'Description', 'Local Debit', 'Local Credit', 'Entity', 'Partner', 'Remark']);
+
+            foreach ($entries as $entry) {
+                if ($entry->lines->isEmpty()) {
+                    fputcsv($file, [
+                        $entry->entry_no,
+                        $entry->entry_date ? $entry->entry_date->format('Y-m-d') : '',
+                        $entry->office ? $entry->office->name : '',
+                        $entry->status,
+                        '-', '-', '-',
+                        $entry->description,
+                        0.00, 0.00,
+                        '-', '-',
+                        $entry->remark
+                    ]);
+                } else {
+                    foreach ($entry->lines as $line) {
+                        fputcsv($file, [
+                            $entry->entry_no,
+                            $entry->entry_date ? $entry->entry_date->format('Y-m-d') : '',
+                            $entry->office ? $entry->office->name : '',
+                            $entry->status,
+                            $line->line_no,
+                            $line->glAccount ? $line->glAccount->code : '',
+                            $line->glAccount ? $line->glAccount->name : '',
+                            $line->description ?? $entry->description,
+                            $line->local_debit,
+                            $line->local_credit,
+                            $line->entity_type,
+                            $line->tradePartner ? $line->tradePartner->name : '',
+                            $entry->remark
+                        ]);
+                    }
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
+

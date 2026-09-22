@@ -1,5 +1,16 @@
 <?php
 
+// Auto-restore silk-container-page-1.png if corrupted
+if (file_exists(public_path('assets/images/hbl/silk-1.png'))) {
+    $src = public_path('assets/images/hbl/silk-1.png');
+    $dest = public_path('hbl-backgrounds/silk-container-page-1.png');
+    if (!file_exists($dest) || filesize($dest) !== filesize($src)) {
+        @copy($src, $dest);
+        @copy($src, public_path('hbl-backgrounds/8.png'));
+        @copy($src, public_path('hbl-backgrounds/j.png'));
+    }
+}
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\QuotationController;
@@ -46,11 +57,13 @@ use App\Http\Controllers\AirBookingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GaExpenseController;
 use App\Http\Controllers\WorkOrderController;
+use App\Http\Controllers\GlobalSearchController;
 use Illuminate\Support\Facades\Route;
 
 // Views routing - purely rendering blade templates.
 // All data fetching must be done on the client side via the /api routes.
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/api/global-search', [GlobalSearchController::class, 'search'])->name('api.global-search');
     Route::get('/', function () {
         return redirect()->route('dashboard');
     });
@@ -70,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::match(['GET', 'POST', 'DELETE'], '/ocean-import/bulk-delete', [OceanImportController::class, 'bulkDelete'])->name('ocean-import.bulk-delete');
     Route::match(['GET', 'POST', 'DELETE'], '/ocean-import/bulk-block', [OceanImportController::class, 'bulkBlock'])->name('ocean-import.bulk-block');
     Route::match(['GET', 'POST', 'DELETE'], '/ocean-import/bulk-unblock', [OceanImportController::class, 'bulkUnblock'])->name('ocean-import.bulk-unblock');
+    Route::post('/ocean-import/{ocean_import}/copy', [OceanImportController::class, 'copyShipment'])->name('ocean-import.copy');
     Route::post('/ocean-import/bulk-change-op', [OceanImportController::class, 'bulkChangeOp'])->name('ocean-import.bulk-change-op');
     Route::post('/ocean-import/bulk-change-sales', [OceanImportController::class, 'bulkChangeSales'])->name('ocean-import.bulk-change-sales');
     Route::post('/ocean-import', [OceanImportController::class, 'store'])->name('ocean-import.store');
@@ -167,6 +181,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/ocean-export/{ocean_export}/charges/invoice', [OceanExportController::class, 'createInvoiceFromCharges'])->name('ocean-export.charges.invoice');
     Route::delete('/ocean-export/{ocean_export}/charges/all', [OceanExportController::class, 'deleteAllCharges'])->name('ocean-export.charges.destroy-all');
 
+    // Tools Dropdown Subviews
+    Route::get('/ocean-export/{id}/profit-summary', [OceanExportController::class, 'profitSummaryView'])->name('ocean-export.profit-summary');
+    Route::get('/ocean-export/{id}/profit-detail', [OceanExportController::class, 'profitDetailView'])->name('ocean-export.profit-detail');
+    Route::get('/ocean-export/{id}/delivery-order', [OceanExportController::class, 'deliveryOrderView'])->name('ocean-export.delivery-order');
+    Route::get('/ocean-export/{id}/batch-print-view', [OceanExportController::class, 'batchPrintView'])->name('ocean-export.batch-print-view');
+    Route::get('/ocean-export/{id}/hbl-print/{hblIndex}', [OceanExportController::class, 'hblPrint'])->name('ocean-export.hbl-print');
+
+
     // Alias for /ocean/export pattern
     Route::get('/ocean/export/shipment', [OceanExportController::class, 'create']);
     Route::get('/ocean/export/list', [OceanExportController::class, 'index']);
@@ -191,8 +213,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/ocean-export/work-order', [WorkOrderController::class, 'store'])->name('ocean-export.work-order.store');
     Route::get('/ocean-export/work-order/{id}/edit', [WorkOrderController::class, 'edit'])->name('ocean-export.work-order.edit');
     Route::put('/ocean-export/work-order/{id}', [WorkOrderController::class, 'update'])->name('ocean-export.work-order.update');
-    Route::delete('/ocean-export/work-order/{id}', [WorkOrderController::class, 'destroy'])->name('ocean-export.work-order.destroy');
-
+    Route::get('/ocean-export/work-order/{id}/export-excel', [WorkOrderController::class, 'exportExcel'])->name('ocean-export.work-order.export-excel');
+    Route::get('/shipments/{type}/{id}/freight-invoice', [InvoiceController::class, 'generateFreightInvoice'])->name('shipments.freight-invoice');
 
     Route::get('/ocean-export/vessel-schedule/list', [VesselScheduleController::class, 'index'])->name('vessel-schedules.index');
     Route::get('/ocean-export/vessel-schedule/create', [VesselScheduleController::class, 'create'])->name('vessel-schedules.create');
@@ -293,6 +315,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/air-import/charges/{charge}', [AirImportController::class, 'deleteCharge'])->name('air-import.charges.destroy');
     Route::delete('/air-import/{air_import}/charges/all', [AirImportController::class, 'deleteAllCharges'])->name('air-import.charges.destroy-all');
     Route::get('/air-import/{air_import}/charges', [AirImportController::class, 'getCharges'])->name('air-import.charges.index');
+    Route::post('/air-import/{air_import}/charges/invoice', [AirImportController::class, 'createInvoiceFromCharges'])->name('air-import.charges.invoice');
 
     Route::post('/air-import/{air_import}/containers', [AirImportController::class, 'addContainer'])->name('air-import.containers.store');
     Route::put('/air-import/containers/{container}', [AirImportController::class, 'updateContainer'])->name('air-import.containers.update');
@@ -302,6 +325,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/air-import/{air_import}/color', [AirImportController::class, 'updateColor'])->name('air-import.update-color');
     Route::get('/air-import/export-csv', [AirImportController::class, 'exportCsv'])->name('air-import.export-csv');
     Route::get('/air-import/hbl-export-csv', [AirImportController::class, 'hblExportCsv'])->name('air-import.hbl-export-csv');
+
+    Route::get('/air-import/{id}/profit-summary', [AirImportController::class, 'profitSummaryView'])->name('air-import.profit-summary');
+    Route::get('/air-import/{id}/profit-detail', [AirImportController::class, 'profitDetailView'])->name('air-import.profit-detail');
 
     Route::get('/air-import/{air_import}/history', [AirImportController::class, 'getHistory'])->name('air-import.history');
 
@@ -334,6 +360,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/air-export/hbl/{id}/color', [AirExportController::class, 'hblUpdateColor'])->name('air-export.hbl-update-color');
     Route::get('/air-export/{air_export}/history', [AirExportController::class, 'getHistory'])->name('air-export.history');
     Route::post('/air-export/{air_export}/internal-message', [AirExportController::class, 'saveInternalMessage'])->name('air-export.internal-message');
+    Route::get('/air-export/{id}/document-package', [AirExportController::class, 'documentPackage'])->name('air-export.document-package');
+    Route::get('/air-export/{id}/consolidated-manifest', [AirExportController::class, 'consolidatedManifest'])->name('air-export.consolidated-manifest');
+    Route::get('/air-export/{id}/booking-confirmation', [AirExportController::class, 'bookingConfirmation'])->name('air-export.booking-confirmation');
+    Route::get('/air-export/{id}/mawb-package-label', [AirExportController::class, 'mawbPackageLabel'])->name('air-export.mawb-package-label');
+    Route::post('/air-export/{id}/label-description', [AirExportController::class, 'updateLabelDescription'])->name('air-export.label-description.update');
+    Route::get('/air-export/{id}/package-label-list', [AirExportController::class, 'packageLabelList'])->name('air-export.package-label-list');
+    Route::get('/air-export/{id}/profit-detail', [AirExportController::class, 'profitDetailView'])->name('air-export.profit-detail');
+    Route::get('/air-export/{id}/profit-summary', [AirExportController::class, 'profitSummaryView'])->name('air-export.profit-summary');
+    Route::get('/air-export/{id}/hawb-print/{hawbIndex}', [AirExportController::class, 'hawbPrint'])->name('air-export.hawb-print');
     
     // Charge CRUD
     Route::post('/air-export/{air_export}/charges', [AirExportController::class, 'addCharge'])->name('air-export.charges.store');
@@ -341,6 +376,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/air-export/charges/{charge}', [AirExportController::class, 'deleteCharge'])->name('air-export.charges.destroy');
     Route::delete('/air-export/{air_export}/charges/all', [AirExportController::class, 'deleteAllCharges'])->name('air-export.charges.destroy-all');
     Route::get('/air-export/{air_export}/charges', [AirExportController::class, 'getCharges'])->name('air-export.charges.index');
+    Route::post('/air-export/{air_export}/charges/invoice', [AirExportController::class, 'createInvoiceFromCharges'])->name('air-export.charges.invoice');
+    Route::get('/air-export/{air_export}/charges/export', [AirExportController::class, 'exportChargesToExcel'])->name('air-export.charges.export');
+    Route::get('/air-export/{air_export}/charges/print', [AirExportController::class, 'printCharges'])->name('air-export.charges.print');
+    
+    // Status Logs
+    Route::get('/api/air-exports/{air_export}/status-logs', [AirExportController::class, 'getStatusLogs'])->name('air-export.status-logs');
+    
+    // Document Center
+    Route::get('/api/air-exports/{air_export}/documents', [AirExportController::class, 'getDocuments'])->name('air-export.documents.index');
+    Route::post('/api/air-exports/{air_export}/documents', [AirExportController::class, 'uploadDocuments'])->name('air-export.documents.upload');
+    Route::get('/air-export/{airExport}/documents/{document}/download', [AirExportController::class, 'downloadDocument'])->name('air-export.documents.download');
+    Route::delete('/api/air-exports/{airExport}/documents/{document}', [AirExportController::class, 'deleteDocument'])->name('air-export.documents.delete');
     
     // Memo CRUD
     Route::get('/air-export/{air_export}/memos', [AirExportController::class, 'getMemos'])->name('air-export.memos.index');
@@ -434,6 +481,117 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::match(['GET', 'POST', 'DELETE'], '/truck/bulk-unblock', [TruckShipmentController::class, 'bulkUnblock'])->name('truck.bulk-unblock');
     Route::get('/truck/export-csv', [TruckShipmentController::class, 'exportCsv'])->name('truck.export-csv');
     Route::get('/truck/my-shipment-list', [TruckShipmentController::class, 'myShipmentList'])->name('truck.my-shipment-list');
+    Route::get('/truck/my-shipment-list-print', [TruckShipmentController::class, 'myShipmentListPrint'])->name('truck.my-shipment-list-print');
+    Route::get('/truck/{truck_shipment}/pickup-delivery-order', [TruckShipmentController::class, 'pickupDeliveryOrder'])->name('truck.pickup-delivery-order');
+    Route::get('/truck/{truck_shipment}/bol-print', [TruckShipmentController::class, 'bolPrint'])->name('truck.bol-print');
+    Route::get('/truck/{truck_shipment}/profit-report-summary', [TruckShipmentController::class, 'profitReportSummary'])->name('truck.profit-report-summary');
+    Route::get('/truck/{truck_shipment}/profit-report-detail', [TruckShipmentController::class, 'profitReportDetail'])->name('truck.profit-report-detail');
+    Route::get('/truck/{truck_shipment}/cargo-manifest-status', [TruckShipmentController::class, 'cargoManifestStatus'])->name('truck.cargo-manifest-status');
+
+    // Accounting - Currency Rates
+    Route::get('/accounting/currency-table', [App\Http\Controllers\CurrencyRateController::class, 'index'])->name('accounting.currency-table');
+    Route::get('/accounting/currency-table-print', [App\Http\Controllers\CurrencyRateController::class, 'print'])->name('accounting.currency-table-print');
+    Route::get('/api/currency-rates', [App\Http\Controllers\CurrencyRateController::class, 'getRates'])->name('api.currency-rates.index');
+    Route::post('/api/currency-rates/bulk-save', [App\Http\Controllers\CurrencyRateController::class, 'bulkSave'])->name('api.currency-rates.bulk-save');
+    Route::delete('/api/currency-rates/{id}', [App\Http\Controllers\CurrencyRateController::class, 'destroy'])->name('api.currency-rates.destroy');
+    Route::post('/api/currency-rates/bulk-delete', [App\Http\Controllers\CurrencyRateController::class, 'bulkDelete'])->name('api.currency-rates.bulk-delete');
+    Route::get('/api/currency-rates/export', [App\Http\Controllers\CurrencyRateController::class, 'export'])->name('api.currency-rates.export');
+
+    // Accounting - Banks
+    Route::get('/accounting/bank-list', [App\Http\Controllers\BankController::class, 'index'])->name('accounting.bank-list');
+    Route::get('/accounting/bank-list-print', [App\Http\Controllers\BankController::class, 'print'])->name('accounting.bank-list-print');
+    Route::get('/api/banks', [App\Http\Controllers\BankController::class, 'getBanks'])->name('api.banks.index');
+    Route::post('/api/banks/bulk-save', [App\Http\Controllers\BankController::class, 'bulkSave'])->name('api.banks.bulk-save');
+    Route::delete('/api/banks/{id}', [App\Http\Controllers\BankController::class, 'destroy'])->name('api.banks.destroy');
+    Route::post('/api/banks/bulk-delete', [App\Http\Controllers\BankController::class, 'bulkDelete'])->name('api.banks.bulk-delete');
+    Route::get('/api/banks/export', [App\Http\Controllers\BankController::class, 'export'])->name('api.banks.export');
+    
+    // Bank Services (Production Features)
+    Route::get('/api/banks/{bank}/next-check-number', [App\Http\Controllers\BankController::class, 'getNextCheckNumber'])->name('api.banks.next-check-number');
+    Route::post('/api/banks/{bank}/import-check-clearing', [App\Http\Controllers\BankController::class, 'importCheckClearing'])->name('api.banks.import-check-clearing');
+    Route::get('/api/banks/default-invoice', [App\Http\Controllers\BankController::class, 'getDefaultInvoiceBank'])->name('api.banks.default-invoice');
+    Route::get('/api/banks/{bank}/display-info', [App\Http\Controllers\BankController::class, 'getBankDisplayInfo'])->name('api.banks.display-info');
+
+    // Accounting - Billing Code
+    Route::get('/accounting/billing-code-list', [App\Http\Controllers\BillingCodeController::class, 'index'])->name('accounting.billing-code-list');
+    Route::get('/accounting/billing-code-list-print', [App\Http\Controllers\BillingCodeController::class, 'print'])->name('accounting.billing-code-list-print');
+    Route::get('/api/billing-codes', [App\Http\Controllers\BillingCodeController::class, 'getCodes'])->name('api.billing-codes.index');
+    Route::post('/api/billing-codes/bulk-save', [App\Http\Controllers\BillingCodeController::class, 'bulkSave'])->name('api.billing-codes.bulk-save');
+    Route::delete('/api/billing-codes/{id}', [App\Http\Controllers\BillingCodeController::class, 'destroy'])->name('api.billing-codes.destroy');
+    Route::post('/api/billing-codes/bulk-delete', [App\Http\Controllers\BillingCodeController::class, 'bulkDelete'])->name('api.billing-codes.bulk-delete');
+    Route::get('/api/billing-codes/export', [App\Http\Controllers\BillingCodeController::class, 'export'])->name('api.billing-codes.export');
+    Route::get('/api/billing-codes/mapping-data', [App\Http\Controllers\BillingCodeController::class, 'getMappingData'])->name('api.billing-codes.mapping-data');
+    Route::post('/api/billing-codes/save-mappings', [App\Http\Controllers\BillingCodeController::class, 'saveMappings'])->name('api.billing-codes.save-mappings');
+
+    // Accounting - G/L Code
+    Route::get('/accounting/gl-code-list', [App\Http\Controllers\GLCodeController::class, 'index'])->name('accounting.gl-code-list');
+    Route::get('/accounting/gl-code-list-print', [App\Http\Controllers\GLCodeController::class, 'print'])->name('accounting.gl-code-list-print');
+    Route::get('/api/gl-codes', [App\Http\Controllers\GLCodeController::class, 'getCodes'])->name('api.gl-codes.index');
+    Route::post('/api/gl-codes/bulk-save', [App\Http\Controllers\GLCodeController::class, 'bulkSave'])->name('api.gl-codes.bulk-save');
+    Route::delete('/api/gl-codes/{id}', [App\Http\Controllers\GLCodeController::class, 'destroy'])->name('api.gl-codes.destroy');
+    Route::post('/api/gl-codes/bulk-delete', [App\Http\Controllers\GLCodeController::class, 'bulkDelete'])->name('api.gl-codes.bulk-delete');
+    Route::get('/api/gl-codes/export', [App\Http\Controllers\GLCodeController::class, 'export'])->name('api.gl-codes.export');
+
+    // Settings - To Do List
+    Route::get('/settings/todo-list', [App\Http\Controllers\TodoTaskController::class, 'index'])->name('settings.todo-list');
+    Route::get('/settings/todo-list-print', [App\Http\Controllers\TodoTaskController::class, 'print'])->name('settings.todo-list-print');
+    Route::get('/api/todo-tasks', [App\Http\Controllers\TodoTaskController::class, 'getTasks'])->name('api.todo-tasks.index');
+    Route::post('/api/todo-tasks', [App\Http\Controllers\TodoTaskController::class, 'store'])->name('api.todo-tasks.store');
+    Route::put('/api/todo-tasks/{id}', [App\Http\Controllers\TodoTaskController::class, 'update'])->name('api.todo-tasks.update');
+    Route::delete('/api/todo-tasks/{id}', [App\Http\Controllers\TodoTaskController::class, 'destroy'])->name('api.todo-tasks.destroy');
+    Route::post('/api/todo-tasks/bulk-save', [App\Http\Controllers\TodoTaskController::class, 'bulkSave'])->name('api.todo-tasks.bulk-save');
+    Route::post('/api/todo-tasks/bulk-delete', [App\Http\Controllers\TodoTaskController::class, 'bulkDelete'])->name('api.todo-tasks.bulk-delete');
+
+    // Settings - Container TP/SZ
+    Route::get('/settings/container-types', [App\Http\Controllers\ContainerTypeController::class, 'index'])->name('settings.container-types');
+    Route::get('/settings/container-types/export-csv', [App\Http\Controllers\ContainerTypeController::class, 'exportCsv'])->name('settings.container-types.export-csv');
+    Route::get('/api/container-types', [App\Http\Controllers\ContainerTypeController::class, 'index'])->name('api.container-types.index');
+    Route::post('/api/container-types', [App\Http\Controllers\ContainerTypeController::class, 'store'])->name('api.container-types.store');
+    Route::put('/api/container-types/{id}', [App\Http\Controllers\ContainerTypeController::class, 'update'])->name('api.container-types.update');
+    Route::delete('/api/container-types/{id}', [App\Http\Controllers\ContainerTypeController::class, 'destroy'])->name('api.container-types.destroy');
+    Route::post('/api/container-types/bulk-save', [App\Http\Controllers\ContainerTypeController::class, 'bulkSave'])->name('api.container-types.bulk-save');
+
+    // Settings - Freight Default Values
+    Route::get('/settings/freight-default-values', [App\Http\Controllers\FreightDefaultValueController::class, 'index'])->name('settings.freight-default-values');
+    Route::get('/api/freight-default-values/module', [App\Http\Controllers\FreightDefaultValueController::class, 'getByModule'])->name('api.freight-default-values.module');
+    Route::post('/api/freight-default-values', [App\Http\Controllers\FreightDefaultValueController::class, 'store'])->name('api.freight-default-values.store');
+    Route::put('/api/freight-default-values/{id}', [App\Http\Controllers\FreightDefaultValueController::class, 'update'])->name('api.freight-default-values.update');
+    Route::delete('/api/freight-default-values/{id}', [App\Http\Controllers\FreightDefaultValueController::class, 'destroy'])->name('api.freight-default-values.destroy');
+    Route::post('/api/freight-default-values/bulk-save', [App\Http\Controllers\FreightDefaultValueController::class, 'bulkSave'])->name('api.freight-default-values.bulk-save');
+
+    // Settings - User Management
+    Route::get('/settings/user-management', [App\Http\Controllers\UserManagementController::class, 'index'])->name('settings.user-management');
+    Route::get('/settings/user-management/export-csv', [App\Http\Controllers\UserManagementController::class, 'exportCsv'])->name('settings.user-management.export-csv');
+    Route::post('/api/users', [App\Http\Controllers\UserManagementController::class, 'store'])->name('api.users.store');
+    Route::post('/api/users/bulk-save', [App\Http\Controllers\UserManagementController::class, 'bulkSave'])->name('api.users.bulk-save');
+    Route::put('/api/users/{id}', [App\Http\Controllers\UserManagementController::class, 'update'])->name('api.users.update');
+    Route::delete('/api/users/{id}', [App\Http\Controllers\UserManagementController::class, 'destroy'])->name('api.users.destroy');
+    Route::post('/api/users/{id}/reset-password', [App\Http\Controllers\UserManagementController::class, 'resetPassword'])->name('api.users.reset-password');
+
+    // Settings - AWB No. Management
+    Route::get('/settings/awb-management', [App\Http\Controllers\AwbManagementController::class, 'index'])->name('settings.awb-management');
+    Route::get('/settings/awb-management-print', [App\Http\Controllers\AwbManagementController::class, 'print'])->name('settings.awb-management.print');
+    Route::get('/api/awb-management', [App\Http\Controllers\AwbManagementController::class, 'getBlocks'])->name('api.awb-management.index');
+    Route::get('/api/awb-management/carrier/{carrier_id}', [App\Http\Controllers\AwbManagementController::class, 'getAvailableByCarrier'])->name('api.awb-management.carrier');
+    Route::post('/api/awb-management/bulk-save', [App\Http\Controllers\AwbManagementController::class, 'bulkSave'])->name('api.awb-management.bulk-save');
+    Route::post('/api/awb-management/bulk-delete', [App\Http\Controllers\AwbManagementController::class, 'bulkDelete'])->name('api.awb-management.bulk-delete');
+    Route::get('/api/awb-management/export', [App\Http\Controllers\AwbManagementController::class, 'export'])->name('api.awb-management.export');
+    Route::delete('/api/awb-management/{id}', [App\Http\Controllers\AwbManagementController::class, 'destroy'])->name('api.awb-management.destroy');
+
+    // Settings - HBL Templates
+    Route::get('/settings/hbl-templates', [App\Http\Controllers\HblTemplateController::class, 'index'])->name('settings.hbl-templates');
+    Route::get('/settings/hbl-templates-print', [App\Http\Controllers\HblTemplateController::class, 'print'])->name('settings.hbl-templates.print');
+    Route::get('/api/hbl-templates', [App\Http\Controllers\HblTemplateController::class, 'getTemplates'])->name('api.hbl-templates.index');
+    Route::post('/api/hbl-templates/bulk-save', [App\Http\Controllers\HblTemplateController::class, 'bulkSave'])->name('api.hbl-templates.bulk-save');
+    Route::post('/api/hbl-templates/bulk-delete', [App\Http\Controllers\HblTemplateController::class, 'bulkDelete'])->name('api.hbl-templates.bulk-delete');
+    Route::get('/api/hbl-templates/export', [App\Http\Controllers\HblTemplateController::class, 'export'])->name('api.hbl-templates.export');
+    Route::delete('/api/hbl-templates/{id}', [App\Http\Controllers\HblTemplateController::class, 'destroy'])->name('api.hbl-templates.destroy');
+
+    // Settings - Shipment Memo Auto-Load
+    Route::get('/settings/shipment-memo-auto-load', [App\Http\Controllers\ShipmentMemoConfigController::class, 'index'])->name('settings.shipment-memo-auto-load');
+    Route::get('/api/shipment-memo-configs/module', [App\Http\Controllers\ShipmentMemoConfigController::class, 'getByModule'])->name('api.shipment-memo-configs.module');
+    Route::get('/api/shipment-memo-configs/check', [App\Http\Controllers\ShipmentMemoConfigController::class, 'checkAutoLoad'])->name('api.shipment-memo-configs.check');
+    Route::post('/api/shipment-memo-configs/bulk-save', [App\Http\Controllers\ShipmentMemoConfigController::class, 'bulkSave'])->name('api.shipment-memo-configs.bulk-save');
 
     // Supply Chain & Warehouse
     Route::get('/warehouse/receipt', [WarehouseReceiptController::class, 'index'])->name('warehouse.receipts.index');
@@ -490,8 +648,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/warehouse/items/{item}/color', [WarehouseInventoryItemController::class, 'updateColor'])->name('items.update-color');
 
     Route::get('/warehouse/inventory/summary', [WarehouseInventoryItemController::class, 'summary'])->name('inventory.summary');
+    Route::post('/warehouse/inventory/summary', [WarehouseInventoryItemController::class, 'summaryStore'])->name('inventory.summary.store');
+    Route::put('/warehouse/inventory/summary/{id}', [WarehouseInventoryItemController::class, 'summaryUpdate'])->name('inventory.summary.update');
+    Route::delete('/warehouse/inventory/summary/{id}', [WarehouseInventoryItemController::class, 'summaryDestroy'])->name('inventory.summary.destroy');
+    Route::match(['GET', 'POST', 'DELETE'], '/warehouse/inventory/summary/bulk-delete', [WarehouseInventoryItemController::class, 'summaryBulkDelete'])->name('inventory.summary.bulk-delete');
     Route::get('/warehouse/inventory/summary/export-csv', [WarehouseInventoryItemController::class, 'summaryExportCsv'])->name('inventory.summary.export-csv');
     Route::get('/warehouse/inventory/detail', [WarehouseInventoryItemController::class, 'detail'])->name('inventory.detail');
+    Route::post('/warehouse/inventory/detail', [WarehouseInventoryItemController::class, 'detailStore'])->name('inventory.detail.store');
+    Route::put('/warehouse/inventory/detail/{id}', [WarehouseInventoryItemController::class, 'detailUpdate'])->name('inventory.detail.update');
+    Route::delete('/warehouse/inventory/detail/{id}', [WarehouseInventoryItemController::class, 'detailDestroy'])->name('inventory.detail.destroy');
+    Route::match(['GET', 'POST', 'DELETE'], '/warehouse/inventory/detail/bulk-delete', [WarehouseInventoryItemController::class, 'detailBulkDelete'])->name('inventory.detail.bulk-delete');
     Route::get('/warehouse/inventory/detail/export-csv', [WarehouseInventoryItemController::class, 'detailExportCsv'])->name('inventory.detail.export-csv');
 
     // Warehouse Automobile
@@ -641,6 +807,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Accounting — Journal Report
     Route::get('/accounting/report/journal-report', [JournalReportController::class, 'index'])->name('accounting.report.journal-report');
+    Route::post('/accounting/report/journal-report/view', [JournalReportController::class, 'apiView'])->name('accounting.report.journal-report.view');
     Route::get('/accounting/report/journal-report/preview', [JournalReportController::class, 'preview'])->name('accounting.report.journal-report.preview');
     Route::get('/accounting/report/journal-report/print', [JournalReportController::class, 'printReport'])->name('accounting.report.journal-report.print');
     Route::get('/accounting/report/journal-report/export-excel', [JournalReportController::class, 'exportExcel'])->name('accounting.report.journal-report.export-excel');
@@ -648,7 +815,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Accounting — Journal Entry
     Route::get('/accounting/journal/entry', [JournalEntryController::class, 'index'])->name('accounting.journal.entry');
     Route::post('/accounting/journal/entry/store', [JournalEntryController::class, 'store'])->name('accounting.journal.entry.store');
+    Route::put('/accounting/journal/entry/{id}', [JournalEntryController::class, 'update'])->name('accounting.journal.entry.update');
+    Route::delete('/accounting/journal/entry/{id}', [JournalEntryController::class, 'destroy'])->name('accounting.journal.entry.destroy');
     Route::get('/accounting/journal/list', [JournalEntryController::class, 'list'])->name('accounting.journal.list');
+    Route::get('/accounting/journal/export-excel', [JournalEntryController::class, 'exportExcel'])->name('accounting.journal.export-excel');
 
     // Accounting — Block / Unblock (BEFORE {id} wildcard)
     Route::get('/accounting/journal/block', [AccountingBlockController::class, 'index'])->name('accounting.journal.block');
@@ -723,6 +893,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/accounting/payment/made-list/export', [AccountingPaymentController::class, 'exportMadeList'])->name('accounting.payment-made-list.export');
     Route::match(['GET', 'POST', 'DELETE'], '/accounting/payment/made-list/bulk-delete', [AccountingPaymentController::class, 'bulkDeleteMade'])->name('accounting.payment-made-list.bulk-delete');
     Route::patch('/accounting/payment/made-list/{payment}/color', [AccountingPaymentController::class, 'updateColor'])->name('accounting.payment-made-list.update-color');
+    Route::get('/accounting/ar-payment-list', function () { return redirect()->route('accounting.payment-received-list'); })->name('accounting.ar-payment-list');
+    Route::get('/accounting/ap-payment-list', function () { return redirect()->route('accounting.payment-made-list'); })->name('accounting.ap-payment-list');
     Route::get('/accounting/payment/receive', [AccountingPaymentController::class, 'create'])->name('accounting.payment-receive');
     Route::get('/accounting/payment/make', [AccountingPaymentController::class, 'create'])->name('accounting.payment-make');
     Route::post('/accounting/payment', [AccountingPaymentController::class, 'store'])->name('accounting.payment.store');
@@ -740,6 +912,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/accounting/payment/memos/{memo}', [AccountingPaymentController::class, 'deleteMemo'])->name('accounting.payment.memos.destroy');
 
     Route::get('/accounting/{page?}/{subpage?}/{action?}', function ($page = 'report', $subpage = null, $action = null) {
+        if ($page === 'ar-payment-list') return redirect()->route('accounting.payment-received-list');
+        if ($page === 'ap-payment-list') return redirect()->route('accounting.payment-made-list');
         if ($page === 'invoice') return redirect()->route('accounting.invoices.index');
         if ($page === 'ga-expense-list') return redirect()->route('accounting.ga-expense.index');
         if ($page === 'ga-expense' && $subpage === 'create') return redirect()->route('accounting.ga-expense.create');
@@ -819,6 +993,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/pipeline', [LeadController::class, 'pipeline']);
 
         Route::get('/quotations', [QuotationController::class, 'index']);
+        Route::get('/quotation', [QuotationController::class, 'create']);
         Route::get('/quotation/create', [QuotationController::class, 'create'])->name('sales.quotations.create');
         Route::get('/quotation/{id}/edit', [QuotationController::class, 'edit'])->name('sales.quotations.edit');
         Route::get('/quotation/list', [QuotationController::class, 'index'])->name('sales.quotations.list');
@@ -831,6 +1006,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/quotations/documents/{document}', [QuotationController::class, 'deleteDocument']);
         Route::get('/quotations/documents/{document}/download', [QuotationController::class, 'downloadDocument']);
     });
+
+    Route::get('/vessel/create', function() {
+        return view('generic.index', ['title' => 'Create Vessel', 'api_endpoint' => '/api/vessels']);
+    })->name('vessel.create');
+
+    Route::get('/port/create', function() {
+        return view('generic.index', ['title' => 'Create Port', 'api_endpoint' => '/api/ports']);
+    })->name('port.create');
 
     Route::get('/trade-partner/list', [TradePartnerController::class, 'index'])->name('trade-partner.index');
     Route::get('/trade-partner/create', [TradePartnerController::class, 'create'])->name('trade-partner.create');
@@ -896,3 +1079,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+Route::post('/ocean-import/{ocean_import}/send-batch-email', [App\Http\Controllers\OceanImportController::class, 'sendBatchEmail'])->name('ocean-import.send-batch-email');
+Route::post('/ocean-import/{ocean_import}/send-manifest-email', [App\Http\Controllers\OceanImportController::class, 'sendManifestEmail'])->name('ocean-import.send-manifest-email');
+
+Route::get('/ocean-import/{id}/batch-print-view', [App\Http\Controllers\OceanImportController::class, 'batchPrintView'])->name('ocean-import.batch-print-view');
+
+Route::get('/ocean-import/{id}/dev-seg', [App\Http\Controllers\OceanImportController::class, 'devSegView'])->name('ocean-import.dev-seg');
+
+Route::get('/ocean-import/{id}/delivery-order', [App\Http\Controllers\OceanImportController::class, 'deliveryOrderView'])->name('ocean-import.delivery-order');
+
+Route::get('/ocean-import/{id}/profit-summary', [App\Http\Controllers\OceanImportController::class, 'profitSummaryView'])->name('ocean-import.profit-summary');
+
+Route::get('/ocean-import/{id}/profit-detail', [App\Http\Controllers\OceanImportController::class, 'profitDetailView'])->name('ocean-import.profit-detail');

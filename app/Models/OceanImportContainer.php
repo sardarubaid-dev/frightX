@@ -26,19 +26,24 @@ class OceanImportContainer extends Model
     ];
 
     protected $casts = [
-        'lfd' => 'date', 'fdd' => 'date', 'storage_start_date' => 'date',
-        'storage_end_date' => 'date', 'unload_vessel_date' => 'date',
-        'gate_in_date' => 'date', 'rail_start_date' => 'date',
-        'pod_eta' => 'date', 'appointment_date' => 'date',
-        'pickup_date' => 'date', 'gate_out_date' => 'date',
-        'fdest_eta' => 'date', 'eta_door' => 'date', 'ata_door' => 'date',
-        'empty_conf_date' => 'date', 'empty_ret_date' => 'date',
+        'lfd' => 'date:Y-m-d', 'fdd' => 'date:Y-m-d', 'storage_start_date' => 'date:Y-m-d',
+        'storage_end_date' => 'date:Y-m-d', 'unload_vessel_date' => 'date:Y-m-d',
+        'gate_in_date' => 'date:Y-m-d', 'rail_start_date' => 'date:Y-m-d',
+        'pod_eta' => 'date:Y-m-d', 'appointment_date' => 'date:Y-m-d',
+        'pickup_date' => 'date:Y-m-d', 'gate_out_date' => 'date:Y-m-d',
+        'fdest_eta' => 'date:Y-m-d', 'eta_door' => 'date:Y-m-d', 'ata_door' => 'date:Y-m-d',
+        'empty_conf_date' => 'date:Y-m-d', 'empty_ret_date' => 'date:Y-m-d',
         'chassis_days' => 'decimal:1',
-        'an_sent_date' => 'date', 'do_sent_date' => 'date',
+        'an_sent_date' => 'date:Y-m-d', 'do_sent_date' => 'date:Y-m-d',
         'is_dg' => 'boolean', 'is_carrier_release' => 'boolean',
         'is_customs_hold' => 'boolean', 'is_an_sent' => 'boolean',
         'is_do_sent' => 'boolean', 'is_avail_pickup' => 'boolean', 'is_complete' => 'boolean',
     ];
+
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d');
+    }
 
     public function oceanImport() { return $this->belongsTo(OceanImport::class); }
     public function containerType() { return $this->belongsTo(ContainerType::class); }

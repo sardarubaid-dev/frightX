@@ -10,7 +10,7 @@
     </td>
     <td data-col="file_no" class="sticky-col" style="left:50px;" onclick="event.stopPropagation()">
         <div style="display:flex;align-items:center;justify-content:space-between;">
-            <a href="{{ $c->oceanImport ? route('ocean-import.edit', $c->oceanImport?->id) : '#' }}" class="col-link" target="_blank">{{ $c->oceanImport?->file_no ?? 'N/A' }}</a>
+            <a href="{{ $c->oceanImport ? route('ocean-import.edit', $c->oceanImport?->id) : '#' }}" class="col-link">{{ $c->oceanImport?->file_no ?? 'N/A' }}</a>
             <i class="fa fa-external-link" style="color:#94a3b8;font-size:10px;cursor:pointer;" title="Open"></i>
         </div>
     </td>

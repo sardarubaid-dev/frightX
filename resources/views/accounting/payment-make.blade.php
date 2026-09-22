@@ -176,7 +176,7 @@
                     @if($payment)
                     <a href="{{ route('accounting.payment-make') }}" class="btn-default-gf" target="_blank"><i class="fa fa-plus"></i> NEW PAYMENT</a>
                     @endif
-                    <button type="button" class="btn-gofreight" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($payment) UPDATE @else SAVE @endif</button>
+                    <button type="button" class="btn-freightx" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($payment) UPDATE @else SAVE @endif</button>
                     <a href="{{ route('accounting.payment-made-list') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>
@@ -253,7 +253,7 @@
                                             <option value="Cash">Cash</option>
                                             <option value="Check">Check</option>
                                             <option value="Credit Card">Credit Card</option>
-                                            <option value="GoFreight Pay">GoFreight Pay</option>
+                                            <option value="FreightX Pay">FreightX Pay</option>
                                             <option value="Koverly">Koverly</option>
                                             <option value="Melio">Melio</option>
                                             <option value="Paycargo">Paycargo</option>

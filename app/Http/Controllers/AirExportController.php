@@ -7,6 +7,7 @@ use App\Models\Office;
 use App\Models\Port;
 use App\Models\TradePartner;
 use App\Services\AirExportService;
+use App\Services\ShipmentMemoAutoPopulationService;
 use App\Http\Requests\StoreAirExportRequest;
 use App\Http\Requests\UpdateAirExportRequest;
 use App\Models\Currency;
@@ -136,7 +137,7 @@ class AirExportController extends Controller
         $currencies = Currency::all();
 
         $page = $request->segment(2);
-        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])->latest()->get();
+        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Air Export')->latest()->get();
 
         // Handle booking conversion - load data from booking
         if ($request->has('booking')) {
@@ -175,27 +176,36 @@ class AirExportController extends Controller
             $airExport->id = null;
             $airExport->mawb_no = null;
             $airExport->file_no = null;
+            $airExport->is_blocked = false;
             $airExport->created_at = null;
             $chargesData = $airExport->charges->isNotEmpty()
                 ? $airExport->charges->map(fn($c) => [
-                    'id' => $c->id,
+                    'id' => null,
                     'selected' => false,
-                    'charge_code' => $c->charge_code,
-                    'charge_name' => $c->charge_name,
+                    'party' => $c->party ?? 'Custom',
+                    'party_name_id' => $c->type === 'AP' ? ($c->vendor_id ?? '') : ($c->bill_to_id ?? ''),
+                    'sal' => $c->sal ?? 'Air',
+                    'pr' => ($c->type === 'AP' || $c->type === 'origin_cost') ? 'Pay' : 'Rec',
+                    'ppc' => ($c->pc === 'PREPAID') ? 'Prepaid' : 'Colle',
+                    'chrg_code' => $c->charge_code ?? '',
+                    'charge_name' => $c->charge_name ?? '',
                     'currency' => $c->currency->code ?? 'USD',
                     'currency_id' => $c->currency_id,
-                    'rate' => $c->rate,
-                    'qty' => $c->qty,
-                    'amount' => $c->amount,
-                    'total_amount' => $c->total_amount ?? $c->amount,
-                    'pc' => $c->pc,
-                    'pr' => $c->type === 'AP' || $c->type === 'origin_cost' ? 'Pay' : 'Rec',
+                    'rate' => (float)($c->rate ?? 0),
+                    'qty' => (float)($c->qty ?? 1),
+                    'qty_type' => $c->unit ?? 'B/L',
+                    'roe' => (float)($c->roe ?? 1.0),
+                    'vat' => (float)($c->tax_percent ?? 0),
+                    'amount' => (float)($c->amount ?? 0),
+                    'total_amount' => (float)($c->total_amount ?? $c->amount ?? 0),
                     'type' => $c->type,
                     'vendor_id' => $c->vendor_id,
                     'bill_to_id' => $c->bill_to_id,
-                    'invoice_no' => $c->invoice_no ?? '',
-                    'remark' => $c->remark ?? '',
-                    'created_at' => $c->created_at ? $c->created_at->format('m/d/Y') : '',
+                    'inv_no' => '',
+                    'financial_date' => date('Y-m-d'),
+                    'eq_bl_no' => $c->remark ?? '',
+                    'remark' => false,
+                    'mbl_no' => '',
                 ])
                 : collect();
             return view('air-export.create', compact('airExport', 'offices', 'ports', 'agents', 'users', 'packageUnits', 'currencies', 'page', 'quotations', 'chargesData'));
@@ -209,10 +219,81 @@ class AirExportController extends Controller
     public function store(StoreAirExportRequest $request)
     {
         try {
-            $shipment = $this->airExportService->store($request->validated());
+            // DIAGNOSTIC: Field Population Report
+            $allFields = [
+                // Core Fields (Main Tab - Basic Info)
+                'file_no', 'mawb_no', 'booking_no', 'post_date',
+                'office_id', 'op_id',
+                
+                // Agent & Carrier Fields
+                'forwarding_agent_id', 'oversea_agent_id', 'carrier_id', 'acct_carrier_id',
+                
+                // Flight & Route Details
+                'flight_no', 'dep_port_id', 'dst_port_id',
+                'etd', 'eta', 'atd', 'ata',
+                
+                // Quantities & Measurements
+                'pkg_qty', 'pkg_unit_id', 'gross_weight', 'chargeable_weight', 'volume',
+                'buying_rate', 'selling_rate',
+                
+                // Terms & Options
+                'freight_term', 'is_ecommerce', 'sales_type', 'is_blocked',
+                
+                // Direct Master Fields
+                'is_direct_master', 'dm_customer_id', 'dm_shipper_id', 'dm_bill_to_id',
+                'dm_consignee_id', 'dm_notify_id', 'dm_sales_person_id', 'agent_ref_no',
+                
+                // MAWB Party Fields
+                'shipper_id', 'consignee_id', 'notify_id', 'actual_shipper_id',
+                
+                // Additional Fields
+                'internal_remark', 'color', 'label_description',
+            ];
+
+            $requestData = $request->validated();
+            $filled = [];
+            $empty = [];
+
+            foreach ($allFields as $field) {
+                if (isset($requestData[$field]) && $requestData[$field] !== null && $requestData[$field] !== '') {
+                    $filled[] = $field;
+                } else {
+                    $empty[] = $field;
+                }
+            }
+
+            $report = [
+                'total_fields' => count($allFields),
+                'filled_count' => count($filled),
+                'empty_count' => count($empty),
+                'filled_fields' => $filled,
+                'empty_fields' => $empty,
+                'percentage_filled' => round((count($filled) / count($allFields)) * 100, 2),
+            ];
+
+            \Log::info('=== AIR EXPORT CREATE - FIELD DIAGNOSTIC ===');
+            \Log::info('Total Fields: ' . $report['total_fields']);
+            \Log::info('Filled: ' . $report['filled_count'] . ' (' . $report['percentage_filled'] . '%)');
+            \Log::info('Empty: ' . $report['empty_count']);
+            \Log::info('');
+            \Log::info('FILLED FIELDS:');
+            foreach ($filled as $f) {
+                $value = $requestData[$f];
+                if (is_bool($value)) $value = $value ? 'true' : 'false';
+                \Log::info('  ✓ ' . $f . ' = ' . json_encode($value));
+            }
+            \Log::info('');
+            \Log::info('EMPTY FIELDS:');
+            foreach ($empty as $f) {
+                \Log::info('  ✗ ' . $f);
+            }
+            \Log::info('=========================================');
+
+            $shipment = $this->airExportService->store($requestData);
 
             return redirect()->route('air-export.edit', $shipment->id)
-                ->with('success', 'Air Export Shipment created successfully.');
+                ->with('success', 'Air Export Shipment created successfully.')
+                ->with('diagnostic', $report);
                 
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Air Export Store - Database Error:', [
@@ -259,28 +340,36 @@ class AirExportController extends Controller
         $users = \App\Models\User::all();
         $packageUnits = \App\Models\PackageUnit::all();
         $currencies = Currency::all();
-        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency'])->latest()->get();
+        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'carrier', 'op', 'items.currency'])->forModule('Air Export')->latest()->get();
         
         $chargesData = $airExport->charges->isNotEmpty()
             ? $airExport->charges->map(fn($c) => [
                 'id' => $c->id,
                 'selected' => false,
-                'charge_code' => $c->charge_code,
-                'charge_name' => $c->charge_name,
+                'party' => $c->party ?? 'Custom',
+                'party_name_id' => $c->type === 'AP' ? ($c->vendor_id ?? '') : ($c->bill_to_id ?? ''),
+                'sal' => $c->sal ?? 'Air',
+                'pr' => ($c->type === 'AP' || $c->type === 'origin_cost') ? 'Pay' : 'Rec',
+                'ppc' => ($c->pc === 'PREPAID') ? 'Prepaid' : 'Colle',
+                'chrg_code' => $c->charge_code ?? '',
+                'charge_name' => $c->charge_name ?? '',
                 'currency' => $c->currency->code ?? 'USD',
                 'currency_id' => $c->currency_id,
-                'rate' => $c->rate,
-                'qty' => $c->qty,
-                'amount' => $c->amount,
-                'total_amount' => $c->total_amount ?? $c->amount,
-                'pc' => $c->pc,
-                'pr' => $c->type === 'AP' || $c->type === 'origin_cost' ? 'Pay' : 'Rec',
+                'rate' => (float)($c->rate ?? 0),
+                'qty' => (float)($c->qty ?? 1),
+                'qty_type' => $c->unit ?? 'B/L',
+                'roe' => (float)($c->roe ?? 1.0),
+                'vat' => (float)($c->tax_percent ?? 0),
+                'amount' => (float)($c->amount ?? 0),
+                'total_amount' => (float)($c->total_amount ?? $c->amount ?? 0),
                 'type' => $c->type,
                 'vendor_id' => $c->vendor_id,
                 'bill_to_id' => $c->bill_to_id,
-                'invoice_no' => $c->invoice_no ?? '',
-                'remark' => $c->remark ?? '',
-                'created_at' => $c->created_at ? $c->created_at->format('m/d/Y') : '',
+                'inv_no' => $c->invoice_no ?? '',
+                'financial_date' => $c->invoice_date ? (is_string($c->invoice_date) ? $c->invoice_date : $c->invoice_date->format('Y-m-d')) : '',
+                'eq_bl_no' => $c->remark ?? '',
+                'remark' => false,
+                'mbl_no' => $airExport->file_no ?? ($airExport->mawb_no ?? ''),
             ])
             : collect();
         
@@ -289,9 +378,88 @@ class AirExportController extends Controller
 
     public function update(UpdateAirExportRequest $request, AirExport $airExport)
     {
-        $this->airExportService->update($airExport, $request->validated());
+        // DIAGNOSTIC: Field Population Report for UPDATE
+        $allFields = [
+            // Core Fields (Main Tab - Basic Info)
+            'file_no', 'mawb_no', 'booking_no', 'post_date',
+            'office_id', 'op_id',
+            
+            // Agent & Carrier Fields
+            'forwarding_agent_id', 'oversea_agent_id', 'carrier_id', 'acct_carrier_id',
+            
+            // Flight & Route Details
+            'flight_no', 'dep_port_id', 'dst_port_id',
+            'etd', 'eta', 'atd', 'ata',
+            
+            // Quantities & Measurements
+            'pkg_qty', 'pkg_unit_id', 'gross_weight', 'chargeable_weight', 'volume',
+            'buying_rate', 'selling_rate',
+            
+            // Terms & Options
+            'freight_term', 'is_ecommerce', 'sales_type', 'is_blocked',
+            
+            // Direct Master Fields
+            'is_direct_master', 'dm_customer_id', 'dm_shipper_id', 'dm_bill_to_id',
+            'dm_consignee_id', 'dm_notify_id', 'dm_sales_person_id', 'agent_ref_no',
+            
+            // MAWB Party Fields
+            'shipper_id', 'consignee_id', 'notify_id', 'actual_shipper_id',
+            
+            // Additional Fields (from validation)
+            'incoterm_id', 'mark_number', 'service_term_from', 'service_term_to',
+            'agent_id', 'co_loader_id', 'trans_port_id', 'trans_port1_id',
+            'trans_port2_id', 'trans_port3_id', 'delivery_port_id', 'route_data',
+            
+            // Other Fields
+            'internal_remark', 'color', 'label_description',
+        ];
 
-        return back()->with('success', 'Air Export Shipment updated successfully.');
+        $requestData = $request->validated();
+        $filled = [];
+        $empty = [];
+
+        foreach ($allFields as $field) {
+            if (isset($requestData[$field]) && $requestData[$field] !== null && $requestData[$field] !== '') {
+                $filled[] = $field;
+            } else {
+                $empty[] = $field;
+            }
+        }
+
+        $report = [
+            'total_fields' => count($allFields),
+            'filled_count' => count($filled),
+            'empty_count' => count($empty),
+            'filled_fields' => $filled,
+            'empty_fields' => $empty,
+            'percentage_filled' => round((count($filled) / count($allFields)) * 100, 2),
+        ];
+
+        \Log::info('=== AIR EXPORT UPDATE - FIELD DIAGNOSTIC ===');
+        \Log::info('Shipment ID: ' . $airExport->id . ' | File No: ' . $airExport->file_no);
+        \Log::info('Total Fields: ' . $report['total_fields']);
+        \Log::info('Filled: ' . $report['filled_count'] . ' (' . $report['percentage_filled'] . '%)');
+        \Log::info('Empty: ' . $report['empty_count']);
+        \Log::info('');
+        \Log::info('FILLED FIELDS:');
+        foreach ($filled as $f) {
+            $value = $requestData[$f];
+            if (is_bool($value)) $value = $value ? 'true' : 'false';
+            if (is_array($value)) $value = json_encode($value);
+            \Log::info('  ✓ ' . $f . ' = ' . $value);
+        }
+        \Log::info('');
+        \Log::info('EMPTY FIELDS:');
+        foreach ($empty as $f) {
+            \Log::info('  ✗ ' . $f);
+        }
+        \Log::info('=========================================');
+
+        $this->airExportService->update($airExport, $requestData);
+
+        return back()
+            ->with('success', 'Air Export Shipment updated successfully.')
+            ->with('diagnostic', $report);
     }
 
     public function mblList(Request $request)
@@ -443,6 +611,9 @@ class AirExportController extends Controller
     public function destroy(AirExport $airExport)
     {
         $airExport->delete();
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Shipment deleted successfully.']);
+        }
         return redirect()->route('air-export.index')->with('success', 'Shipment deleted.');
     }
 
@@ -766,5 +937,565 @@ class AirExportController extends Controller
             'charge_id' => $request->charge_id,
         ]);
         return response()->json(['success' => true, 'message' => 'Email functionality will be implemented.']);
+    }
+
+    public function documentPackage($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'forwardingAgent', 'overseaAgent', 'shipper', 'consignee',
+            'dmCustomer', 'dmShipper', 'dmConsignee',
+            'hbls.shipper', 'hbls.consignee', 'hbls.notifyParty', 'hbls.packageUnit',
+            'charges'
+        ])->findOrFail($id);
+
+        $reportsStr = $request->query('reports', 'manifest,mawb_print,local_invoice,credit_debit,hawb_print,commercial_invoice,packing_list');
+        $selectedReports = array_filter(explode(',', $reportsStr));
+        $agentType = $request->query('agent_type', 'master');
+
+        return view('air-export.document-package', compact('shipment', 'selectedReports', 'agentType'));
+    }
+
+    public function consolidatedManifest($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'forwardingAgent', 'overseaAgent', 'shipper', 'consignee',
+            'dmCustomer', 'dmShipper', 'dmConsignee',
+            'hbls.shipper', 'hbls.consignee', 'hbls.notifyParty', 'hbls.packageUnit',
+            'charges'
+        ])->findOrFail($id);
+
+        $agentType = $request->query('agent_type', 'master');
+
+        return view('air-export.consolidated-manifest', compact('shipment', 'agentType'));
+    }
+
+    public function bookingConfirmation($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'forwardingAgent', 'overseaAgent', 'shipper', 'consignee', 'notifyParty',
+            'dmCustomer', 'dmShipper', 'dmConsignee',
+            'hbls.shipper', 'hbls.consignee', 'hbls.notifyParty', 'hbls.packageUnit',
+            'charges'
+        ])->findOrFail($id);
+
+        $agentType = $request->query('agent_type', 'master');
+
+        return view('air-export.booking-confirmation', compact('shipment', 'agentType'));
+    }
+
+    public function mawbPackageLabel($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'forwardingAgent', 'overseaAgent', 'shipper', 'consignee',
+            'hbls'
+        ])->findOrFail($id);
+
+        $totalPcs = $shipment->hbls->sum('pkg_qty') ?: 1;
+
+        return view('air-export.mawb-package-label', compact('shipment', 'totalPcs'));
+    }
+
+    public function updateLabelDescription($id, Request $request)
+    {
+        $shipment = AirExport::findOrFail($id);
+        $shipment->update([
+            'label_description' => $request->input('label_description')
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Label description saved to database',
+            'label_description' => $shipment->label_description
+        ]);
+    }
+
+    public function packageLabelList($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort', 'shipper', 'consignee',
+            'hbls.packageUnit'
+        ])->findOrFail($id);
+
+        return view('air-export.package-label-list', compact('shipment'));
+    }
+
+    public function profitDetailView($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'overseaAgent', 'shipper', 'consignee',
+            'hbls.shipper', 'hbls.consignee', 'hbls.customer',
+            'charges.currency', 'charges.billTo', 'charges.vendor'
+        ])->findOrFail($id);
+
+        $totalRevenue = $shipment->charges->where('type', 'AR')->sum('amount');
+        $totalCost = $shipment->charges->whereIn('type', ['AP', 'origin_cost'])->sum('amount');
+        $totalProfit = $totalRevenue - $totalCost;
+        $profitPercentage = $totalRevenue > 0 ? number_format(($totalProfit / $totalRevenue) * 100, 2) . '%' : 'N/A';
+        $profitMargin = $totalCost > 0 ? number_format(($totalCost / $totalCost) * 100, 2) . '%' : 'N/A';
+
+        return view('air-export.profit-detail', compact(
+            'shipment', 'totalRevenue', 'totalCost', 'totalProfit', 'profitPercentage', 'profitMargin'
+        ));
+    }
+
+    public function profitSummaryView($id, Request $request)
+    {
+        $shipment = AirExport::with([
+            'office', 'operator', 'carrier',
+            'depPort', 'dstPort',
+            'overseaAgent', 'shipper', 'consignee',
+            'hbls', 'charges.currency'
+        ])->findOrFail($id);
+
+        $totalRevenue = $shipment->charges->where('type', 'AR')->sum('amount');
+        $totalCost = $shipment->charges->whereIn('type', ['AP', 'origin_cost'])->sum('amount');
+        $totalProfit = $totalRevenue - $totalCost;
+
+        return view('air-export.profit-summary', compact(
+            'shipment', 'totalRevenue', 'totalCost', 'totalProfit'
+        ));
+    }
+
+    public function createInvoiceFromCharges(Request $request, $airExportId)
+    {
+        $airExport = AirExport::findOrFail($airExportId);
+        $invNo = 'SCL' . sprintf('%08d', $airExportId);
+
+        if ($request->has('charges') && is_array($request->charges)) {
+            foreach ($request->charges as $cData) {
+                if (empty($cData['chrg_code']) && empty($cData['charge_name'])) continue;
+                
+                $currencyId = null;
+                if (!empty($cData['currency'])) {
+                    $curr = Currency::where('code', $cData['currency'])->first();
+                    $currencyId = $curr?->id;
+                }
+
+                $rate = (float)($cData['rate'] ?? 0);
+                $qty = (float)($cData['qty'] ?? 1);
+                $roe = (float)($cData['roe'] ?? 1.0);
+                $vat = (float)($cData['vat'] ?? 0);
+                $amt = $rate * $qty;
+                $taxAmt = $amt * ($vat / 100);
+                $totAmt = $amt + $taxAmt;
+
+                if (!empty($cData['id'])) {
+                    Charge::where('id', $cData['id'])->update([
+                        'party' => $cData['party'] ?? 'Custom',
+                        'sal' => $cData['sal'] ?? 'Air',
+                        'type' => ($cData['pr'] ?? 'Rec') === 'Pay' ? 'AP' : 'AR',
+                        'pc' => ($cData['ppc'] ?? 'Colle') === 'Prepaid' ? 'PREPAID' : 'COLLECT',
+                        'charge_code' => $cData['chrg_code'] ?? '',
+                        'charge_name' => $cData['charge_name'] ?? '',
+                        'currency_id' => $currencyId,
+                        'rate' => $rate,
+                        'qty' => $qty,
+                        'unit' => $cData['qty_type'] ?? 'B/L',
+                        'roe' => $roe,
+                        'tax_percent' => $vat,
+                        'amount' => $amt,
+                        'tax_amount' => $taxAmt,
+                        'total_amount' => $totAmt,
+                        'invoice_no' => $invNo,
+                        'is_invoiced' => true,
+                        'invoice_date' => now(),
+                    ]);
+                } else {
+                    $airExport->charges()->create([
+                        'party' => $cData['party'] ?? 'Custom',
+                        'sal' => $cData['sal'] ?? 'Air',
+                        'type' => ($cData['pr'] ?? 'Rec') === 'Pay' ? 'AP' : 'AR',
+                        'pc' => ($cData['ppc'] ?? 'Colle') === 'Prepaid' ? 'PREPAID' : 'COLLECT',
+                        'charge_code' => $cData['chrg_code'] ?? '',
+                        'charge_name' => $cData['charge_name'] ?? '',
+                        'currency_id' => $currencyId,
+                        'rate' => $rate,
+                        'qty' => $qty,
+                        'unit' => $cData['qty_type'] ?? 'B/L',
+                        'roe' => $roe,
+                        'tax_percent' => $vat,
+                        'amount' => $amt,
+                        'tax_amount' => $taxAmt,
+                        'total_amount' => $totAmt,
+                        'invoice_no' => $invNo,
+                        'is_invoiced' => true,
+                        'invoice_date' => now(),
+                    ]);
+                }
+            }
+        }
+
+        // Auto mark all charges for this shipment as invoiced
+        Charge::where('chargeable_type', 'App\Models\AirExport')
+            ->where('chargeable_id', $airExportId)
+            ->update([
+                'is_invoiced' => true,
+                'invoice_no' => $invNo,
+                'invoice_date' => now(),
+            ]);
+
+        // === AUTO-POPULATION INTEGRATION ===
+        $shipment = AirExport::with([
+            'forwardingAgent', 'carrier', 'dmShipper', 'dmConsignee', 'dmNotify', 
+            'agent', 'salesPerson', 'dmCustomer', 'coLoader', 'hbls'
+        ])->find($airExportId);
+
+        $autoPopService = new ShipmentMemoAutoPopulationService();
+        $autoPopulatedData = [
+            'master_bl' => $autoPopService->getAutoPopulatedData('air-export', $shipment, 'master_bl'),
+            'house_bl' => $autoPopService->getAutoPopulatedData('air-export', $shipment, 'house_bl'),
+            'enabled_fields' => [
+                'master_bl' => $autoPopService->getEnabledFields('air-export', 'master_bl'),
+                'house_bl' => $autoPopService->getEnabledFields('air-export', 'house_bl'),
+            ],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'invoice_no' => $invNo,
+            'freight_invoice_url' => route('shipments.freight-invoice', ['type' => 'air-export', 'id' => $airExportId]),
+            'auto_populated_data' => $autoPopulatedData
+        ]);
+    }
+
+    public function exportChargesToExcel($airExportId)
+    {
+        $airExport = AirExport::with(['charges.billTo', 'charges.vendor', 'charges.currency'])->findOrFail($airExportId);
+        $charges = $airExport->charges;
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="air-export-charges-' . $airExportId . '-' . now()->format('Y-m-d') . '.csv"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+        ];
+
+        $callback = function () use ($charges) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Party', 'Type', 'P/C', 'Code', 'Rate', 'Qty', 'Unit', 'Amount', 'ROE', 'VAT %', 'Total Amount', 'Invoice No', 'Remark']);
+            foreach ($charges as $c) {
+                fputcsv($file, [
+                    $c->type === 'AP' ? ($c->vendor->name ?? '--') : ($c->billTo->name ?? '--'),
+                    $c->type,
+                    $c->pc,
+                    $c->charge_code,
+                    $c->rate,
+                    $c->qty,
+                    $c->unit,
+                    $c->amount,
+                    $c->roe,
+                    $c->tax_percent ?? 0,
+                    $c->total_amount,
+                    $c->invoice_no,
+                    $c->remark
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function printCharges($airExportId)
+    {
+        $shipment = AirExport::with(['office', 'operator', 'carrier', 'depPort', 'dstPort', 'charges.currency', 'charges.billTo', 'charges.vendor'])->findOrFail($airExportId);
+        return view('air-export.print-charges', compact('shipment'));
+    }
+
+    // ==================== STATUS LOGS ====================
+    
+    public function getStatusLogs(Request $request, AirExport $airExport)
+    {
+        // Fetch activity logs for this shipment
+        $logs = \App\Models\ActivityLog::where('subject_type', 'App\Models\AirExport')
+            ->where('subject_id', $airExport->id)
+            ->with('causer')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'action' => $log->description ?? 'Updated',
+                    'user' => $log->causer ? $log->causer->name : 'System',
+                    'user_code' => $log->causer ? $log->causer->user_id : 'SYS',
+                    'date' => $log->created_at->format('m-d-Y'),
+                    'time' => $log->created_at->format('H:i'),
+                    'details' => $log->properties ?? [],
+                ];
+            });
+
+        return response()->json($logs);
+    }
+
+    // ==================== DOC CENTER OPERATIONS ====================
+    
+    public function getDocuments(Request $request, AirExport $airExport)
+    {
+        $documents = $airExport->documents()->orderBy('created_at', 'desc')->get();
+        
+        return response()->json([
+            'success' => true,
+            'documents' => $documents->map(function ($doc) {
+                return [
+                    'id' => $doc->id,
+                    'name' => $doc->original_name,
+                    'file_name' => $doc->file_name,
+                    'size' => $doc->file_size,
+                    'type' => $doc->mime_type,
+                    'uploaded_at' => $doc->created_at->format('Y-m-d H:i:s'),
+                    'uploaded_by' => $doc->user ? $doc->user->name : 'Unknown',
+                    'download_url' => route('air-export.documents.download', ['airExport' => $airExport->id, 'document' => $doc->id]),
+                ];
+            }),
+        ]);
+    }
+
+    public function uploadDocuments(Request $request, AirExport $airExport)
+    {
+        $request->validate([
+            'documents' => 'required|array',
+            'documents.*' => 'file|max:10240', // 10MB max
+        ]);
+
+        $uploaded = [];
+        
+        foreach ($request->file('documents') as $file) {
+            $originalName = $file->getClientOriginalName();
+            $fileName = time() . '_' . $originalName;
+            $path = $file->storeAs('air-export-documents/' . $airExport->id, $fileName, 'public');
+            
+            $document = $airExport->documents()->create([
+                'original_name' => $originalName,
+                'file_name' => $fileName,
+                'file_path' => $path,
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'uploaded_by' => auth()->id(),
+            ]);
+            
+            $uploaded[] = [
+                'id' => $document->id,
+                'name' => $document->original_name,
+                'size' => $document->file_size,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => count($uploaded) . ' document(s) uploaded successfully',
+            'documents' => $uploaded,
+        ]);
+    }
+
+    public function downloadDocument(AirExport $airExport, $documentId)
+    {
+        $document = $airExport->documents()->findOrFail($documentId);
+        $filePath = storage_path('app/public/' . $document->file_path);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
+        }
+        
+        return response()->download($filePath, $document->original_name);
+    }
+
+    public function deleteDocument(AirExport $airExport, $documentId)
+    {
+        $document = $airExport->documents()->findOrFail($documentId);
+        
+        // Delete physical file
+        $filePath = storage_path('app/public/' . $document->file_path);
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+        
+        $document->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Document deleted successfully',
+        ]);
+    }
+
+    public function hawbPrint($id, $hawbIndex)
+    {
+        if (file_exists(base_path('run_replace.php'))) {
+            require_once base_path('run_replace.php');
+        }
+        // Ensure the blank HAWB template PNG converted from PDF exists
+        $pngPath = public_path('hbl-backgrounds/hawb-blank-1.png');
+        if (!file_exists($pngPath)) {
+            $pdfPath = base_path('templateforhawbblank/HAWB BLANK COPY.pdf');
+            if (file_exists($pdfPath)) {
+                $outputPrefix = public_path('hbl-backgrounds/hawb-blank');
+                @exec("pdftoppm -png -r 300 " . escapeshellarg($pdfPath) . " " . escapeshellarg($outputPrefix));
+            }
+        }
+
+        $shipment = AirExport::with([
+            'office', 'operator', 'forwardingAgent', 'overseaAgent', 
+            'carrier', 'depPort', 'dstPort', 'packageUnit', 
+            'hbls.shipper', 'hbls.consignee', 'hbls.notifyParty', 
+            'hbls.customer', 'hbls.packageUnit'
+        ])->findOrFail($id);
+
+        $hbl = $shipment->hbls->values()->get($hawbIndex);
+        if (!$hbl) {
+            $hbl = $shipment->hbls->first();
+        }
+
+        $mawbNo = $shipment->mawb_no ?? '';
+        $airlineCode = '';
+        $serialNo = '';
+        if (str_contains($mawbNo, '-')) {
+            $parts = explode('-', $mawbNo, 2);
+            $airlineCode = $parts[0];
+            $serialNo = $parts[1];
+        } elseif (strlen($mawbNo) >= 3) {
+            $airlineCode = substr($mawbNo, 0, 3);
+            $serialNo = substr($mawbNo, 3);
+        }
+
+        $getCountryName = function($country) {
+            if (is_null($country)) return '';
+            if (is_string($country) || is_numeric($country)) return (string)$country;
+            return $country->name ?? $country->code ?? '';
+        };
+
+        $shipperStr = '';
+        if ($hbl && $hbl->shipper) {
+            $countryName = $getCountryName($hbl->shipper->country);
+            $cityLine = implode(', ', array_filter([$hbl->shipper->city, $hbl->shipper->state, $hbl->shipper->zip, $countryName]));
+            $shipperStr = implode("\n", array_filter([$hbl->shipper->name, $hbl->shipper->address, $cityLine]));
+        } elseif ($shipment->shipper) {
+            $shipperStr = implode("\n", array_filter([$shipment->shipper->name, $shipment->shipper->address]));
+        }
+
+        $consigneeStr = '';
+        if ($hbl && $hbl->consignee) {
+            $countryName = $getCountryName($hbl->consignee->country);
+            $cityLine = implode(', ', array_filter([$hbl->consignee->city, $hbl->consignee->state, $hbl->consignee->zip, $countryName]));
+            $consigneeStr = implode("\n", array_filter([$hbl->consignee->name, $hbl->consignee->address, $cityLine]));
+        }
+
+        $agentStr = '';
+        if ($shipment->forwardingAgent) {
+            $countryName = $getCountryName($shipment->forwardingAgent->country);
+            $cityLine = trim(($shipment->forwardingAgent->city ?? '') . ' ' . $countryName);
+            $agentStr = implode("\n", array_filter([$shipment->forwardingAgent->name, $shipment->forwardingAgent->address, $cityLine]));
+        } else {
+            $agentStr = "FREIGHTX LOGISTICS INC\n71246 FISHER ESTATE APT. 970\nNORTH KELSEY, KS 97983-3182\nUNITED STATES";
+        }
+
+        $notifyStr = '';
+        if ($hbl && $hbl->notifyParty) {
+            $countryName = $getCountryName($hbl->notifyParty->country);
+            $cityLine = implode(', ', array_filter([$hbl->notifyParty->city, $hbl->notifyParty->state, $hbl->notifyParty->zip, $countryName]));
+            $notifyStr = implode("\n", array_filter(['NOTIFY: ' . $hbl->notifyParty->name, $hbl->notifyParty->address, $cityLine]));
+        } elseif ($shipment->notifyParty) {
+            $countryName = $getCountryName($shipment->notifyParty->country);
+            $cityLine = implode(', ', array_filter([$shipment->notifyParty->city, $shipment->notifyParty->state, $shipment->notifyParty->zip, $countryName]));
+            $notifyStr = implode("\n", array_filter(['NOTIFY: ' . $shipment->notifyParty->name, $shipment->notifyParty->address, $cityLine]));
+        } else {
+            $notifyStr = "NOTIFY: SAME AS CONSIGNEE";
+        }
+
+        $overseaStr = '';
+        if ($shipment->overseaAgent) {
+            $countryName = $getCountryName($shipment->overseaAgent->country);
+            $cityLine = implode(', ', array_filter([$shipment->overseaAgent->city, $shipment->overseaAgent->state, $shipment->overseaAgent->zip, $countryName]));
+            $overseaStr = implode("\n", array_filter(['OVERSEA AGENT: ' . $shipment->overseaAgent->name, $shipment->overseaAgent->address, $cityLine]));
+        } else {
+            $overseaStr = "OVERSEA AGENT: FREIGHTX GLOBAL NETWORK\nLONDON OFFICE, UK";
+        }
+
+        $pkgQty = ($hbl->pkg_qty ?? 0) ?: ($shipment->pkg_qty ?? 0);
+        $pkgUnit = $hbl?->packageUnit?->code ?? $shipment?->packageUnit?->code ?? 'CARTON(S)';
+
+        $data = [
+            'hawb_number' => $hbl->hawb_no ?? ('MAH-' . str_pad($shipment->id, 7, '0', STR_PAD_LEFT)),
+            'mawb_number' => $mawbNo,
+            'airline_code' => $airlineCode ?: '016',
+            'departure_code' => $shipment->depPort?->code ?? 'LAX',
+            'serial_no' => $serialNo ?: '2034 6045',
+            'file_no' => $shipment->file_no ?? ('MAE-' . date('Y') . str_pad($shipment->id, 4, '0', STR_PAD_LEFT)),
+            
+            'shipper' => $shipperStr,
+            'shipper_account_no' => $hbl->shipper?->account_no ?? '',
+
+            'consignee' => $consigneeStr,
+            'consignee_account_no' => $hbl->consignee?->account_no ?? '',
+
+            'issuing_agent' => $agentStr,
+            'agent_iata_code' => $shipment->forwardingAgent?->iata_code ?? '',
+            'agent_account_no' => $shipment->forwardingAgent?->account_no ?? '',
+            
+            'notify_info' => $notifyStr,
+            'oversea_info' => $overseaStr,
+
+            'airport_departure' => ($shipment->depPort?->code ? '(' . $shipment->depPort->code . ') ' : '') . ($shipment->depPort?->name ?? 'LOS ANGELES INTL'),
+            'airport_destination' => ($shipment->dstPort?->code ? '(' . $shipment->dstPort->code . ') ' : '') . ($shipment->dstPort?->name ?? 'LONDON HEATHROW'),
+            'routing_to1' => $shipment->dstPort?->code ?? 'LHR',
+            'routing_by1' => $shipment->carrier?->name ?? '3M COMPANY',
+            'routing_to2' => '',
+            'routing_by2' => '',
+            'routing_to3' => '',
+            'routing_by3' => '',
+            
+            'requested_flight_no' => $shipment->flight_no ?? 'UA923',
+            'requested_flight_date' => $shipment->etd ? (is_string($shipment->etd) ? substr($shipment->etd, 5, 5) : $shipment->etd->format('m-d')) : '05-20',
+            'currency' => 'CAD',
+            'chgs_code' => 'PP',
+            'wt_val_ppd' => true,
+            'wt_val_coll' => false,
+            'other_ppd' => true,
+            'other_coll' => false,
+            'dv_carriage' => $hbl->dv_carriage ?? 'NVD',
+            'dv_customs' => $hbl->dv_customs ?? 'NCV',
+            'insurance_amount' => $hbl->insurance ?? 'XXX',
+
+            'accounting_info' => $hbl->hbl_remark ?? '',
+            'handling_info' => $hbl->handling_info ?? $shipment->handling_info ?? '',
+            'export_destination' => 'UNITED KINGDOM',
+
+            'pkg_qty' => $pkgQty ? (number_format($pkgQty) . "\n" . $pkgUnit) : ("0\n" . $pkgUnit),
+            'gross_weight' => ($hbl->gross_weight ?? 0) ?: ($shipment->gross_weight ?? 0),
+            'weight_unit' => 'kg',
+            'rate_class' => '',
+            'commodity_item_no' => '',
+            'chargeable_weight' => ($hbl->chargeable_weight ?? 0) ?: ($shipment->chargeable_weight ?? 0),
+            'rate_charge' => ($hbl->selling_rate ?? 0) ?: ($shipment->selling_rate ?? 0),
+            'total_charge' => 'AS ARRANGED',
+            'nature_quantity' => ($hbl->commodity ?? $hbl->description ?? '"FREIGHT PREPAID"'),
+
+            'prepaid_weight_charge' => 'AS ARRANGED',
+            'collect_weight_charge' => '',
+            'prepaid_valuation' => '',
+            'collect_valuation' => '',
+            'prepaid_tax' => '',
+            'collect_tax' => '',
+            'due_agent_prepaid' => '',
+            'due_agent_collect' => '',
+            'due_carrier_prepaid' => '',
+            'due_carrier_collect' => '',
+            'total_prepaid' => 'AS ARRANGED',
+            'total_collect' => '',
+
+            'executed_date' => $shipment->post_date ? (is_string($shipment->post_date) ? substr($shipment->post_date, 0, 10) : $shipment->post_date->format('m-d-Y')) : date('m-d-Y'),
+            'executed_place' => $shipment->depPort?->code ?? 'LAX',
+            'signature_carrier' => ($shipment->carrier?->name ?? 'FREIGHTX') . "\n" . ($shipment->forwardingAgent?->name ?? '3M COMPANY'),
+        ];
+
+        return view('air-export.hawb-print', compact('data', 'shipment', 'hbl', 'hawbIndex'));
     }
 }

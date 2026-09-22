@@ -13,7 +13,7 @@
     }
 }"
 @sidebar-toggled.window="isCollapsed = document.body.classList.contains('sidebar-collapsed')"
-x-init="if(activeMenu) openMenus.push(activeMenu)">
+x-init="if(activeMenu) { openMenus.push(activeMenu); if(activeMenu === 'settings') openMenus.push('settings-menu'); }">
     <div class="flex flex-col w-[200px] h-screen border-r border-white/10" style="background-color: #405189 !important; color: #ffffff !important;">
         <!-- Logo Area -->
         <div class="flex items-center h-[50px] px-4 border-b border-white/10 justify-between" style="background-color: #405189 !important;">
@@ -31,18 +31,22 @@ x-init="if(activeMenu) openMenus.push(activeMenu)">
             <nav class="flex-1 w-full text-[10px] font-medium pb-10">
 <br><br>
                 <!-- Main Items -->
-                <a href="/" class="sidebar-nav-item flex items-center  transition-all duration-200 {{ request()->is('/') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;">
-                    <i class="fa fa-dashboard w-5 text-center mr-3 text-[12px]"></i>
-                    <span class="uppercase tracking-widest font-bold">Dashboard</span>
+                <a href="/" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is('/') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;" :class="isCollapsed ? 'justify-center px-0' : 'px-5'">
+                    <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
+                        <i class="fa fa-dashboard text-center text-[12px]" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
+                        <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Dashboard</span>
+                    </div>
                 </a>
 
-                <a href="/action-center" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is('action-center') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;">
-                    <i class="fa fa-rocket w-5 text-center mr-3 text-[12px]"></i>
-                    <span class="uppercase tracking-widest font-bold">Action Center</span>
+                <a href="/action-center" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is('action-center') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;" :class="isCollapsed ? 'justify-center px-0' : 'px-5'">
+                    <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
+                        <i class="fa fa-rocket text-center text-[12px]" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
+                        <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Action Center</span>
+                    </div>
                 </a>
 
                 <!-- Modules Header -->
-                <div class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">Modules</div>
+                <div x-show="!isCollapsed" class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">Modules</div>
 
                 @php
                     $menus = [
@@ -52,8 +56,8 @@ x-init="if(activeMenu) openMenus.push(activeMenu)">
                             ['url' => '/ocean-import/list', 'label' => 'My Shipment List'],
                             ['url' => '/ocean-import/list/mbl', 'label' => 'Master B/L List'],
                             ['url' => '/ocean-import/list/hbl', 'label' => 'House B/L List'],
-                            ['url' => '/ocean-import/list/containers', 'label' => 'My Containers'],
-                            ['url' => '/edi-import', 'label' => 'EDI History'],
+                            // ['url' => '/ocean-import/list/containers', 'label' => 'My Containers'], // Hidden per client request
+                            // ['url' => '/edi-import', 'label' => 'EDI History'], // Hidden per client request
                         ]],
                         ['id' => 'ocean-export', 'label' => 'Ocean Export', 'icon' => 'fa-anchor', 'sub' => [
                             ['url' => '/ocean-export/create', 'label' => 'New Shipment'],
@@ -118,8 +122,8 @@ x-init="if(activeMenu) openMenus.push(activeMenu)">
                             ['label' => 'Payment', 'type' => 'group', 'items' => [
                                 ['url' => '/accounting/payment/receive', 'label' => 'Receive Payment'],
                                 ['url' => '/accounting/payment/make', 'label' => 'Make Payment'],
-                                ['url' => '/accounting/payment/received-list', 'label' => 'Payment Received List'],
-                                ['url' => '/accounting/payment/made-list', 'label' => 'Payment Made List'],
+                                ['url' => '/accounting/payment/received-list', 'label' => 'Payment Received List (A/R)'],
+                                ['url' => '/accounting/payment/made-list', 'label' => 'Payment Made List (A/P)'],
                             ]],
                             ['label' => 'Bank', 'type' => 'group', 'items' => [
                                 ['url' => '/accounting/bank/book-balance', 'label' => 'Bank Book Balance'],
@@ -178,16 +182,17 @@ x-init="if(activeMenu) openMenus.push(activeMenu)">
                      @mouseenter="if(isCollapsed) hovered = true"
                      @mouseleave="hovered = false"
                      class="relative">
-                    <button @click="open = !open; if(open && !openMenus.includes('{{ $menu['id'] }}')) openMenus.push('{{ $menu['id'] }}'); else if(!open) openMenus = openMenus.filter(m => m !== '{{ $menu['id'] }}')" class="sidebar-nav-item w-full flex items-center justify-between transition-all duration-200 nav-link">
-                        <div class="flex items-center">
-                            <i class="fa {{ $menu['icon'] }} w-5 text-center mr-3 text-[12px] opacity-70"></i>
-                            <span class="uppercase tracking-widest font-bold">{{ $menu['label'] }}</span>
+                    <button @click="open = !open; if(open && !openMenus.includes('{{ $menu['id'] }}')) openMenus.push('{{ $menu['id'] }}'); else if(!open) openMenus = openMenus.filter(m => m !== '{{ $menu['id'] }}')"
+                            class="sidebar-nav-item w-full flex items-center transition-all duration-200 nav-link"
+                            :class="isCollapsed ? 'justify-center px-0' : 'justify-between px-5'">
+                        <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
+                            <i class="fa {{ $menu['icon'] }} text-center text-[12px] opacity-70" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
+                            <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">{{ $menu['label'] }}</span>
                         </div>
-                        <i :class="{'rotate-90': open}" class="fa fa-angle-right text-[7px] transition-transform duration-200 opacity-30"></i>
                     </button>
                     <div x-show="(!isCollapsed && open) || (isCollapsed && hovered)"
-                         :class="isCollapsed ? 'collapsed-floating-submenu' : ''"
-                         style="background-color: #3b4b7a !important; border-top: 1px solid rgba(255,255,255,0.05); z-index: 99999; max-width: 100%;">
+                         :class="isCollapsed ? ('collapsed-floating-submenu ' + ({{ $loop->index }} >= 5 ? 'collapsed-floating-submenu-bottom' : '')) : ''"
+                         style="background-color: #3b4b7a !important; border-top: 1px solid rgba(255,255,255,0.05); z-index: 99999;">
                         @foreach($menu['sub'] as $sub)
                             @if(isset($sub['type']) && $sub['type'] === 'group')
                                 @php
@@ -199,7 +204,6 @@ x-init="if(activeMenu) openMenus.push(activeMenu)">
                                 <div x-data="{ subOpen: {{ $subOpen ? 'true' : 'false' }} }" class="border-b border-white/5 last:border-none">
                                     <button @click="subOpen = !subOpen" class="w-full flex items-center justify-between text-[8.5px] uppercase tracking-widest text-white/60 hover:text-white transition-all duration-200" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; padding-right: 20px !important;">
                                         <span class="font-bold">{{ $sub['label'] }}</span>
-                                        <i :class="{'rotate-90': subOpen}" class="fa fa-angle-right text-[7px] transition-transform duration-200"></i>
                                     </button>
                                     <div x-show="subOpen" class="bg-black/10">
                                         @foreach($sub['items'] as $item)
@@ -220,18 +224,101 @@ x-init="if(activeMenu) openMenus.push(activeMenu)">
                 @endforeach
 
                 <!-- Intelligence Section -->
-                <div class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">Intelligence</div>
+                <div x-show="!isCollapsed" class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">Intelligence</div>
 
-                @foreach([
-                    ['url' => '/crm', 'label' => 'Customers', 'icon' => 'fa-users'],
-                    ['url' => '/settings', 'label' => 'Settings', 'icon' => 'fa-cogs'],
-                    ['url' => '/useful-links', 'label' => 'Useful Links', 'icon' => 'fa-link'],
-                ] as $item)
-                <a href="{{ $item['url'] }}" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is(trim($item['url'], '/').'*') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;">
-                    <i class="fa {{ $item['icon'] }} w-5 text-center mr-3 text-[12px] opacity-70"></i>
-                    <span class="uppercase tracking-widest font-bold">{{ $item['label'] }}</span>
+                <a href="/crm" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is('crm*') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;" :class="isCollapsed ? 'justify-center px-0' : 'px-5'">
+                    <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
+                        <i class="fa fa-users text-center text-[12px] opacity-70" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
+                        <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Customers</span>
+                    </div>
                 </a>
-                @endforeach
+
+                <!-- Settings Menu with Accounting Submenu -->
+                <div x-data="{ open: openMenus.includes('settings-menu'), hovered: false, isCollapsed: document.body.classList.contains('sidebar-collapsed') }"
+                     @sidebar-toggled.window="isCollapsed = document.body.classList.contains('sidebar-collapsed')"
+                     @mouseenter="if(isCollapsed) hovered = true"
+                     @mouseleave="hovered = false"
+                     class="relative">
+                    <button @click="open = !open; if(open && !openMenus.includes('settings-menu')) openMenus.push('settings-menu'); else if(!open) openMenus = openMenus.filter(m => m !== 'settings-menu')"
+                            class="sidebar-nav-item w-full flex items-center transition-all duration-200 nav-link"
+                            :class="isCollapsed ? 'justify-center px-0' : 'justify-between px-5'">
+                        <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
+                            <i class="fa fa-cogs text-center text-[12px] opacity-70" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
+                            <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Settings</span>
+                        </div>
+                    </button>
+                    <div x-show="(!isCollapsed && open) || (isCollapsed && hovered)"
+                         :class="isCollapsed ? 'collapsed-floating-submenu collapsed-floating-submenu-bottom' : ''"
+                         style="background-color: #3b4b7a !important; border-top: 1px solid rgba(255,255,255,0.05); z-index: 99999;">
+                        
+                        <!-- Accounting Nested Submenu -->
+                        @php
+                            $accountingOpen = Request::is('accounting/currency-table') || Request::is('accounting/bank-list') || Request::is('accounting/billing-code-list') || Request::is('accounting/gl-code-list');
+                        @endphp
+                        <div x-data="{ subOpen: {{ $accountingOpen ? 'true' : 'false' }} }" class="border-b border-white/5 last:border-none">
+                            <button @click="subOpen = !subOpen" class="w-full flex items-center justify-between text-[8.5px] uppercase tracking-widest text-white/60 hover:text-white transition-all duration-200" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; padding-right: 20px !important;">
+                                <span class="font-bold">Accounting</span>
+                            </button>
+                            <div x-show="subOpen" class="bg-black/10">
+                                <a href="/accounting/currency-table" class="block text-[8px] transition-all duration-200 {{ Request::is('accounting/currency-table') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest" style="padding-left: 68px !important; padding-top: 8px !important; padding-bottom: 8px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                                    <i class="fa fa-circle-o mr-2 opacity-30" style="font-size: 6px;"></i> Currency Table
+                                </a>
+                                <a href="/accounting/bank-list" class="block text-[8px] transition-all duration-200 {{ Request::is('accounting/bank-list') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest" style="padding-left: 68px !important; padding-top: 8px !important; padding-bottom: 8px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                                    <i class="fa fa-circle-o mr-2 opacity-30" style="font-size: 6px;"></i> Bank List
+                                </a>
+                                <a href="/accounting/billing-code-list" class="block text-[8px] transition-all duration-200 {{ Request::is('accounting/billing-code-list') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest" style="padding-left: 68px !important; padding-top: 8px !important; padding-bottom: 8px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                                    <i class="fa fa-circle-o mr-2 opacity-30" style="font-size: 6px;"></i> Billing Code
+                                </a>
+                                <a href="/accounting/gl-code-list" class="block text-[8px] transition-all duration-200 {{ Request::is('accounting/gl-code-list') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest" style="padding-left: 68px !important; padding-top: 8px !important; padding-bottom: 8px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                                    <i class="fa fa-circle-o mr-2 opacity-30" style="font-size: 6px;"></i> G/L Code
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- To Do List Link -->
+                        <a href="/settings/todo-list" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/todo-list*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-check-square-o mr-2" style="font-size: 8px;"></i> To Do List
+                        </a>
+                        
+                        <!-- Container TP/SZ Link -->
+                        <a href="/settings/container-types" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/container-types*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-cube mr-2" style="font-size: 8px;"></i> Container TP/SZ
+                        </a>
+                        
+                        <!-- Freight Default Values Link -->
+                        <a href="/settings/freight-default-values" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/freight-default-values*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-calculator mr-2" style="font-size: 8px;"></i> Freight Default Value
+                        </a>
+                        
+                        <!-- User Management Link -->
+                        <a href="/settings/user-management" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/user-management*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-users mr-2" style="font-size: 8px;"></i> User Management
+                        </a>
+                        
+                        <!-- Shipment Memo Auto-Load Link -->
+                        <a href="/settings/shipment-memo-auto-load" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/shipment-memo-auto-load*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-file-text-o mr-2" style="font-size: 8px;"></i> Shipment Memo Auto-Load
+                        </a>
+                        
+                        <!-- AWB No. Management Link -->
+                        <a href="/settings/awb-management" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/awb-management*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-barcode mr-2" style="font-size: 8px;"></i> AWB No. Management
+                        </a>
+                        
+                        <!-- HBL Templates Link -->
+                        <a href="/settings/hbl-templates" class="block text-[9px] transition-all duration-200 {{ Request::is('settings/hbl-templates*') ? 'active-sub-link' : 'sub-link' }} uppercase tracking-widest border-b border-white/5 last:border-none" style="padding-left: 52px !important; padding-top: 10px !important; padding-bottom: 10px !important; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
+                            <i class="fa fa-file-text-o mr-2" style="font-size: 8px;"></i> HBL Templates
+                        </a>
+                        
+                    </div>
+                </div>
+
+                <a href="/useful-links" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is('useful-links*') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;" :class="isCollapsed ? 'justify-center px-0' : 'px-5'">
+                    <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
+                        <i class="fa fa-link text-center text-[12px] opacity-70" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
+                        <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Useful Links</span>
+                    </div>
+                </a>
 
             </nav>
         </div>

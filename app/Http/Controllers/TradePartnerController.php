@@ -111,14 +111,66 @@ class TradePartnerController extends Controller
         return view('trade-partner.list', compact('partners', 'countries', 'users'));
     }
 
+    public function destroy(TradePartner $tradePartner)
+    {
+        if ($this->isInUse([$tradePartner->id])) {
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete: Trade Partner is linked to active shipments, invoices, or quotations.'], 422);
+            }
+            return redirect()->route('trade-partner.index')->with('error', 'Cannot delete: Trade Partner is linked to active shipments, invoices, or quotations.');
+        }
+
+        $tradePartner->delete();
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Trade Partner deleted.']);
+        }
+        return redirect()->route('trade-partner.index')->with('success', 'Trade Partner deleted.');
+    }
+
     public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids', []);
         if (empty($ids)) {
             return response()->json(['success' => false, 'message' => 'No trade partners selected.'], 422);
         }
+
+        if ($this->isInUse($ids)) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete: One or more selected Trade Partners are linked to active shipments, invoices, or quotations.'], 422);
+        }
+
         TradePartner::whereIn('id', $ids)->delete();
         return response()->json(['success' => true, 'message' => count($ids) . ' trade partner(s) deleted.']);
+    }
+
+    private function isInUse(array $ids): bool
+    {
+        if (empty($ids)) return false;
+
+        $checks = [
+            ['table' => 'ocean_imports', 'columns' => ['agent_id', 'shipper_id', 'consignee_id', 'notify_id', 'customer_id', 'bill_to_id', 'customs_broker_id', 'trucker_id', 'delivery_location_id']],
+            ['table' => 'ocean_exports', 'columns' => ['agent_id', 'shipper_id', 'consignee_id', 'notify_id', 'customer_id', 'bill_to_id', 'customs_broker_id', 'trucker_id', 'delivery_location_id']],
+            ['table' => 'air_imports', 'columns' => ['agent_id', 'shipper_id', 'consignee_id', 'notify_id', 'customer_id', 'bill_to_id', 'customs_broker_id', 'trucker_id', 'delivery_location_id']],
+            ['table' => 'air_exports', 'columns' => ['agent_id', 'shipper_id', 'consignee_id', 'notify_id', 'customer_id', 'bill_to_id', 'customs_broker_id', 'trucker_id', 'delivery_location_id']],
+            ['table' => 'quotations', 'columns' => ['customer_id', 'agent_id', 'shipper_id', 'consignee_id']],
+            ['table' => 'invoices', 'columns' => ['bill_to_id']],
+            ['table' => 'invoice_lines', 'columns' => ['bill_to_id', 'vendor_id']],
+            ['table' => 'payments', 'columns' => ['trade_partner_id']],
+            ['table' => 'journal_entries', 'columns' => ['trade_partner_id']],
+        ];
+
+        foreach ($checks as $check) {
+            if (\Illuminate\Support\Facades\Schema::hasTable($check['table'])) {
+                foreach ($check['columns'] as $column) {
+                    if (\Illuminate\Support\Facades\Schema::hasColumn($check['table'], $column)) {
+                        if (\Illuminate\Support\Facades\DB::table($check['table'])->whereIn($column, $ids)->exists()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return false;
     }
 
     public function bulkRestore(Request $request)
@@ -447,7 +499,7 @@ class TradePartnerController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Trade Partner updated successfully!',
-                    'redirect' => route('trade-partner.edit', $tradePartner->id)
+                    'id' => $tradePartner->id
                 ]);
             }
 
@@ -461,11 +513,7 @@ class TradePartnerController extends Controller
         }
     }
 
-    public function destroy(TradePartner $tradePartner)
-    {
-        $tradePartner->delete();
-        return redirect()->route('trade-partner.index')->with('success', 'Trade Partner deleted.');
-    }
+
 
     public function uploadDocument(Request $request, TradePartner $tradePartner)
     {

@@ -14,8 +14,8 @@
         .table-custom th, .table-custom td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; vertical-align: middle; }
         .table-custom th { background: #f9fafb; font-weight: 600; color: #333; }
         .table-custom tr:hover td { background-color: #f5f5f5; }
-        .btn-gofreight { background-color: #1abc9c; color: white; border: 1px solid #1abc9c; padding: 4px 10px; font-size: 12px; font-weight: 600; border-radius: 3px; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
-        .btn-gofreight:hover { background-color: #16a085; }
+        .btn-freightx { background-color: #1abc9c; color: white; border: 1px solid #1abc9c; padding: 4px 10px; font-size: 12px; font-weight: 600; border-radius: 3px; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+        .btn-freightx:hover { background-color: #16a085; }
         .btn-default-gf { background-color: #fff; color: #333; border: 1px solid #ccc; padding: 4px 10px; font-size: 12px; font-weight: 600; border-radius: 3px; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
         .btn-default-gf:hover { background-color: #e6e6e6; border-color: #adadad; }
     </style>
@@ -32,7 +32,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h1 class="caption-subject" style="font-size: 18px;">Create Ocean Export Booking</h1>
             <div style="display: flex; gap: 8px;">
-                <button class="btn-gofreight"><i class="fa fa-save"></i> SAVE BOOKING</button>
+                <button class="btn-freightx"><i class="fa fa-save"></i> SAVE BOOKING</button>
             </div>
         </div>
         <div style="height: 500px; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px;"></div>
@@ -160,13 +160,13 @@
                     
                     <div style="text-align: center; margin-top: 15px;">
                         <button type="button" class="btn-default-gf" @click="clearSearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Clear</button>
-                        <button type="button" class="btn-gofreight" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
+                        <button type="button" class="btn-freightx" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
                     </div>
                     
                     <hr style="margin: 20px 0; border-top: 1px solid #eee;">
                     
                     <div style="text-align: right; margin-bottom: 5px;">
-                        <button type="button" class="btn-gofreight" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
+                        <button type="button" class="btn-freightx" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
                     </div>
                     
                     <div style="border: 1px solid #e7ecf1; height: 310px; overflow-y: auto; display: flex; flex-direction: column;">
@@ -253,7 +253,7 @@
                                 <td style="width: 35%;">
                                     <div style="display: flex; width: 100%;">
                                         <input type="date" class="form-control-gf" x-model="bookingForm.booking_date" style="height: 24px; border-right: none;">
-                                        <div style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;"><i class="fa fa-calendar"></i></div>
+                                        <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </td>
                             </tr>
@@ -262,14 +262,14 @@
                                 <td>
                                     <div style="display: flex; width: 100%;">
                                         <input type="date" class="form-control-gf" x-model="bookingForm.etd" style="height: 24px; border-right: none;">
-                                        <div style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;"><i class="fa fa-calendar"></i></div>
+                                        <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </td>
                                 <td style="background: #f9fafb; font-weight: 600;">ETA</td>
                                 <td>
                                     <div style="display: flex; width: 100%;">
                                         <input type="date" class="form-control-gf" x-model="bookingForm.eta" style="height: 24px; border-right: none;">
-                                        <div style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;"><i class="fa fa-calendar"></i></div>
+                                        <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </td>
                             </tr>
@@ -355,11 +355,11 @@
             <div class="modal-footer" style="padding: 15px; border-top: 1px solid #e5e5e5; display: flex; justify-content: flex-end; gap: 10px; background: #f9fafb; border-radius: 0 0 4px 4px;">
                 <button type="button" class="btn-default-gf" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;" @click="closeQuoteModal()">Cancel</button>
                 <button type="button" class="btn-default-gf" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep > 1" @click="quoteStep--">Back</button>
-                <button type="button" class="btn-gofreight" 
+                <button type="button" class="btn-freightx" 
                         :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!bookingForm.booking_date || !bookingForm.etd))" 
                         :style="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!bookingForm.booking_date || !bookingForm.etd))) ? 'background: #ccc; border: none; color: #666; cursor: not-allowed; opacity: 0.7; padding: 6px 12px; font-size: 12px; border-radius: 4px;' : 'background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;'" 
                         x-show="quoteStep < 3" @click="quoteStep++">Next <i class="fa fa-arrow-right"></i></button>
-                <button type="button" class="btn-gofreight" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()"><i class="fa fa-check"></i> Finish</button>
+                <button type="button" class="btn-freightx" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()"><i class="fa fa-check"></i> Finish</button>
             </div>
         </div>
     </div>

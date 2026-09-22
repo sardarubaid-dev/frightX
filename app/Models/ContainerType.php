@@ -4,22 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ContainerType extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'code',
         'name',
-        'size_feet',
-        'max_weight_kg',
-        'max_cbm',
+        'description',
+        'ams_type_code',
+        'type',
+        'teu',
+        'is_active',
     ];
 
-    public function oceanImportContainers()
-    {
-        return $this->hasMany(OceanImportContainer::class);
-    }
+    protected $casts = [
+        'teu' => 'decimal:2',
+        'is_active' => 'boolean',
+    ];
 }

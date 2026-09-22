@@ -24,7 +24,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>GoFreight</h1>
+        <h1>FreightX</h1>
     </div>
 
     <div class="title">Journal Report</div>
@@ -51,7 +51,7 @@
         <tbody>
             @forelse($results as $row)
             <tr>
-                <td>{{ $row['date'] }}</td>
+                <td>{{ $row['date_formatted'] ?? $row['date'] }}</td>
                 <td>{{ $row['gl_no'] }}</td>
                 <td>{{ $row['gl_desc'] }}</td>
                 <td class="center">{{ $row['source'] }}</td>

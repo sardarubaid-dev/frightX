@@ -124,13 +124,13 @@
                         </div>
                         <div style="text-align: center; margin-top: 15px;">
                             <button type="button" class="btn-default-gf" @click="clearSearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Clear</button>
-                            <button type="button" class="btn-gofreight" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
+                            <button type="button" class="btn-freightx" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
                         </div>
                         
                         <hr style="margin: 20px 0; border-top: 1px solid #eee;">
                         
                         <div style="text-align: right; margin-bottom: 5px;">
-                            <button type="button" class="btn-gofreight" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
+                            <button type="button" class="btn-freightx" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
                         </div>
                         
                         <div style="border: 1px solid #e7ecf1; height: 310px; overflow-y: auto; display: flex; flex-direction: column;">
@@ -235,8 +235,8 @@
                                     <td style="width: 35%;">
                                         <div style="display: flex; gap: 5px;">
                                             <input type="text" class="form-control-gf" x-model="quoteForm.mawb_no" style="height: 24px; flex: 1;">
-                                            <button class="btn-gofreight"><i class="fa fa-external-link-square"></i></button>
-                                            <button class="btn-gofreight" disabled><i class="fa fa-magic"></i></button>
+                                            <button class="btn-freightx"><i class="fa fa-external-link-square"></i></button>
+                                            <button class="btn-freightx" disabled><i class="fa fa-magic"></i></button>
                                         </div>
                                     </td>
                                     <td style="background: #f9fafb; font-weight: 600; width: 15%;"><span style="color: red;">*</span>HAWB No.</td>
@@ -346,8 +346,8 @@
 
                 <div class="modal-footer" style="padding: 15px; border-top: 1px solid #e5e5e5; display: flex; justify-content: flex-end; gap: 10px; background: #f9fafb; border-radius: 0 0 4px 4px;">
                     <button type="button" class="btn-default-gf" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;" @click="closeQuoteModal()">Cancel</button>
-                    <button type="button" class="btn-gofreight" :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))" :style="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))) ? 'background: #ccc; border: none; color: #666; cursor: not-allowed; opacity: 0.7; padding: 6px 12px; font-size: 12px; border-radius: 4px;' : 'background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;'" x-show="quoteStep < 3" @click="quoteStep++">Next</button>
-                    <button type="button" class="btn-gofreight" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()">Confirm</button>
+                    <button type="button" class="btn-freightx" :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))" :style="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))) ? 'background: #ccc; border: none; color: #666; cursor: not-allowed; opacity: 0.7; padding: 6px 12px; font-size: 12px; border-radius: 4px;' : 'background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;'" x-show="quoteStep < 3" @click="quoteStep++">Next</button>
+                    <button type="button" class="btn-freightx" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()">Confirm</button>
                 </div>
                 </div>
             </div>

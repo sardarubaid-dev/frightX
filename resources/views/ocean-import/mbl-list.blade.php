@@ -39,7 +39,7 @@
             border-bottom: 1px solid #e2e8f0;
         }
         
-        /* Mobile Responsive Enhancements - OPTIMIZED FOR SMOOTH SCROLLING */
+        /* Mobile Responsive Enhancements - FIXED SCROLLING */
         @media (max-width: 768px) {
             .page-content { 
                 padding: 2px !important; 
@@ -89,7 +89,7 @@
                 height: 20px !important;
                 flex: 0 1 auto;
             }
-            .input-inline, .select-tool { 
+            .input-inline { 
                 width: 100% !important; 
                 font-size: 9px !important;
             }
@@ -120,7 +120,7 @@
             .grid-table { 
                 font-size: 8px !important;
                 width: auto !important;
-                min-width: 1600px !important;
+                min-width: 1600px !important; /* Ensures horizontal scroll */
                 table-layout: auto !important;
             }
             
@@ -337,7 +337,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -346,7 +346,7 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="exportExcel()" title="Export to CSV" id="btn-excel">
+                    <button class="btn-action-round white" onclick="exportExcel()" title="Download as CSV/Excel" id="btn-excel">
                         <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
@@ -354,35 +354,28 @@
 
             {{-- ── TOOLBAR ── --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <a class="btn-tool green" href="{{ route('ocean-import.create') }}" title="New Shipment" target="_blank">
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div class="btn-group">
+                        <a class="btn-tool green" href="{{ route('ocean-import.create') }}" title="New Shipment">
                             <i class="fa fa-plus"></i>
                         </a>
-                        <button class="btn-tool" id="btn-copy"   disabled title="Copy (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
-                    </div>
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
-                    </div>
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-profit-s" disabled onclick="profitSummary()" title="Generate Profit Report - Summary"><i class="fa fa-file-text-o"></i> Profit – Summary</button>
-                        <button class="btn-tool" id="btn-profit-d" disabled onclick="profitDetail()" title="Generate Profit Report - Detail"><i class="fa fa-file-text-o"></i> Profit – Detail</button>
-                        <button class="btn-tool" id="btn-arrival"  disabled onclick="arrivalNotice()" title="Generate Arrival Notice"><i class="fa fa-file-text-o"></i> Arrival Notice</button>
+                        <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()">
+                            <i class="fa fa-files-o"></i>
+                        </button>
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()">
+                            <i class="fa fa-trash"></i>
+                        </button>
                     </div>
                     <div class="btn-group">
-                        <select class="select-tool" id="sel-op" disabled onchange="changeOp(this)">
-                            <option value="">Change OP</option>
-                            @foreach($operators as $op)
-                                <option value="{{ $op->id }}">{{ $op->name }}</option>
-                            @endforeach
-                        </select>
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:150px;" placeholder="Quick search…" oninput="quickSearch(this.value)">
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;"
+                           placeholder="Quick search..." value="{{ request('search') }}"
+                           oninput="quickSearch(this.value)" onkeyup="if(event.key === 'Enter') this.blur()">
                 </div>
             </div>
 
@@ -549,15 +542,15 @@
             </div>
             </form>
 
-            {{-- ── PAGINATION FOOTER ── --}}
-            <div class="portlet-tool bottom">
-                <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $shipments->links() }}</div>
-                    <div style="font-size:10px;color:#64748b;">
-                        Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $shipments->total() }}</span> records
-                    </div>
-                </div>
-            </div>
+            {{-- ── PAGINATION ── --}}
+                                 <div class="portlet-tool bottom">
+                                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                                         <div id="pagination-container">{{ $shipments->links('vendor.pagination.custom') }}</div>
+                                         <div style="font-size:10px;color:#64748b;">
+                                             Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $shipments->total() }}</span> records
+                                         </div>
+                                     </div>
+                                 </div>
 
         </div>
     </div>

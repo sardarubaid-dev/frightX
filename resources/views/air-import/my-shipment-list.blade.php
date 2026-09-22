@@ -1,6 +1,44 @@
 <x-layout>
     @push('styles')
     <x-list-styles />
+    <style>
+        /* Button Group Styling - Better Alignment */
+        .btn-group {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .btn-group .btn-tool:not(:first-child) {
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-group .btn-tool {
+            border-radius: 0;
+            margin: 0;
+        }
+        
+        .btn-group .btn-tool:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .btn-group .btn-tool:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .portlet-tool {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+    </style>
     @endpush
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -77,7 +115,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -86,33 +124,27 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV/Excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             <div class="portlet-tool">
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a href="/air-import/create" class="btn-tool green" target="_blank"><i class="fa fa-plus"></i></a>
-                        <button class="btn-tool" id="btn-copy" disabled title="Copy Selected" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                        <a href="/air-import/create" class="btn-tool green"><i class="fa fa-plus"></i></a>
+                        <button class="btn-tool" id="btn-copy" disabled title="Copy Selected (select 1 row)" onclick="copySelected()">
+                            <i class="fa fa-files-o"></i>
+                        </button>
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()">
+                            <i class="fa fa-trash"></i>
+                        </button>
                     </div>
                     <div class="btn-group">
                         <button class="btn-tool" id="btn-block" disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
                         <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
-                    <div class="btn-group">
-                        <button class="btn-tool" disabled title="Profit Report Summary"><i class="fa fa-file-text-o"></i> Profit Report - Summary</button>
-                        <button class="btn-tool" disabled title="Profit Report Detail"><i class="fa fa-file-text-o"></i> Profit Report - Detail</button>
-                    </div>
-                    <select class="select-tool" id="bulk-op-select" disabled onchange="onBulkOpChange(this)">
-                        <option value="">Change OP</option>
-                        @foreach($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
-                    </select>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
@@ -178,9 +210,9 @@
 
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $shipments->links() }}</div>
+                    <div id="pagination-container">{{ $shipments->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
-                        Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span> &ndash; <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $shipments->total() }}</span> records
+                        Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $shipments->total() }}</span> records
                     </div>
                 </div>
             </div>

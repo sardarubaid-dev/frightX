@@ -81,10 +81,12 @@ class WarehouseReceiptController extends Controller
 
     public function create()
     {
-        $warehouses = TradePartner::where('type', 'WAREHOUSE')->get();
-        $customers = TradePartner::where('type', 'CLIENT')->get();
-        $shippers = TradePartner::whereIn('type', ['CLIENT', 'VENDOR'])->get();
-        $consignees = TradePartner::whereIn('type', ['CLIENT', 'VENDOR'])->get();
+        $warehouses = TradePartner::whereIn('type', ['WH', 'CF', 'CY', 'WAREHOUSE', 'CFS'])
+            ->orWhereJsonContains('popup_tips->warehouse', true)
+            ->get();
+        $customers = TradePartner::whereIn('type', ['CS', 'CLIENT'])->get();
+        $shippers = TradePartner::all();
+        $consignees = TradePartner::all();
         $offices = Office::where('is_active', true)->get();
         $users = User::all();
         $packageUnits = \App\Models\PackageUnit::all();
@@ -184,10 +186,12 @@ class WarehouseReceiptController extends Controller
             'created_at' => $d->created_at?->format('Y-m-d') ?? '',
         ])->values()->toArray();
         $memoData = $receipt->memos_data ?? [];
-        $warehouses = TradePartner::where('type', 'WAREHOUSE')->get();
-        $customers = TradePartner::where('type', 'CLIENT')->get();
-        $shippers = TradePartner::whereIn('type', ['CLIENT', 'VENDOR'])->get();
-        $consignees = TradePartner::whereIn('type', ['CLIENT', 'VENDOR'])->get();
+        $warehouses = TradePartner::whereIn('type', ['WH', 'CF', 'CY', 'WAREHOUSE', 'CFS'])
+            ->orWhereJsonContains('popup_tips->warehouse', true)
+            ->get();
+        $customers = TradePartner::whereIn('type', ['CS', 'CLIENT'])->get();
+        $shippers = TradePartner::all();
+        $consignees = TradePartner::all();
         $offices = Office::where('is_active', true)->get();
         $users = User::all();
         $packageUnits = \App\Models\PackageUnit::all();

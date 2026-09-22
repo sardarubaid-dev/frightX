@@ -48,13 +48,27 @@
                         </div>
                     </div>
                 </template>
+
+                <!-- Vessel Fields -->
+                <template x-if="module === 'vessel'">
+                    <div>
+                        <div class="form-group-gf" style="margin-bottom: 10px;">
+                            <label style="display:block; font-size:11px; font-weight:600; margin-bottom:4px;">Vessel Name</label>
+                            <input type="text" x-model="formData.name" class="form-control-gf" required style="height:24px; font-size:11px;">
+                        </div>
+                        <div class="form-group-gf" style="margin-bottom: 10px;">
+                            <label style="display:block; font-size:11px; font-weight:600; margin-bottom:4px;">IMO / Call Sign</label>
+                            <input type="text" x-model="formData.imo" class="form-control-gf" style="height:24px; font-size:11px;">
+                        </div>
+                    </div>
+                </template>
                 
                 <div x-show="errorMessage" x-text="errorMessage" style="color:red; font-size:11px; margin-top:10px;"></div>
             </div>
             
             <div class="modal-footer" style="padding: 10px 15px; text-align: right; border-top: 1px solid #eee; background: #f9f9f9;">
                 <button type="button" @click="closeModal()" class="btn-default-gf" style="padding:4px 12px; margin-right:5px;">Cancel</button>
-                <button type="submit" class="btn-gofreight" :disabled="isLoading" style="padding:4px 12px;">
+                <button type="submit" class="btn-freightx" :disabled="isLoading" style="padding:4px 12px;">
                     <span x-show="!isLoading">Save</span>
                     <span x-show="isLoading">Saving...</span>
                 </button>
@@ -107,6 +121,8 @@ function addNewModal() {
                 endpoint = '/api/trade-partners';
             } else if (this.module === 'port') {
                 endpoint = '/api/ports';
+            } else if (this.module === 'vessel') {
+                endpoint = '/api/vessels';
             }
             
             try {

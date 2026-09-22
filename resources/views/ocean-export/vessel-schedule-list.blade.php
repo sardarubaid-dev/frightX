@@ -2,7 +2,25 @@
     @push('styles')
     <x-list-styles />
     <style>
-        /* Mobile Responsive Enhancements */
+        /* Button Group Styling */
+        .btn-group {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .portlet-tool {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Mobile Responsive Enhancements - FIXED SCROLLING */
         @media (max-width: 768px) {
             .page-content { 
                 padding: 2px !important; 
@@ -208,7 +226,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -218,15 +236,15 @@
                         </div>
                     </div>
                     <button class="btn-action-round white" onclick="exportExcel()" title="Download as CSV/Excel">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             <div class="portlet-tool">
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('vessel-schedules.create') }}" title="New Schedule" target="_blank">
+                        <a class="btn-tool green" href="{{ route('vessel-schedules.create') }}" title="New Schedule">
                             <i class="fa fa-plus"></i>
                         </a>
                         <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()">
@@ -236,6 +254,10 @@
                             <i class="fa fa-trash"></i>
                         </button>
                     </div>
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
+                    </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
@@ -243,6 +265,8 @@
                            placeholder="Quick search..." oninput="quickSearch(this.value)" onkeyup="if(event.key === 'Enter') this.blur()">
                 </div>
             </div>
+
+            {{-- ── TABLE FORM ── --}}
 
             <div class="portlet-body">
                 <div class="grid-container">
@@ -314,14 +338,15 @@
                 </div>
             </div>
 
-            <div class="portlet-tool bottom">
-                <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $schedules->links() }}</div>
-                    <div style="font-size:10px;color:#64748b;">
-                        Showing <span id="stat-first">{{ $schedules->firstItem() ?? 0 }}</span> &ndash; <span id="stat-last">{{ $schedules->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $schedules->total() }}</span> records
-                    </div>
-                </div>
-            </div>
+            {{-- ── PAGINATION ── --}}
+                                 <div class="portlet-tool bottom">
+                                     <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                                         <div id="pagination-container">{{ $schedules->links('vendor.pagination.custom') }}</div>
+                                         <div style="font-size:10px;color:#64748b;">
+                                             Showing <span id="stat-first">{{ $schedules->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $schedules->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $schedules->total() }}</span> records
+                                         </div>
+                                     </div>
+                                 </div>
         </div>
     </div>
 

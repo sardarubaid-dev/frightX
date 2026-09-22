@@ -185,7 +185,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -194,21 +194,26 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV/Excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             {{-- ── TOOLBAR ── --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div class="btn-group">
+                        <button class="btn-tool green" onclick="window.location.href='{{ route('air-export.create') }}'" title="Add new Air Export">
+                            <i class="fa fa-plus"></i>
+                        </button>
                     </div>
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
                     <div class="btn-group">
                         <select class="select-tool" id="bulk-sales-select" disabled onchange="onBulkSalesChange(this)">
@@ -229,7 +234,7 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:150px;"
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;"
                            placeholder="Quick search…" oninput="quickSearch(this.value)" value="{{ request('search') }}">
                 </div>
             </div>
@@ -291,17 +296,9 @@
                                         <input type="checkbox" class="row-check" value="{{ $hbl->id }}" onchange="updateToolbar()">
                                     </td>
                                     <td class="sticky-col" style="left:25px;text-align:center;" onclick="event.stopPropagation()">
-                                        @if($isBlocked)
-                                            <i class="fa fa-ban" 
-                                               style="cursor:pointer;color:#e74c3c;font-size:10px;" 
-                                               title="Blocked - Cannot be edited"
-                                               onclick="showToast('warning', 'This HBL is blocked. Unblock it first to make changes.')"></i>
-                                        @else
-                                            <i class="fa fa-unlock" 
-                                               style="cursor:pointer;color:#22c55e;font-size:10px;" 
-                                               title="Unlocked"
-                                               onclick="showToast('info', 'HBL is unlocked')"></i>
-                                        @endif
+                                        <i class="fa {{ $isBlocked ? 'fa-lock' : 'fa-unlock' }}" 
+                                           style="color:{{ $isBlocked ? '#94a3b8' : '#22c55e' }};cursor:pointer;font-size:10px;" 
+                                           title="{{ $isBlocked ? 'Blocked' : 'Unlocked' }}"></i>
                                     </td>
                                     <td class="sticky-col" style="left:50px;font-weight:600;" onclick="event.stopPropagation()">
                                         <a href="/air-export/{{ $hbl->air_export_id }}/edit" class="col-link">{{ $hbl->hawb_no ?: '--' }}</a>
@@ -340,7 +337,7 @@
             {{-- ── PAGINATION ── --}}
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $hbls->links() }}</div>
+                    <div id="pagination-container">{{ $hbls->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
                         Showing <span id="stat-first">{{ $hbls->firstItem() ?? 0 }}</span> &ndash; <span id="stat-last">{{ $hbls->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $hbls->total() }}</span> records
                     </div>
@@ -571,7 +568,7 @@
                     if (row) {
                         var lockCell = row.querySelector('td:nth-child(2)');
                         if (lockCell) {
-                            lockCell.innerHTML = '<i class="fa fa-ban" style="cursor:pointer;color:#e74c3c;font-size:10px;" title="Blocked - Cannot be edited" onclick="showToast(\'warning\', \'This HBL is blocked. Unblock it first to make changes.\')"></i>';
+                            lockCell.innerHTML = '<i class="fa fa-lock" style="color:#94a3b8;cursor:pointer;font-size:10px;" title="Blocked"></i>';
                         }
                         // Uncheck the checkbox
                         var checkbox = row.querySelector('.row-check');
@@ -599,13 +596,13 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
             if (d.success) {
-                // Update lock icons for unblocked HBLs (restore to unlocked)
+                // Update lock icons for unblocked HBLs
                 ids.forEach(function(id) {
                     var row = document.getElementById('hbl-row-' + id);
                     if (row) {
                         var lockCell = row.querySelector('td:nth-child(2)');
                         if (lockCell) {
-                            lockCell.innerHTML = '<i class="fa fa-unlock" style="cursor:pointer;color:#22c55e;font-size:10px;" title="Unlocked" onclick="showToast(\'info\', \'HBL is unlocked\')"></i>';
+                            lockCell.innerHTML = '<i class="fa fa-unlock" style="color:#22c55e;cursor:pointer;font-size:10px;" title="Unlocked"></i>';
                         }
                         // Uncheck the checkbox
                         var checkbox = row.querySelector('.row-check');

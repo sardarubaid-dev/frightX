@@ -35,7 +35,7 @@
     </div>
 
     <div class="company">
-        <h1>GoFreight</h1>
+        <h1>FreightX</h1>
     </div>
 
     <div class="title">Bank Book Balance Report</div>

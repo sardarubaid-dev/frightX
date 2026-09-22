@@ -220,7 +220,7 @@
 
                 {{-- Actions --}}
                 <div style="display:flex; gap:6px; align-items:center; margin-top:12px;">
-                    <button class="btn-gofreight" :disabled="!hasInput" :style="!hasInput ? 'opacity:0.5; cursor:not-allowed; pointer-events:none;' : ''" @click="downloadReport()">
+                    <button class="btn-freightx" :disabled="!hasInput" :style="!hasInput ? 'opacity:0.5; cursor:not-allowed; pointer-events:none;' : ''" @click="downloadReport()">
                         <i class="fa fa-download"></i> Download
                     </button>
                     <button class="btn-default-gf" @click="resetForm()">

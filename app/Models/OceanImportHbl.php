@@ -79,6 +79,8 @@ class OceanImportHbl extends Model
     public function customer() { return $this->belongsTo(TradePartner::class, 'customer_id'); }
     public function shipper() { return $this->belongsTo(TradePartner::class, 'shipper_id'); }
     public function consignee() { return $this->belongsTo(TradePartner::class, 'consignee_id'); }
+    public function notifyParty() { return $this->belongsTo(TradePartner::class, 'notify_party_id'); }
+    public function customsBroker() { return $this->belongsTo(TradePartner::class, 'customs_broker_id'); }
     public function cfsLocation() { return $this->belongsTo(TradePartner::class, 'cfs_location_id'); }
     public function deliveryLocation() { return $this->belongsTo(TradePartner::class, 'delivery_location_id'); }
     public function freightReleasedBy() { return $this->belongsTo(User::class, 'freight_released_by_id'); }

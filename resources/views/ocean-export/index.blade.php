@@ -50,6 +50,8 @@
                 isDirectMaster: {{ (isset($oceanExport) && $oceanExport->is_direct_master) ? 'true' : 'false' }},
                 showMore: false,
                 showClipboardModal: false,
+                showToolsMenu: false,
+                showTrackTraceModal: false,
                 
                 // Initialize saved state based on whether we have an ID
                 init() {
@@ -57,6 +59,24 @@
                     console.log('form.id:', this.form.id);
                     console.log('saved (before):', this.saved);
                     
+                    // Sanitize container dates to YYYY-MM-DD for HTML date inputs
+                    if (this.form.containers && Array.isArray(this.form.containers)) {
+                        const dateKeys = [
+                            'lfd', 'fdd', 'storage_start_date', 'storage_end_date',
+                            'unload_vessel_date', 'gate_in_date', 'rail_start_date',
+                            'pod_eta', 'appointment_date', 'pickup_date', 'gate_out_date',
+                            'fdest_eta', 'eta_door', 'ata_door', 'empty_conf_date',
+                            'empty_ret_date', 'an_sent_date', 'do_sent_date'
+                        ];
+                        this.form.containers.forEach(c => {
+                            dateKeys.forEach(k => {
+                                if (c[k] && typeof c[k] === 'string' && c[k].length >= 10) {
+                                    c[k] = c[k].substring(0, 10);
+                                }
+                            });
+                        });
+                    }
+
                     // Check if form has ID (means we're editing)
                     if (this.form.id) {
                         this.saved = true;
@@ -84,28 +104,44 @@
                 quoteStep: 1,
                 selectedQuote: null,
                 selectQuote(data) {
+                    if (!data) return;
                     this.selectedQuote = { ...data, items: this.quoteItems[data.quote_no] || [] };
                     this.quoteForm.quote_no = data.quote_no || '';
-                    this.quoteForm.mbl_no = data.mbl_no;
-                    this.quoteForm.hbl_no = data.hbl_no;
-                    this.quoteForm.eta = data.eta;
-                    this.quoteForm.etd = data.etd;
-                    this.quoteForm.customer = data.customer;
+                    const dateStr = new Date().toISOString().slice(2,10).replace(/-/g,'');
+                    const randNum = Math.floor(100000 + Math.random() * 900000);
+                    this.quoteForm.mbl_no = data.mbl_no || ('MOE-' + dateStr + randNum);
+                    this.quoteForm.hbl_no = data.hbl_no || ('HOE-' + dateStr + randNum);
+                    this.quoteForm.etd = data.etd || new Date().toISOString().split('T')[0];
+                    const defaultEta = new Date();
+                    defaultEta.setDate(defaultEta.getDate() + 14);
+                    this.quoteForm.eta = data.eta || defaultEta.toISOString().split('T')[0];
+                    this.quoteForm.customer = data.customer_name || data.customer || '';
                     this.quoteForm.customer_id = data.customer_id || '';
-                    this.quoteForm.sales = data.sales;
+                    this.quoteForm.sales = data.sales_name || data.sales || '';
                     this.quoteForm.sales_person_id = data.sales_person_id || '';
+                    this.quoteForm.office_id = data.office_id || '';
                     this.quoteForm.pol_id = data.pol_id || '';
                     this.quoteForm.pod_id = data.pod_id || '';
                     this.quoteForm.pol_name = data.pol_name || '';
                     this.quoteForm.pod_name = data.pod_name || '';
-                    this.quoteForm.oversea_agent = data.oversea_agent || '';
-                    this.quoteForm.service_term = data.service_term || '';
-                    this.quoteForm.op = data.op || '';
-                    this.quoteForm.incoterms = data.incoterms || '';
-                    this.quoteForm.incoterms_id = data.incoterms_id || '';
                     this.quoteForm.carrier_name = data.carrier_name || '';
-                    this.quoteForm.detail = data.detail || '';
-                    this.quoteForm.ship_mode = data.ship_mode || 'FCL';
+                    this.quoteForm.carrier_id = data.carrier_id || '';
+                    this.quoteForm.oversea_agent = data.oversea_agent || '';
+                    this.quoteForm.oversea_agent_id = data.agent_id || data.oversea_agent_id || '';
+                    this.quoteForm.service_term = data.service_term || '';
+                    this.quoteForm.op = data.op_name || data.op || '';
+                    this.quoteForm.op_id = data.op_id || '';
+                    this.quoteForm.incoterms = data.incoterms_id || data.incoterms || '';
+                    this.quoteForm.incoterms_id = data.incoterms_id || '';
+                    this.quoteForm.booking_no = data.booking_no || '';
+                    this.quoteForm.po_no = data.po_no || '';
+                    this.quoteForm.hts_code = data.hts_code || '';
+                    this.quoteForm.pkg_qty = data.pkg_qty || '';
+                    this.quoteForm.weight_kg = data.weight_kg || '';
+                    this.quoteForm.volume_cbm = data.volume_cbm || '';
+                    this.quoteForm.detail = data.detail || data.remark || '';
+                    this.quoteForm.commodity = data.commodity || '';
+                    this.quoteForm.ship_mode = data.ship_mode || data.transport_mode || 'FCL';
                 },
                 filters: {
                     customer: '',
@@ -158,12 +194,81 @@
                 },
                 quoteForm: {
                     quote_no: '', mbl_no: '', hbl_no: '', etd: '', eta: '',
-                    customer: '', customer_id: '', sales: '', sales_person_id: '',
+                    customer: '', customer_id: '', sales: '', sales_person_id: '', office_id: '',
                     pol_id: '', pod_id: '', pol_name: '', pod_name: '',
-                    ship_mode: 'FCL', oversea_agent: '', service_term: '', op: '',
-                    incoterms: '', incoterms_id: '', carrier_name: '', detail: ''
+                    ship_mode: 'FCL', oversea_agent: '', oversea_agent_id: '', service_term: '', op: '', op_id: '',
+                    incoterms: '', incoterms_id: '', carrier_name: '', carrier_id: '', commodity: '',
+                    booking_no: '', po_no: '', hts_code: '', pkg_qty: '', weight_kg: '', volume_cbm: '', detail: ''
                 },
-                hbls: getFormValue('hbls', @json(isset($oceanExport) && $oceanExport->hbls->count() ? $oceanExport->hbls : [])),
+                hbls: (function() {
+                    let raw = getFormValue('hbls', @json(isset($oceanExport) && $oceanExport->hbls->count() ? $oceanExport->hbls : []));
+                    if (!Array.isArray(raw)) return [];
+                    return raw.map(function(hbl) {
+                        function fmtDate(d) {
+                            if (!d) return '';
+                            if (typeof d === 'string') return d.substring(0, 10);
+                            return '';
+                        }
+                        function toBool(v) {
+                            return v === true || v === 1 || v === '1' || v === 'true';
+                        }
+                        return {
+                            id: hbl.id || null,
+                            show: true,
+                            showMore: false,
+                            showMemo: false,
+                            hbl_no: hbl.hbl_no || '',
+                            quotation_no: hbl.quotation_no || '',
+                            customer_id: hbl.customer_id || '',
+                            sales_person_id: hbl.sales_person_id || '',
+                            shipper_id: hbl.shipper_id || '',
+                            consignee_id: hbl.consignee_id || '',
+                            notify_party_id: hbl.notify_party_id || '',
+                            customs_broker_id: hbl.customs_broker_id || '',
+                            delivery_location_id: hbl.delivery_location_id || '',
+                            referred_by_id: hbl.referred_by_id || '',
+                            pol_id: hbl.pol_id || '',
+                            pod_id: hbl.pod_id || '',
+                            del_id: hbl.del_id || '',
+                            fdest_id: hbl.fdest_id || '',
+                            receipt_id: hbl.receipt_id || '',
+                            vessel_name: hbl.vessel_name || '',
+                            voyage_no: hbl.voyage_no || '',
+                            pre_carriage_by: hbl.pre_carriage_by || '',
+                            is_rail: toBool(hbl.is_rail),
+                            service_term: hbl.service_term || 'CY',
+                            ship_mode: hbl.ship_mode || 'FCL',
+                            ship_type: hbl.ship_type || 'NORMAL',
+                            cargo_type: hbl.cargo_type || 'GENERAL CARGO',
+                            incoterms_id: hbl.incoterms_id || '',
+                            date_of_issue: fmtDate(hbl.date_of_issue),
+                            lc_no: hbl.lc_no || '',
+                            sc_no: hbl.sc_no || '',
+                            freight_payable_at: hbl.freight_payable_at || '',
+                            is_express_bl: hbl.is_express_bl == 1 || hbl.is_express_bl === true ? 1 : 0,
+                            is_door_move: toBool(hbl.is_door_move),
+                            is_customs_clear: toBool(hbl.is_customs_clear),
+                            is_customs_hold: toBool(hbl.is_customs_hold),
+                            is_obl_received: toBool(hbl.is_obl_received),
+                            obl_received_date: fmtDate(hbl.obl_received_date),
+                            is_fr_released: toBool(hbl.is_fr_released),
+                            fr_released_date: fmtDate(hbl.fr_released_date),
+                            is_an_sent: toBool(hbl.is_an_sent),
+                            an_sent_date: fmtDate(hbl.an_sent_date),
+                            is_do_sent: toBool(hbl.is_do_sent),
+                            do_sent_date: fmtDate(hbl.do_sent_date),
+                            name_account: hbl.name_account || '',
+                            group_comm: hbl.group_comm || '',
+                            line_code: hbl.line_code || '',
+                            is_ecommerce: toBool(hbl.is_ecommerce),
+                            is_customs_doc: toBool(hbl.is_customs_doc),
+                            hbl_remark: hbl.hbl_remark || '',
+                            cfs_location_id: hbl.cfs_location_id || '',
+                            freight_released_by_id: hbl.freight_released_by_id || '',
+                            po_no: hbl.po_no || '',
+                        };
+                    });
+                })(),
                 form: {
                     id: @json(isset($oceanExport) ? $oceanExport->id : null),
                     file_no: getFormValue('file_no', @json(isset($oceanExport) ? $oceanExport->file_no : 'MOE-' . date('ymdHis'))),
@@ -384,8 +489,77 @@
                     e.target.value = '';
                 },
                 copyDataFromAllHbl() {
-                    let hblNos = this.hbls.filter(h => h.hbl_no).map(h => h.hbl_no);
-                    alert('Copied from HB/L: ' + (hblNos.length ? hblNos.join(', ') : 'No HB/L found.'));
+                    if (!this.hbls || !this.hbls.length) {
+                        if (typeof showToast === 'function') showToast('info', 'No House BLs found to copy from.');
+                        return;
+                    }
+
+                    const containerMap = {};
+                    let unassignedPkg = 0, unassignedWgt = 0, unassignedVol = 0;
+
+                    this.hbls.forEach(h => {
+                        (h.containers || []).forEach(c => {
+                            const pkg = parseFloat(c.pkg_qty) || 0;
+                            const wgt = parseFloat(c.weight_kg) || 0;
+                            const vol = parseFloat(c.measure_cbm) || 0;
+                            const cNo = (c.container_no && c.container_no !== 'MANUAL') ? c.container_no : (c.manual_container_no || '');
+
+                            if (cNo) {
+                                if (!containerMap[cNo]) {
+                                    containerMap[cNo] = { pkg: 0, wgt: 0, vol: 0 };
+                                }
+                                containerMap[cNo].pkg += pkg;
+                                containerMap[cNo].wgt += wgt;
+                                containerMap[cNo].vol += vol;
+                            } else {
+                                unassignedPkg += pkg;
+                                unassignedWgt += wgt;
+                                unassignedVol += vol;
+                            }
+                        });
+                    });
+
+                    if (Object.keys(containerMap).length === 0 && unassignedPkg === 0 && unassignedWgt === 0 && unassignedVol === 0) {
+                        if (typeof showToast === 'function') showToast('info', 'No container quantities found in HBLs.');
+                        return;
+                    }
+
+                    if (!this.form.containers || !this.form.containers.length) this.addContainer();
+
+                    this.form.containers.forEach(mblC => {
+                        if (mblC.container_no && containerMap[mblC.container_no]) {
+                            mblC.pkg_qty = containerMap[mblC.container_no].pkg;
+                            mblC.weight_kg = containerMap[mblC.container_no].wgt;
+                            mblC.measure_cbm = containerMap[mblC.container_no].vol;
+                            delete containerMap[mblC.container_no];
+                        }
+                    });
+
+                    Object.keys(containerMap).forEach(cNo => {
+                        this.form.containers.push({
+                            id: null,
+                            pp_ctf: '',
+                            container_no: cNo,
+                            container_type_id: '',
+                            seal_no: '',
+                            lfd: '',
+                            fdd: '',
+                            pkg_qty: containerMap[cNo].pkg,
+                            weight_kg: containerMap[cNo].wgt,
+                            measure_cbm: containerMap[cNo].vol,
+                            expanded: false
+                        });
+                    });
+
+                    if ((unassignedPkg > 0 || unassignedWgt > 0 || unassignedVol > 0) && this.form.containers.length === 1) {
+                        this.form.containers[0].pkg_qty = (parseFloat(this.form.containers[0].pkg_qty) || 0) + unassignedPkg;
+                        this.form.containers[0].weight_kg = (parseFloat(this.form.containers[0].weight_kg) || 0) + unassignedWgt;
+                        this.form.containers[0].measure_cbm = (parseFloat(this.form.containers[0].measure_cbm) || 0) + unassignedVol;
+                    }
+
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Data copied from all HBLs successfully. MBL Container totals updated.');
+                    }
                 },
                 toggleAllContainers(e) {
                     this.form.containers.forEach(c => c.selected = e.target.checked);
@@ -466,49 +640,320 @@
                         this.hbls.splice(idx, 1);
                     }
                 },
+                validateForm() {
+                    let errors = [];
+                    
+                    if (!this.form.mbl_no || !this.form.mbl_no.trim()) {
+                        errors.push('MB/L No. is required');
+                    }
+                    
+                    if (!this.form.office_id) {
+                        errors.push('Office is required');
+                    }
+                    
+                    if (!this.form.eta) {
+                        errors.push('ETA is required');
+                    }
+                    
+                    this.form.containers.forEach((container, idx) => {
+                        if (container.pkg_qty === null || container.pkg_qty === '' || container.pkg_qty === undefined) {
+                            container.pkg_qty = 0;
+                        }
+                        if (container.weight_kg === null || container.weight_kg === '' || container.weight_kg === undefined) {
+                            container.weight_kg = 0;
+                        }
+                        if (container.measure_cbm === null || container.measure_cbm === '' || container.measure_cbm === undefined) {
+                            container.measure_cbm = 0;
+                        }
+                    });
+
+                    if (errors.length > 0) {
+                        errors.forEach(err => showToast('error', err));
+                        return false;
+                    }
+                    return true;
+                },
+                saveShipment() {
+                    // Handled by the standard form submission, triggered via @click in template.
+                },
                 confirmQuoteSelection() {
                     this.form.mbl_no = this.quoteForm.mbl_no;
                     this.form.eta = this.quoteForm.eta;
                     this.form.etd = this.quoteForm.etd;
+                    if (this.quoteForm.office_id) this.form.office_id = this.quoteForm.office_id;
                     if (this.quoteForm.customer_id) this.form.dm_customer_id = this.quoteForm.customer_id;
                     if (this.quoteForm.sales_person_id) this.form.dm_sales_person_id = this.quoteForm.sales_person_id;
                     if (this.quoteForm.pol_id) this.form.pol_id = this.quoteForm.pol_id;
                     if (this.quoteForm.pod_id) this.form.pod_id = this.quoteForm.pod_id;
                     if (this.quoteForm.incoterms_id) this.form.incoterm_id = this.quoteForm.incoterms_id;
-                    if(this.hbls.length === 0) this.addHbl();
+                    if (this.quoteForm.carrier_id) this.form.carrier_id = this.quoteForm.carrier_id;
+                    if (this.quoteForm.op_id) this.form.op_id = this.quoteForm.op_id;
+                    if (this.quoteForm.oversea_agent_id) this.form.oversea_agent_id = this.quoteForm.oversea_agent_id;
+                    if (this.quoteForm.service_term) {
+                        this.form.service_term = this.quoteForm.service_term;
+                        this.form.service_term_from_id = this.quoteForm.service_term;
+                        this.form.service_term_to_id = this.quoteForm.service_term;
+                    }
+                    if (this.quoteForm.ship_mode) this.form.ship_mode = this.quoteForm.ship_mode;
+                    if (this.quoteForm.detail) this.form.remark = this.quoteForm.detail;
+                    if (this.quoteForm.booking_no) this.form.booking_no = this.quoteForm.booking_no;
+
+                    if (this.hbls.length === 0) this.addHbl();
                     this.hbls[0].hbl_no = this.quoteForm.hbl_no;
+                    if (this.quoteForm.customer_id) {
+                        this.hbls[0].customer_id = this.quoteForm.customer_id;
+                        if (!this.hbls[0].shipper_id) this.hbls[0].shipper_id = this.quoteForm.customer_id;
+                    }
+                    if (this.quoteForm.sales_person_id) this.hbls[0].sales_person_id = this.quoteForm.sales_person_id;
+                    if (this.quoteForm.pol_id) this.hbls[0].pol_id = this.quoteForm.pol_id;
+                    if (this.quoteForm.pod_id) this.hbls[0].pod_id = this.quoteForm.pod_id;
+                    if (this.quoteForm.service_term) this.hbls[0].service_term = this.quoteForm.service_term;
+                    if (this.quoteForm.incoterms_id) this.hbls[0].incoterms_id = this.quoteForm.incoterms_id;
+                    if (this.quoteForm.ship_mode) {
+                        this.hbls[0].ship_mode = this.quoteForm.ship_mode;
+                        this.hbls[0].ship_type = this.quoteForm.ship_mode;
+                    }
+                    if (this.quoteForm.commodity) this.hbls[0].commodity = this.quoteForm.commodity;
+                    if (this.quoteForm.po_no) this.hbls[0].po_no = this.quoteForm.po_no;
+                    if (this.quoteForm.detail) this.hbls[0].hbl_remark = this.quoteForm.detail;
                     if (this.quoteForm.quote_no) {
                         this.hbls[0].quotation_no = this.quoteForm.quote_no;
                     }
+
+                    if (this.quoteForm.commodity || this.quoteForm.hts_code || this.quoteForm.pkg_qty || this.quoteForm.weight_kg || this.quoteForm.volume_cbm) {
+                        this.hbls[0].commodities = [{
+                            id: null,
+                            commodity_name: this.quoteForm.commodity || '',
+                            hts_code: this.quoteForm.hts_code || '',
+                            pkg_qty: this.quoteForm.pkg_qty || '',
+                            weight_kg: this.quoteForm.weight_kg || '',
+                            measure_cbm: this.quoteForm.volume_cbm || ''
+                        }];
+                    }
+
                     if (this.selectedQuote && this.selectedQuote.items) {
                         const items = this.selectedQuote.items.filter(item => item.selected !== false);
                         items.forEach(item => {
                             this.chargesList.push({
-                                id: null, selected: false, party: 'Custom', party_name_id: '',
+                                id: null, selected: false, party: 'Custom', party_name_id: this.quoteForm.customer_id || '',
                                 sal: 'Sea', pr: 'Rec', ppc: 'Colle',
                                 chrg_code: item.charge_code, charge_name: item.charge_name,
                                 currency: item.currency || 'USD', rate: item.rate,
                                 qty: item.qty, qty_type: item.unit || 'UNIT',
                                 roe: 1.0, vat: 0, inv_no: '', financial_date: new Date().toISOString().split('T')[0],
-                                eq_bl_no: '', remark: false, mbl_no: ''
+                                eq_bl_no: '', remark: '', mbl_no: this.quoteForm.mbl_no || ''
                             });
                         });
                     }
                     this.showQuoteModal = false;
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Quotation data successfully loaded into shipment!');
+                    }
                 },
                 saveShipment() {
                     // Let normal form submit handle it
                 },
                 openAddNewModal(module, selectName) {
-                    window.dispatchEvent(new CustomEvent('open-add-new-modal', {
-                        detail: { module: module, targetModel: '', targetSelect: selectName }
-                    }));
+                    if (module === 'trade-partner') {
+                        window.open('/trade-partner/create', '_blank');
+                    } else if (module === 'port') {
+                        window.open('/port/create', '_blank');
+                    } else if (module === 'vessel') {
+                        window.open('/vessel/create', '_blank');
+                    }
+                },
+
+                toolsAction(action, hblIdx = 0) {
+                    const shipmentId = this.form ? this.form.id : null;
+                    if (!shipmentId && !['block','unblock','copy','delete','batch_email','batch_print'].includes(action)) {
+                        showToast('warning', 'Please save the shipment first.');
+                        return;
+                    }
+                    const actions = {
+                        unblock: () => {
+                            if (!shipmentId) { showToast('warning', 'Save the shipment first.'); return; }
+                            fetch('/ocean-export/bulk-unblock', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
+                                body: JSON.stringify({ ids: [shipmentId], type: 'mbl' })
+                            }).then(r => r.json()).then(d => {
+                                this.form.is_blocked = false;
+                                showToast(d.success ? 'success' : 'error', d.message || (d.success ? 'Shipment unblocked.' : 'Unblock failed.'));
+                            }).catch(() => showToast('error', 'Unblock request failed.'));
+                        },
+                        block: () => {
+                            if (!shipmentId) { showToast('warning', 'Save the shipment first.'); return; }
+                            fetch('/ocean-export/bulk-block', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
+                                body: JSON.stringify({ ids: [shipmentId], type: 'mbl' })
+                            }).then(r => r.json()).then(d => {
+                                this.form.is_blocked = true;
+                                showToast(d.success ? 'success' : 'error', d.message || (d.success ? 'Shipment blocked.' : 'Block failed.'));
+                            }).catch(() => showToast('error', 'Block request failed.'));
+                        },
+                        copy: () => {
+                            if (!shipmentId) return;
+                            window.location.href = `/ocean-export/create?copy=${shipmentId}`;
+                        },
+                        copy_oi: () => {
+                            if (!shipmentId) return;
+                            window.location.href = `/ocean-import/create?copy_oe=${shipmentId}`;
+                        },
+                        delete: () => {
+                            if (!shipmentId) return;
+                            if (!confirm('Are you sure you want to delete this shipment? This action cannot be undone.')) return;
+                            fetch(`/ocean-export/${shipmentId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
+                                body: JSON.stringify({ _method: 'DELETE' })
+                            }).then(r => r.json()).then(d => {
+                                showToast('success', 'Shipment deleted successfully.');
+                                setTimeout(() => window.location.href = '/ocean-export/list', 800);
+                            }).catch(() => showToast('error', 'Delete failed.'));
+                        },
+                        edi: () => showToast('info', 'Opening FreightX EDI export...'),
+                        doc_package: () => window.open(`/ocean-export/${shipmentId}/batch-print-view`, '_blank'),
+                        hbl_print: () => window.open(`/ocean-export/${shipmentId}/hbl-print/${hblIdx}`, '_blank'),
+                        mbl_print: () => window.open(`/ocean-export/${shipmentId}/mbl-print`, '_blank'),
+                        delivery_order: () => window.open(`/ocean-export/${shipmentId}/delivery-order`, '_blank'),
+                        manifest: () => window.open(`/ocean-export/${shipmentId}/dev-seg`, '_blank'),
+                        profit_summary: () => window.open(`/ocean-export/${shipmentId}/profit-summary`, '_blank'),
+                        profit_detail: () => window.open(`/ocean-export/${shipmentId}/profit-detail`, '_blank'),
+                        track_trace: () => {
+                            window.openTrackTrace({ type: 'container', number: this.form.mbl_no || '' });
+                        }
+                    };
+                    if (actions[action]) {
+                        actions[action]();
+                    } else {
+                        showToast('info', 'Feature coming soon.');
+                    }
                 },
 
 
                 // ============ CHARGES SECTION FUNCTIONS ============
                 chargesList: @json($chargesList ?? []),
                 saveAsDraftInvoice: false,
+                quotationsMap: {
+                    @foreach($quotations as $q)
+                    "{{ $q->quote_no }}": {
+                        quote_id: "{{ $q->id }}",
+                        quote_no: "{{ addslashes($q->quote_no) }}",
+                        customer_id: "{{ $q->customer_id }}",
+                        customer_name: "{{ addslashes($q->customer->name ?? '') }}",
+                        sales_person_id: "{{ $q->sales_person_id }}",
+                        sales_name: "{{ addslashes($q->salesPerson->name ?? '') }}",
+                        office_id: "{{ $q->office_id }}",
+                        pol_id: "{{ $q->pol_id }}",
+                        pol_name: "{{ addslashes($q->pol->name ?? '') }}",
+                        pod_id: "{{ $q->pod_id }}",
+                        pod_name: "{{ addslashes($q->pod->name ?? '') }}",
+                        carrier_id: "{{ $q->carrier_id }}",
+                        carrier_name: "{{ addslashes($q->carrier->name ?? '') }}",
+                        agent_id: "{{ $q->agent_id }}",
+                        oversea_agent: "{{ addslashes($q->agent->name ?? '') }}",
+                        op_id: "{{ $q->op_id }}",
+                        op_name: "{{ addslashes($q->op->name ?? '') }}",
+                        service_term: "{{ addslashes($q->service_term ?? '') }}",
+                        incoterms_id: "{{ addslashes($q->incoterms_id ?? '') }}",
+                        commodity: "{{ addslashes($q->commodity ?? '') }}",
+                        ship_mode: "{{ addslashes($q->ship_mode ?? $q->transport_mode ?? 'FCL') }}",
+                        booking_no: "{{ addslashes($q->booking_no ?? '') }}",
+                        po_no: "{{ addslashes($q->po_no ?? '') }}",
+                        hts_code: "{{ addslashes($q->hts_code ?? '') }}",
+                        pkg_qty: "{{ $q->pkg_qty ?? '' }}",
+                        weight_kg: "{{ $q->weight_kg ?? '' }}",
+                        volume_cbm: "{{ $q->volume_cbm ?? '' }}",
+                        etd: "{{ $q->quote_date ? $q->quote_date->format('Y-m-d') : ($q->create_date ? $q->create_date->format('Y-m-d') : '') }}",
+                        eta: "{{ $q->expiry_date ? $q->expiry_date->format('Y-m-d') : ($q->valid_date ? $q->valid_date->format('Y-m-d') : '') }}",
+                        detail: "{{ addslashes($q->internal_remark ?? $q->remark ?? '') }}"
+                    },
+                    @endforeach
+                },
+                loadQuoteToHbl(index) {
+                    const qNo = this.hbls[index].quotation_no;
+                    if (!qNo || !this.quotationsMap[qNo]) return;
+                    const q = this.quotationsMap[qNo];
+
+                    if (q.customer_id) {
+                        this.hbls[index].customer_id = q.customer_id;
+                        if (!this.hbls[index].shipper_id) this.hbls[index].shipper_id = q.customer_id;
+                    }
+                    if (q.sales_person_id) this.hbls[index].sales_person_id = q.sales_person_id;
+                    if (q.pol_id) this.hbls[index].pol_id = q.pol_id;
+                    if (q.pod_id) this.hbls[index].pod_id = q.pod_id;
+                    if (q.service_term) this.hbls[index].service_term = q.service_term;
+                    if (q.incoterms_id) this.hbls[index].incoterms_id = q.incoterms_id;
+                    if (q.ship_mode) {
+                        this.hbls[index].ship_mode = q.ship_mode;
+                        this.hbls[index].ship_type = q.ship_mode;
+                    }
+                    if (q.commodity) this.hbls[index].commodity = q.commodity;
+                    if (q.po_no) this.hbls[index].po_no = q.po_no;
+                    if (q.detail) this.hbls[index].hbl_remark = q.detail;
+
+                    if (q.customer_id) this.form.dm_customer_id = q.customer_id;
+                    if (q.sales_person_id) this.form.dm_sales_person_id = q.sales_person_id;
+                    if (q.office_id) this.form.office_id = q.office_id;
+                    if (q.pol_id) this.form.pol_id = q.pol_id;
+                    if (q.pod_id) this.form.pod_id = q.pod_id;
+                    if (q.carrier_id) this.form.carrier_id = q.carrier_id;
+                    if (q.agent_id) this.form.oversea_agent_id = q.agent_id;
+                    if (q.op_id) this.form.op_id = q.op_id;
+                    if (q.incoterms_id) this.form.incoterm_id = q.incoterms_id;
+                    if (q.service_term) {
+                        this.form.service_term = q.service_term;
+                        this.form.service_term_from_id = q.service_term;
+                        this.form.service_term_to_id = q.service_term;
+                    }
+                    if (q.ship_mode) this.form.ship_mode = q.ship_mode;
+                    if (q.detail) this.form.remark = q.detail;
+                    if (q.booking_no) this.form.booking_no = q.booking_no;
+                    if (q.etd) this.form.etd = q.etd;
+                    if (q.eta) this.form.eta = q.eta;
+
+                    if (q.commodity || q.hts_code || q.pkg_qty || q.weight_kg || q.volume_cbm) {
+                        this.hbls[index].commodities = [{
+                            id: null,
+                            commodity_name: q.commodity || '',
+                            hts_code: q.hts_code || '',
+                            pkg_qty: q.pkg_qty || '',
+                            weight_kg: q.weight_kg || '',
+                            measure_cbm: q.volume_cbm || ''
+                        }];
+                    }
+
+                    const items = this.quoteItems[qNo] || [];
+                    items.forEach(item => {
+                        this.chargesList.push({
+                            id: null,
+                            selected: false,
+                            party: 'Custom',
+                            party_name_id: q.customer_id || '',
+                            sal: 'Sea',
+                            pr: 'Rec',
+                            ppc: 'Colle',
+                            chrg_code: item.charge_code,
+                            charge_name: item.charge_name,
+                            currency: item.currency || 'USD',
+                            rate: item.rate,
+                            qty: item.qty,
+                            qty_type: item.unit || 'UNIT',
+                            roe: 1.0,
+                            vat: 0,
+                            inv_no: '',
+                            financial_date: new Date().toISOString().split('T')[0],
+                            eq_bl_no: '',
+                            remark: '',
+                            mbl_no: this.form.mbl_no || ''
+                        });
+                    });
+
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Quotation data loaded into HBL #' + (index + 1));
+                    }
+                },
                 quoteItems: {
                     @foreach($quotations as $q)
                     "{{ $q->quote_no }}": {!! json_encode($q->items->map(fn($i) => [
@@ -672,7 +1117,11 @@
                 },
 
                 createInvoice() {
-                    if (!confirm('Create invoice from uninvoiced charges?')) return;
+                    if (!this.form.id) {
+                        alert('Please save shipment first.');
+                        return;
+                    }
+                    if (!confirm('Generate Freight Invoice for this shipment?')) return;
                     fetch(`/ocean-export/${this.form.id}/charges/invoice`, {
                         method: 'POST',
                         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
@@ -680,12 +1129,21 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            alert('Invoice created successfully: ' + data.invoice_no);
-                            window.location.reload();
+                            alert('Invoice generated successfully: ' + (data.invoice_no || ''));
+                            window.open(data.freight_invoice_url || `/shipments/ocean-export/${this.form.id}/freight-invoice`, '_blank');
+                            setTimeout(() => { window.location.reload(); }, 800);
                         } else {
                             alert('Failed to create invoice: ' + data.message);
                         }
                     });
+                },
+
+                generateFreightInvoice() {
+                    if (!this.form.id) {
+                        alert('Please save shipment first.');
+                        return;
+                    }
+                    window.open(`/shipments/ocean-export/${this.form.id}/freight-invoice`, '_blank');
                 },
 
                 prorataCharges() {
@@ -862,19 +1320,52 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h1 class="caption-subject" style="font-size: 18px;">{{ isset($oceanExport) ? 'Edit' : 'Create' }} Ocean Export Shipment</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" class="btn-gofreight"><i class="fa fa-save"></i> <span x-text="saved ? 'SAVE SHIPMENT' : 'SAVE MAIN'"></span></button>
+               <button type="button" class="btn-freightx" @click="if(validateForm()) $el.closest('form').submit()"><i class="fa fa-save"></i> <span x-text="saved ? 'SAVE SHIPMENT' : 'SAVE MAIN'"></span></button>
                 <a href="{{ route('ocean-export.index') }}" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
 
-        <!-- Main Tabs -->
-        <ul class="gf-tabs">
-            <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Main</a></li>
-            <li :class="[activeTab === 'container' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'container' : null"><a>Container & Items</a></li>
-            <li :class="[activeTab === 'charges' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'charges' : null"><a>Charges</a></li>
-            <li :class="[activeTab === 'history' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'history' : null"><a>History</a></li>
-            <li :class="[activeTab === 'filing' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'filing' : null"><a>Filing</a></li>
-        </ul>
+        <!-- Main Tabs + Tools Tabs -->
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #e5e7eb;margin-bottom:0;width:100%;">
+            <!-- Sticky Main Tabs (Fixed on left) -->
+            <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;display:flex;flex-shrink:0;">
+                <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Main</a></li>
+                <li :class="[activeTab === 'container' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'container' : null"><a>Container &amp; Items</a></li>
+                <li :class="[activeTab === 'charges' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'charges' : null"><a>Charges</a></li>
+                <li :class="[activeTab === 'history' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'history' : null"><a>History</a></li>
+                <li :class="[activeTab === 'filing' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'filing' : null"><a>Filing</a></li>
+            </ul>
+
+            <!-- Divider -->
+            <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;">
+                <span style="border-left:2px solid #e5e7eb;height:20px;display:inline-block;"></span>
+            </div>
+
+            <!-- Tools Options (Scrollable) -->
+            <div style="flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;-ms-overflow-style:none;">
+                <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;display:flex;white-space:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('block') : null"><a>Block</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('unblock') : null"><a>Unblock</a></li>
+
+                    <template x-if="activeTab==='basic'">
+                        <div style="display:flex;">
+                            <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('copy') : null"><a>Copy</a></li>
+                            <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('copy_oi') : null"><a>Copy to OI</a></li>
+                            <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('delete') : null"><a style="color:#ef4444;">Delete</a></li>
+                            <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('doc_package') : null"><a>Doc Package</a></li>
+                            <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('mbl_print') : null"><a>MB/L Print</a></li>
+                        </div>
+                    </template>
+
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('manifest') : null"><a>Manifest</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('dev_seg') : null"><a>DEV/SEG</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('delivery_order') : null"><a>Delivery Order</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('profit_summary') : null"><a>Profit Summary</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('profit_detail') : null"><a>Profit Detail</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toolsAction('track_trace') : null"><a>Track-Trace</a></li>
+                </ul>
+            </div>
+        </div>
 
         <div style="padding-bottom: 50px;">
             <!-- BASIC TAB -->
@@ -887,12 +1378,12 @@
                         </div>
                     </div>
                     <div class="portlet-body" x-show="showMblSection" x-collapse>
-                        <!-- Reminder Section for MBL -->
-                        <div class="memo-section" style="margin-bottom: 10px;">
+                        <!-- Reminder Section for MBL (Hidden per client instruction) -->
+                        <div class="memo-section" style="margin-bottom: 10px; display: none;">
                             <div class="memo-header" @click="showMblMemo = !showMblMemo">
                                 <span>Note</span>
                                 <div style="display: flex; gap: 10px; align-items: center;">
-                                    <button class="btn-memo-doc" @click.stop="">Document (0) <i class="fa fa-external-link"></i></button>
+                                   <button class="btn-memo-doc" @click.stop="">Document (0) <i class="fa fa-external-link"></i></button>
                                     <i class="fa" :class="showMblMemo ? 'fa-angle-up' : 'fa-angle-down'"></i>
                                 </div>
                             </div>
@@ -927,10 +1418,10 @@
                             <div class="flex flex-col">
                                 <div class="form-group-gf"><label class="form-label-gf">File No.</label><div class="form-input-container"><input type="text" name="file_no" class="form-control-gf" x-model="form.file_no" readonly style="background:#f5f5f5;"></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Post Date</label><div class="form-input-container"><input type="date" name="post_date" class="form-control-gf" x-model="form.post_date"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Forwarding Agent</label><div class="form-input-container"><x-inline-select name="forwarding_agent_id" :options="$agents" module="trade-partner" x-model="form.forwarding_agent_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Forwarding Agent</label><div class="form-input-container"><x-inline-select name="forwarding_agent_id" :options="$agents" module="trade-partner" x-model="form.forwarding_agent_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'forwarding_agent_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><select name="op_id" class="form-control-gf" x-model="form.op_id">@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
                                 <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Customer Ref.</label><div class="form-input-container"><input type="text" name="agent_ref_no" class="form-control-gf" x-model="form.agent_ref_no"></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Customer</label><div class="form-input-container"><x-inline-select name="dm_customer_id" :options="$agents" module="trade-partner" x-model="form.dm_customer_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Customer</label><div class="form-input-container"><x-inline-select name="dm_customer_id" :options="$agents" module="trade-partner" x-model="form.dm_customer_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'dm_customer_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Sales</label><div class="form-input-container"><select name="dm_sales_person_id" class="form-control-gf" x-model="form.dm_sales_person_id"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
                             </div>
 
@@ -938,27 +1429,27 @@
                             <div class="flex flex-col">
                                 <div class="form-group-gf"><label class="form-label-gf" style="color:red;">* MB/L No.</label><div class="form-input-container"><input type="text" name="mbl_no" class="form-control-gf" x-model="form.mbl_no" required></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Booking No.</label><div class="form-input-container"><input type="text" name="booking_no" class="form-control-gf" x-model="form.booking_no"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><x-inline-select name="oversea_agent_id" :options="$agents" module="trade-partner" x-model="form.oversea_agent_id" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Co-loader</label><div class="form-input-container"><x-inline-select name="co_loader_id" :options="$agents" module="trade-partner" x-model="form.co_loader_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><x-inline-select name="oversea_agent_id" :options="$agents" module="trade-partner" x-model="form.oversea_agent_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'oversea_agent_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Co-loader</label><div class="form-input-container"><x-inline-select name="co_loader_id" :options="$agents" module="trade-partner" x-model="form.co_loader_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'co_loader_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Contract No.</label><div class="form-input-container"><input type="text" name="contract_no" class="form-control-gf" x-model="form.contract_no"></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Shipper</label><div class="form-input-container"><x-inline-select name="dm_shipper_id" :options="$agents" module="trade-partner" x-model="form.dm_shipper_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Shipper</label><div class="form-input-container"><x-inline-select name="dm_shipper_id" :options="$agents" module="trade-partner" x-model="form.dm_shipper_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'dm_shipper_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Bill To</label><div class="form-input-container"><x-inline-select name="dm_bill_to_id" :options="$agents" module="trade-partner" x-model="form.dm_bill_to_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'dm_bill_to_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                             </div>
 
                             <!-- Column 3 -->
                             <div class="flex flex-col">
                                 <div class="form-group-gf"><label class="form-label-gf" style="color:red;">* Office</label><div class="form-input-container"><select name="office_id" class="form-control-gf" x-model="form.office_id" required><option value="">Select...</option>@foreach($offices as $office)<option value="{{ $office->id }}">{{ $office->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Carrier</label><div class="form-input-container"><x-inline-select name="carrier_id" :options="$agents" module="trade-partner" x-model="form.carrier_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Carrier</label><div class="form-input-container"><x-inline-select name="carrier_id" :options="$agents" module="trade-partner" x-model="form.carrier_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'carrier_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Agent Ref No.</label><div class="form-input-container"><input type="text" name="agent_ref_no" class="form-control-gf" x-model="form.agent_ref_no"></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Direct Master</label><div class="form-input-container"><input type="checkbox" name="is_direct_master" value="1" x-model="isDirectMaster"><input type="hidden" name="is_direct_master" :value="isDirectMaster ? 1 : 0"></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="dm_consignee_id" :options="$agents" module="trade-partner" x-model="form.dm_consignee_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'dm_consignee_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="dm_consignee_id" :options="$agents" module="trade-partner" x-model="form.dm_consignee_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'dm_consignee_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select name="sales_type" class="form-control-gf" x-model="form.sales_type"><option value="NORMAL">NORMAL</option></select></div></div>
                             </div>
 
                             <!-- Column 4 -->
                             <div class="flex flex-col">
                                 <div class="form-group-gf"><label class="form-label-gf">B/L Type</label><div class="form-input-container"><select name="bl_type" class="form-control-gf" x-model="form.bl_type"><option value="NORMAL">NORMAL</option><option value="MEMO">MEMO</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Acct. Carrier</label><div class="form-input-container"><x-inline-select name="acct_carrier_id" :options="$agents" module="trade-partner" x-model="form.acct_carrier_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Acct. Carrier</label><div class="form-input-container"><x-inline-select name="acct_carrier_id" :options="$agents" module="trade-partner" x-model="form.acct_carrier_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'acct_carrier_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Sub B/L No.</label><div class="form-input-container"><input type="text" name="sub_bl_no" class="form-control-gf" x-model="form.sub_bl_no"></div></div>
                                 <div class="form-group-gf" style="height: 19px;"></div>
                                 <div class="form-group-gf" x-show="isDirectMaster"><label class="form-label-gf">Notify</label><div class="form-input-container"><x-inline-select name="dm_notify_id" :options="$agents" module="trade-partner" x-model="form.dm_notify_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'dm_notify_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
@@ -972,8 +1463,8 @@
                             <!-- Column 1 -->
                             <div class="flex flex-col">
                                 <div class="form-group-gf"><label class="form-label-gf">Vessel</label><div class="form-input-container"><select name="vessel_id" class="form-control-gf" x-model="form.vessel_id"><option value="">Select...</option>@foreach($vessels as $vessel)<option value="{{ $vessel->id }}">{{ $vessel->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Port of Loading</label><div class="form-input-container"><x-inline-select name="pol_id" :options="$ports" module="port" x-model="form.pol_id" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Place of Delivery</label><div class="form-input-container"><x-inline-select name="del_id" :options="$ports" module="port" x-model="form.del_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'del_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Port of Loading</label><div class="form-input-container"><x-inline-select name="pol_id" :options="$ports" module="port" x-model="form.pol_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'pol_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Place of Delivery</label><div class="form-input-container"><x-inline-select name="del_id" :options="$ports" module="port" x-model="form.del_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'del_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                             </div>
 
                             <!-- Column 2 -->
@@ -987,14 +1478,14 @@
                             <!-- Column 3 -->
                             <div class="flex flex-col">
                                 <div class="form-group-gf"><label class="form-label-gf">CY Location</label><div class="form-input-container"><select name="cy_location_id" class="form-control-gf" x-model="form.cy_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Port of Discharge</label><div class="form-input-container"><x-inline-select name="pod_id" :options="$ports" module="port" x-model="form.pod_id" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Final Destination</label><div class="form-input-container"><x-inline-select name="fdest_id" :options="$ports" module="port" x-model="form.fdest_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'fdest_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Port of Discharge</label><div class="form-input-container"><x-inline-select name="pod_id" :options="$ports" module="port" x-model="form.pod_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'pod_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Final Destination</label><div class="form-input-container"><x-inline-select name="fdest_id" :options="$ports" module="port" x-model="form.fdest_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'fdest_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">ATA</label><div class="form-input-container"><input type="date" name="ata" class="form-control-gf" x-model="form.ata"></div></div>
                             </div>
 
                             <!-- Column 4 -->
                             <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">CFS Location</label><div class="form-input-container"><select name="cfs_location_id" class="form-control-gf" x-model="form.cfs_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">CFS Location</label><div class="form-input-container"><select name="cfs_location_id" class="form-control-gf" x-model="form.cfs_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'cfs_location_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf" style="color:red;">* ETA</label><div class="form-input-container"><input type="date" name="eta" class="form-control-gf" x-model="form.eta" required></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" name="final_eta" class="form-control-gf" x-model="form.final_eta"></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">ETB</label><div class="form-input-container"><input type="date" name="etb" class="form-control-gf" x-model="form.etb"></div></div>
@@ -1008,19 +1499,19 @@
                             <div class="space-y-[4px]">
                                 <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select name="freight_term" class="form-control-gf" x-model="form.freight_term"><option value="Prepaid">Prepaid</option><option value="Collect">Collect</option></select></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">OB/L Type</label><div class="form-input-container"><select name="obl_type" class="form-control-gf" x-model="form.obl_type"><option value="ORIGINAL BILL OF LADING">ORIGINAL BILL OF LADING</option><option value="SEA WAYBILL">SEA WAYBILL</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Latest Gate In</label><div class="form-input-container"><input type="date" name="latest_gate_in" class="form-control-gf" x-model="form.latest_gate_in"> <i class="fa fa-calendar text-[10px] text-gray-400"></i></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Latest Gate In</label><div class="form-input-container"><input type="date" name="latest_gate_in" class="form-control-gf" x-model="form.latest_gate_in"> <i class="fa fa-calendar text-[10px] text-gray-400 cursor-pointer" @click="$el.previousElementSibling.showPicker()"></i></div></div>
                             </div>
 
                             <!-- Column 2 -->
                             <div class="space-y-[4px]">
                                 <div class="form-group-gf"><label class="form-label-gf">Ship Mode</label><div class="form-input-container"><select name="ship_mode" class="form-control-gf" x-model="form.ship_mode"><option value="FCL">FCL</option><option value="LCL">LCL</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf"><input type="checkbox" name="is_obl_received" value="1" x-model="form.is_obl_received" class="mr-1"> OB/L Received</label><div class="form-input-container"><input type="date" name="obl_received_date" class="form-control-gf" x-model="form.obl_received_date"> <i class="fa fa-calendar text-[10px] text-gray-400"></i></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf"><input type="checkbox" name="is_obl_received" value="1" x-model="form.is_obl_received" class="mr-1"> OB/L Received</label><div class="form-input-container"><input type="date" name="obl_received_date" class="form-control-gf" x-model="form.obl_received_date"> <i class="fa fa-calendar text-[10px] text-gray-400 cursor-pointer" @click="$el.previousElementSibling.showPicker()"></i></div></div>
                             </div>
 
                             <!-- Column 3 -->
                             <div class="space-y-[4px]">
                                 <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select name="service_term_from_id" class="form-control-gf" style="width: 45%;" x-model="form.service_term_from_id"><option value="">Select...</option>@foreach($serviceTerms as $st)<option value="{{ $st->id }}">{{ $st->code }}</option>@endforeach</select><span class="mx-1">~</span><select name="service_term_to_id" class="form-control-gf" style="width: 45%;" x-model="form.service_term_to_id"><option value="">Select...</option>@foreach($serviceTerms as $st)<option value="{{ $st->id }}">{{ $st->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf"><input type="checkbox" name="is_released" value="1" class="mr-1"> Released Date</label><div class="form-input-container"><input type="date" name="released_date" class="form-control-gf" x-model="form.released_date"> <i class="fa fa-calendar text-[10px] text-gray-400"></i></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf"><input type="checkbox" name="is_released" value="1" class="mr-1"> Released Date</label><div class="form-input-container"><input type="date" name="released_date" class="form-control-gf" x-model="form.released_date"> <i class="fa fa-calendar text-[10px] text-gray-400 cursor-pointer" @click="$el.previousElementSibling.showPicker()"></i></div></div>
                             </div>
 
                             <!-- Column 4 -->
@@ -1030,24 +1521,26 @@
                             </div>
                         </div>
 
-                        <div style="height: 5px;"></div>
-                        <div style="margin-bottom: 10px;">
-                            <button type="button" @click="showMore = !showMore" class="btn-default-gf" style="border:none; color:#4b77be; font-weight:700;">
-                                <span x-text="showMore ? 'More [-]' : 'More [+]'"></span>
-                            </button>
-                        </div>
+                        <!-- Hidden per client instruction: More toggle, Place of Receipt, Place of Receipt ETD, Return Location, E-Commerce, Internal Remark -->
+                        <div style="display: none;">
+                            <div style="margin-bottom: 10px;">
+                               <button type="button" @click="showMore = !showMore" class="btn-default-gf" style="border:none; color:#4b77be; font-weight:700;">
+                                    <span x-text="showMore ? 'More [-]' : 'More [+]'"></span>
+                                </button>
+                            </div>
 
-                        <div class="form-grid-4" x-show="showMore" x-transition>
-                            <div class="form-group-gf"><label class="form-label-gf">Place of Receipt</label><div class="form-input-container"><x-inline-select name="receipt_id" :options="$ports" module="port" x-model="form.receipt_id" class="form-control-gf" /></div></div>
-                            <div class="form-group-gf"><label class="form-label-gf">Place of Receipt ETD</label><div class="form-input-container"><input type="date" name="receipt_etd" class="form-control-gf" x-model="form.receipt_etd"> <i class="fa fa-calendar text-[10px] text-gray-400"></i></div></div>
-                            <div class="form-group-gf"><label class="form-label-gf">Return Location</label><div class="form-input-container"><select name="return_location_id" class="form-control-gf" x-model="form.return_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
-                            <div class="form-group-gf"><label class="form-label-gf">E-Commerce</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" name="is_ecommerce" value="1" x-model="form.is_ecommerce" style="width: 14px; height: 14px;"></div></div>
-                        </div>
+                            <div class="form-grid-4" x-show="showMore" x-transition>
+                                <div class="form-group-gf"><label class="form-label-gf">Place of Receipt</label><div class="form-input-container"><x-inline-select name="receipt_id" :options="$ports" module="port" x-model="form.receipt_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'receipt_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Place of Receipt ETD</label><div class="form-input-container"><input type="date" name="receipt_etd" class="form-control-gf" x-model="form.receipt_etd"> <i class="fa fa-calendar text-[10px] text-gray-400 cursor-pointer" @click="$el.previousElementSibling.showPicker()"></i></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Return Location</label><div class="form-input-container"><select name="return_location_id" class="form-control-gf" x-model="form.return_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">E-Commerce</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" name="is_ecommerce" value="1" x-model="form.is_ecommerce" style="width: 14px; height: 14px;"></div></div>
+                            </div>
 
-                        <div style="margin-top: 10px; display: flex; gap: 20px;">
-                            <div style="flex: 1;">
-                                <label class="form-label-gf">Internal Remark</label>
-                                <textarea name="internal_remark" class="form-control-gf" style="height: 60px;" x-model="form.internal_remark"></textarea>
+                            <div style="margin-top: 10px; display: flex; gap: 20px;">
+                                <div style="flex: 1;">
+                                    <label class="form-label-gf">Internal Remark</label>
+                                    <textarea name="internal_remark" class="form-control-gf" style="height: 60px;" x-model="form.internal_remark"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -1057,20 +1550,25 @@
                 <!-- House B/L (HB/L) Section -->
                 <template x-for="(hbl, index) in hbls" :key="index">
                     <div class="portlet light" style="margin-top: 5px;">
-                        <div class="portlet-title" style="background: #f2bc00; color: #fff; cursor: pointer; min-height: 24px; padding: 2px 10px;" @click="hbl.show = !hbl.show">
-                            <span class="caption-subject" style="color: #fff; font-size: 11px;"><i class="fa fa-user"></i> HB/L Information <small style="color:rgba(255,255,255,0.8); margin-left: 10px; font-weight: normal;">OP : {{ auth()->user()->name ?? 'DEMO_USER' }}</small></span>
-                            <div class="actions" style="display: flex; gap: 10px; align-items: center;">
-                                <i @click.stop="removeHbl(index)" class="fa fa-times" style="font-size: 12px; opacity: 0.8; cursor: pointer;"></i>
-                                <i class="fa fa-angle-down transition-transform" :class="hbl.show ? 'rotate-180' : ''" style="font-size: 12px;"></i>
+                        <div class="portlet-title" style="background: #f2bc00; color: #fff; cursor: pointer; min-height: 28px; padding: 2px 10px; display: flex; align-items: center; justify-content: space-between;" @click="hbl.show = !hbl.show">
+                            <span class="caption-subject" style="color: #fff; font-size: 11px; font-weight: 600;"><i class="fa fa-user"></i> HB/L Information <small style="color:rgba(255,255,255,0.85); margin-left: 10px; font-weight: normal;">OP : {{ auth()->user()->name ?? 'DEMO_USER' }}</small></span>
+                            <div class="actions" style="display: flex; gap: 8px; align-items: center;" @click.stop>
+                                <!-- HBL Tools Inline -->
+                                <button type="button" @click="toolsAction('hbl_print', index)"
+                                    style="display: flex; align-items: center; gap: 4px; background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(0,0,0,0.1); border-radius: 3px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: #374151; cursor: pointer; height: 22px;">
+                                    <i class="fa fa-print" style="color: #4b5563; font-size: 10px;"></i> HBL Print
+                                </button>
+                                <i @click="removeHbl(index)" class="fa fa-times" style="font-size: 12px; opacity: 0.9; cursor: pointer; color: #fff;" title="Remove HB/L"></i>
+                                <i class="fa fa-angle-down transition-transform" :class="hbl.show ? 'rotate-180' : ''" style="font-size: 12px; cursor: pointer; color: #fff;" @click="hbl.show = !hbl.show"></i>
                             </div>
                         </div>
                         <div class="portlet-body" x-show="hbl.show" x-collapse>
-                            <!-- Reminder Section for HBL -->
-                            <div class="memo-section" style="margin-bottom: 10px;">
+                            <!-- Reminder Section for HBL (Hidden per client instruction) -->
+                            <div class="memo-section" style="margin-bottom: 10px; display: none;">
                                 <div class="memo-header" @click="hbl.showMemo = !hbl.showMemo">
                                     <span>Note</span>
                                     <div style="display: flex; gap: 10px; align-items: center;">
-                                        <button class="btn-memo-doc" @click.stop="">Document (0) <i class="fa fa-external-link"></i></button>
+                                       <button class="btn-memo-doc" @click.stop="">Document (0) <i class="fa fa-external-link"></i></button>
                                         <i class="fa" :class="hbl.showMemo ? 'fa-angle-up' : 'fa-angle-down'"></i>
                                     </div>
                                 </div>
@@ -1106,19 +1604,19 @@
                                 <div class="flex flex-col">
                                     <input type="hidden" :name="'hbls['+index+'][id]'" :value="hbl.id">
                                     <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*HB/L No.</label><div class="form-input-container"><input type="text" :name="'hbls['+index+'][hbl_no]'" class="form-control-gf" x-model="hbl.hbl_no" required></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Quotation No.</label><div class="form-input-container"><select :name="'hbls['+index+'][quotation_no]'" class="form-control-gf" x-model="hbl.quotation_no"><option value="">Select...</option>@foreach($quotations as $q)<option value="{{ $q->quotation_no ?? $q->id }}">{{ $q->quotation_no ?? $q->id }} - {{ $q->customer->name ?? '' }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" onclick="window.open('/sales/quotation/create', '_blank')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">Quotation No.</label><div class="form-input-container"><select :name="'hbls['+index+'][quotation_no]'" class="form-control-gf" x-model="hbl.quotation_no" @change="loadQuoteToHbl(index)"><option value="">Select...</option>@foreach($quotations as $q)<option value="{{ $q->quote_no }}">{{ $q->quote_no }} - {{ $q->customer->name ?? '' }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" onclick="window.open('/sales/quotation/create', '_blank')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][customer_id]'" :options="$agents" module="trade-partner" x-model="hbl.customer_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][customer_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container"><select :name="'hbls['+index+'][sales_person_id]'" class="form-control-gf" x-model="hbl.sales_person_id"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
                                     <div style="height: 5px;"></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Customs Broker</label><div class="form-input-container"><select :name="'hbls['+index+'][customs_broker_id]'" class="form-control-gf" x-model="hbl.customs_broker_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][customs_broker_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Place of Delivery</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][del_id]'" :options="$ports" module="port" x-model="hbl.del_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('port', 'hbls['+index+'][del_id]')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">Place of Delivery</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][del_id]'" :options="$ports" module="port" x-model="hbl.del_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'hbls['+index+'][del_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Delivery Loc.</label><div class="form-input-container"><select :name="'hbls['+index+'][delivery_location_id]'" class="form-control-gf" x-model="hbl.delivery_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][delivery_location_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Rail</label><div class="form-input-container"><input type="checkbox" :name="'hbls['+index+'][is_rail]'" value="1" x-model="hbl.is_rail"> <select :name="'hbls['+index+'][pre_carriage_by]'" class="form-control-gf" x-model="hbl.pre_carriage_by"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->name }}">{{ $agent->name }}</option>@endforeach</select></div></div>
                                 </div>
 
                                 <!-- Column 2: Shipper Context -->
                                 <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][shipper_id]'" :options="$agents" module="trade-partner" x-model="hbl.shipper_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][shipper_id]')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][shipper_id]'" :options="$agents" module="trade-partner" x-model="hbl.shipper_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][shipper_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Date of Issue</label><div class="form-input-container"><input type="date" :name="'hbls['+index+'][date_of_issue]'" class="form-control-gf" x-model="hbl.date_of_issue"></div></div>
                                     <div class="form-group-gf"><label class="form-label-gf">Place of Discharge</label><div class="form-input-container"><select :name="'hbls['+index+'][pod_id]'" class="form-control-gf" x-model="hbl.pod_id"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></div></div>
 <div class="form-group-gf"><label class="form-label-gf" style="margin-right: 15px;">PRE-CARRIAGE BY</label><div class="form-input-container"><input type="text" :name="'hbls['+index+'][pre_carriage_by]'" class="form-control-gf" x-model="hbl.pre_carriage_by"></div></div>
@@ -1130,9 +1628,9 @@
 
                                 <!-- Column 3: Consignee Context -->
                                 <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][consignee_id]'" :options="$agents" module="trade-partner" x-model="hbl.consignee_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][consignee_id]')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Place of Receipt</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][receipt_id]'" :options="$ports" module="port" x-model="hbl.receipt_id" class="form-control-gf" /></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Place of Delivery</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][del_id]'" :options="$ports" module="port" x-model="hbl.del_id" class="form-control-gf" /></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][consignee_id]'" :options="$agents" module="trade-partner" x-model="hbl.consignee_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][consignee_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">Place of Receipt</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][receipt_id]'" :options="$ports" module="port" x-model="hbl.receipt_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'hbls['+index+'][receipt_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">Place of Delivery</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][del_id]'" :options="$ports" module="port" x-model="hbl.del_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'hbls['+index+'][del_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
 <div class="form-group-gf"><label class="form-label-gf">VOYAGE NO</label><div class="form-input-container"><input type="text" :name="'hbls['+index+'][voyage_no]'" class="form-control-gf" x-model="hbl.voyage_no"></div></div>
 <div class="form-group-gf"><label class="form-label-gf">L/C No</label><div class="form-input-container"><input type="text" :name="'hbls['+index+'][lc_no]'" class="form-control-gf" x-model="hbl.lc_no"></div></div>
 <div class="form-group-gf"><label class="form-label-gf">CARGO TYPE</label><div class="form-input-container"><select :name="'hbls['+index+'][cargo_type]'" class="form-control-gf" x-model="hbl.cargo_type"><option value="">Select...</option><option value="GENERAL CARGO">GENERAL CARGO</option></select></div></div>
@@ -1143,12 +1641,12 @@
                                 <div class="flex flex-col">
                                     <div class="form-group-gf"><label class="form-label-gf">Notify Party</label><div class="form-input-container"><select :name="'hbls['+index+'][notify_party_id]'" class="form-control-gf" x-model="hbl.notify_party_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][notify_party_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
 <div class="form-group-gf"><label class="form-label-gf">Place of Loading</label><div class="form-input-container"><select :name="'hbls['+index+'][pol_id]'" class="form-control-gf" x-model="hbl.pol_id"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></div></div>
-<div class="form-group-gf"><label class="form-label-gf">Final Destination</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][fdest_id]'" :options="$ports" module="port" x-model="hbl.fdest_id" class="form-control-gf" /></div></div>
+<div class="form-group-gf"><label class="form-label-gf">Final Destination</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls['+index+'][fdest_id]'" :options="$ports" module="port" x-model="hbl.fdest_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'hbls['+index+'][fdest_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
 <div class="form-group-gf"><label class="form-label-gf">FREIGHT PAYABLE AT</label><div class="form-input-container"><input type="text" :name="'hbls['+index+'][freight_payable_at]'" class="form-control-gf" x-model="hbl.freight_payable_at"></div></div>
 <div class="form-group-gf"><label class="form-label-gf">INCOTERMS</label><div class="form-input-container"><select :name="'hbls['+index+'][incoterms_id]'" class="form-control-gf" x-model="hbl.incoterms_id"><option value="">Select...</option>@foreach($incoterms as $incoterm)<option value="{{ $incoterm->code }}">{{ $incoterm->code }} - {{ $incoterm->name }}</option>@endforeach</select></div></div>
 <div class="form-group-gf"><label class="form-label-gf">S/C No</label><div class="form-input-container"><input type="text" :name="'hbls['+index+'][sc_no]'" class="form-control-gf" x-model="hbl.sc_no"></div></div>
 <div class="form-group-gf"><label class="form-label-gf">SHIP MODE</label><div class="form-input-container"><select :name="'hbls['+index+'][ship_mode]'" class="form-control-gf" x-model="hbl.ship_mode"><option value="">Select...</option><option value="FCL">FCL</option><option value="LCL">LCL</option></select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">CY/CFS Loc.</label><div class="form-input-container"><select :name="'hbls['+index+'][cfs_location_id]'" class="form-control-gf" x-model="hbl.cfs_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
+                                    <div class="form-group-gf"><label class="form-label-gf">CY/CFS Loc.</label><div class="form-input-container"><select :name="'hbls['+index+'][cfs_location_id]'" class="form-control-gf" x-model="hbl.cfs_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'hbls['+index+'][cfs_location_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 </div>
                             </div>
 
@@ -1196,7 +1694,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                 </template>
 
                 <div class="flex justify-end" style="margin-top: 5px;">
-                    <button @click="addHbl" class="btn-gofreight" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HB/L</button>
+                   <button @click="addHbl" class="btn-freightx" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HB/L</button>
                 </div>
             </div>
 
@@ -1208,24 +1706,23 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                     </div>
                     <div class="portlet-body">
                         <div class="container-toolbar">
-                            <div style="display: flex; gap: 2px;">
-                                <button type="button" @click="addContainer()" class="btn-tool-icon btn-tool-icon-blue" title="Add Row"><i class="fa fa-plus"></i></button>
-                                <button type="button" @click="addContainer(5)" class="btn-tool-icon" title="Add 5 Rows">+5</button>
-                                <button type="button" @click="addBulkContainers" class="btn-tool-icon" title="Add Bulk"><i class="fa fa-plus-square"></i></button>
-                                <button type="button" @click="duplicateSelectedContainers" class="btn-tool-icon" title="Duplicate"><i class="fa fa-copy"></i></button>
-                                <button type="button" @click="deleteSelectedContainers" class="btn-tool-icon" style="color:red; border-color:red;" title="Delete Selected"><i class="fa fa-trash"></i></button>
-                            </div>
-                            <div style="display: flex; gap: 4px; margin-left: 10px;">
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                               <button type="button" @click="addContainer()" class="btn-tool" title="Add Row"><i class="fa fa-plus"></i> Add Row</button>
+                               <button type="button" @click="addContainer(5)" class="btn-tool" style="background:#64748b; color:#fff;" title="Add 5 Rows"><i class="fa fa-plus"></i> Add 5 Rows</button>
+                               <button type="button" @click="addBulkContainers" class="btn-tool-icon" title="Add Bulk"><i class="fa fa-plus-square"></i></button>
+                               <button type="button" @click="duplicateSelectedContainers" class="btn-tool-icon" title="Duplicate"><i class="fa fa-copy"></i></button>
+                               <button type="button" @click="deleteSelectedContainers" class="btn-tool-icon" style="color:red; border-color:red;" title="Delete Selected"><i class="fa fa-trash"></i></button>
+                                                      <!-- Hidden per client instruction: Import Container, Create A/P, Copy Data from All HB/L, Container info to clipboard, purple button -->
+                            <div style="display: none;">
                                 <button @click="document.getElementById('container-import-input').click()" class="btn-tool"><i class="fa fa-cloud-upload"></i> Import Container</button>
                                 <input type="file" id="container-import-input" accept=".csv,.xlsx,.xls" @change="handleContainerImport" style="display:none;">
                                 <button class="btn-tool-outline">Create A/P <i class="fa fa-angle-down"></i></button>
                                 <button @click="copyDataFromAllHbl" class="btn-tool-outline" style="color:#4b77be; border-color:#4b77be;">Copy Data from All HB/L</button>
                                 <button @click="showClipboardModal = true" class="btn-tool-outline">Container info to clipboard <i class="fa fa-external-link"></i></button>
-                            </div>
-                            <div style="margin-left: auto;">
                                 <button class="btn-tool-secondary" style="background: #9b59b6;"><i class="fa fa-sign-out"></i></button>
                             </div>
                         </div>
+                    </div>
 
                         <div class="table-responsive">
                             <table class="container-table">
@@ -1287,7 +1784,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                                             <td style="width:160px;">
                                                 <div class="flex items-center gap-1">
                                                     <input type="text" :name="'containers['+idx+'][container_no]'" class="form-control-gf" x-model="cont.container_no">
-                                                    <button type="button" @click.stop="cont.expanded = !cont.expanded" class="btn-default-gf" style="padding: 0 4px; height: 16px; line-height: 1; min-width: 16px; border-radius:0; background:#fff; border:1px solid #ccc;">
+                                                   <button type="button" @click.stop="cont.expanded = !cont.expanded" class="btn-default-gf" style="padding: 0 4px; height: 16px; line-height: 1; min-width: 16px; border-radius:0; background:#fff; border:1px solid #ccc; display: none;">
                                                         <i class="fa fa-minus text-gray-500" style="font-size:10px;"></i>
                                                     </button>
                                                 </div>
@@ -1300,7 +1797,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                                             <td style="width:100px;"><input type="number" :name="'containers['+idx+'][weight_kg]'" class="form-control-gf" x-model="cont.weight_kg" step="0.01" style="text-align:right;"></td>
                                             <td style="width:100px;"><input type="number" :name="'containers['+idx+'][measure_cbm]'" class="form-control-gf" x-model="cont.measure_cbm" step="0.01" style="text-align:right;"></td>
                                         </tr>
-                                        <tr x-show="cont.expanded" x-cloak class="expanded-row">
+                                        <tr style="display: none !important;" class="expanded-row">
                                             <td colspan="2" style="border-right: 1px solid #dcdcdc; background:#fff !important;"></td>
                                             <td colspan="9">
                                                 <div class="expanded-container">
@@ -1335,7 +1832,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                                                         <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">P.O.D ETA</label><div class="form-input-container"><input type="date" :name="'containers['+idx+'][pod_eta]'" class="form-control-gf" x-model="cont.pod_eta"></div></div>
                                                         <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">Avail Pickup</label><div class="form-input-container"><input type="checkbox" :name="'containers['+idx+'][is_avail_pickup]'" value="1" x-model="cont.is_avail_pickup" style="width:12px;height:12px;"></div></div>
                                                         <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">Appt.</label><div class="form-input-container"><input type="date" :name="'containers['+idx+'][appointment_date]'" class="form-control-gf" x-model="cont.appointment_date"></div></div>
-                                                        <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">Trucker</label><div class="form-input-container"><select :name="'containers['+idx+'][trucker_id]'" class="form-control-gf" x-model="cont.trucker_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
+                                                        <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">Trucker</label><div class="form-input-container"><select :name="'containers['+idx+'][trucker_id]'" class="form-control-gf" x-model="cont.trucker_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button type="button" class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'containers['+idx+'][trucker_id]')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                                         <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">Pick Up</label><div class="form-input-container"><input type="date" :name="'containers['+idx+'][pickup_date]'" class="form-control-gf" x-model="cont.pickup_date"></div></div>
                                                         <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">Gate Out</label><div class="form-input-container"><input type="date" :name="'containers['+idx+'][gate_out_date]'" class="form-control-gf" x-model="cont.gate_out_date"></div></div>
                                                         <div class="form-group-gf"><label class="form-label-gf" style="width:65px;">F.Dest ETA</label><div class="form-input-container"><input type="date" :name="'containers['+idx+'][fdest_eta]'" class="form-control-gf" x-model="cont.fdest_eta"></div></div>
@@ -1394,7 +1891,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                             <div style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                                     <label class="caption-subject" style="font-size: 11px;">Description</label>
-                                    <button class="btn-tool" style="padding: 2px 8px; font-size: 10px;">Copy from All HB/L</button>
+                                   <button class="btn-tool" style="padding: 2px 8px; font-size: 10px;">Copy from All HB/L</button>
                                 </div>
                                 <textarea class="form-control-gf" style="height: 80px;"></textarea>
                             </div>
@@ -1443,7 +1940,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                         </table>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" @click="copyContainersToClipboard" class="btn-tool" style="background:#4b77be; padding: 6px 15px;">COPY TO CLIPBOARD</button>
+                       <button type="button" @click="copyContainersToClipboard" class="btn-tool" style="background:#4b77be; padding: 6px 15px;">COPY TO CLIPBOARD</button>
                     </div>
                 </div>
             </div>
@@ -1472,7 +1969,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                     <span style="color: #333;">JYCHI2512828</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <button class="btn-default-gf" style="border: 1px solid #4b77be; color: #4b77be; padding: 2px 8px;">GP : Show All of this BKG</button>
+                   <button class="btn-default-gf" style="border: 1px solid #4b77be; color: #4b77be; padding: 2px 8px;">GP : Show All of this BKG</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px; margin-left: auto;">
                     <span style="font-weight: 700; color: #4b77be;">CM :</span>
@@ -1501,7 +1998,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                     <thead>
                         <tr style="background: #f1f3f6;">
                             <th style="padding: 6px 8px; width: 30px; text-align: center;">
-                                <button type="button" @click="addNewCharge" class="btn-tool-icon-blue" style="border:none; padding: 2px 6px; border-radius: 2px; cursor: pointer; display: inline-block;">
+                               <button type="button" @click="addNewCharge" class="btn-tool-icon-blue" style="border:none; padding: 2px 6px; border-radius: 2px; cursor: pointer; display: inline-block;">
                                     <i class="fa fa-plus"></i>
                                 </button>
                             </th>
@@ -1531,7 +2028,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                         <template x-for="(charge, idx) in chargesList" :key="idx">
                             <tr x-show="shouldShowChargeRow(charge)">
                                 <td style="padding: 5px 8px; text-align: center;">
-                                    <button type="button" @click="removeCharge(idx)" class="btn-tool-icon" style="color: #ef4444; border:none; padding: 2px; background: transparent; cursor: pointer; display: inline-block;">
+                                   <button type="button" @click="removeCharge(idx)" class="btn-tool-icon" style="color: #ef4444; border:none; padding: 2px; background: transparent; cursor: pointer; display: inline-block;">
                                         <i class="fa fa-trash"></i>
                                     </button>
                                 </td>
@@ -1629,21 +2126,21 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
 
             <!-- Buttons Row - Exactly as per image -->
             <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; align-items: center; padding: 10px 0; border-top: 1px solid #e7ecf1;">
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="addNewCharge">Parcs</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="openCertificateModal">Certificate</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="applyTemplate">Template</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="copyFromQuote">Copy From</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="createInvoice">Create INV/CRN</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="prorataCharges">Prorata</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="setDefaultCharges">Default</button>
-                <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="reloadCharges">Reload</button>
-                <button type="button" class="btn-gofreight" style="background: #4b77be; padding: 6px 20px; font-size: 11px;" @click="saveCharges">Save</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="addNewCharge">Parcs</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="openCertificateModal">Certificate</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="applyTemplate">Template</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="copyFromQuote">Copy From</button>
+               <button type="button" class="btn-freightx" style="background: #16a34a; color: white; border: none; padding: 6px 14px; font-weight: 600; border-radius: 3px; font-size: 11px; cursor: pointer;" @click="generateFreightInvoice">Generate Freight Invoice</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="prorataCharges">Prorata</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="setDefaultCharges">Default</button>
+               <button type="button" class="btn-default-gf" style="background: #fff; border: 1px solid #ccc; padding: 6px 15px; font-size: 11px;" @click="reloadCharges">Reload</button>
+               <button type="button" class="btn-freightx" style="background: #4b77be; padding: 6px 20px; font-size: 11px;" @click="saveCharges">Save</button>
             </div>
 
             <!-- Dropdown for Multiple Options (as requested) -->
             <div style="position: relative; margin-top: 10px; display: flex; justify-content: flex-end;">
                 <div class="dropdown" x-data="{ open: false }">
-                    <button @click="open = !open" class="btn-default-gf" style="background: #f1f3f6; border: 1px solid #ccc; padding: 5px 12px; font-size: 11px; display: flex; align-items: center; gap: 5px;">
+                   <button @click="open = !open" class="btn-default-gf" style="background: #f1f3f6; border: 1px solid #ccc; padding: 5px 12px; font-size: 11px; display: flex; align-items: center; gap: 5px;">
                         More Actions <i class="fa fa-angle-down"></i>
                     </button>
                     <div x-show="open" @click.away="open = false" style="position: absolute; bottom: 100%; right: 0; margin-bottom: 5px; background: #fff; border: 1px solid #ccc; border-radius: 4px; min-width: 180px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 100;">
@@ -1672,40 +2169,34 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                         <span class="caption-subject"><i class="fa fa-history"></i> History</span>
                     </div>
                     <div class="portlet-body">
-                        <div style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border: 1px solid #eee; border-radius: 4px;">
-                            <div class="caption-subject" style="font-size: 11px; margin-bottom: 10px; font-weight: bold; color: #4b77be; text-transform: uppercase;">Shipment Status Logs</div>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <div style="background: #ebf5ff; color: #4b77be; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #4b77be;">BOOKING</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">MBL SUBMIT</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">AMS SUBMIT</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">ISF SUBMIT</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">BL RELEASE</div>
-                                <div style="background: #e6fffa; color: #2d6a4f; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; border-left: 3px solid #2d6a4f;">BL SURRENDERED</div>
-                            </div>
+                        <div style="margin-bottom: 12px; font-weight: bold; font-size: 11px; color: #4b77be; text-transform: uppercase;">
+                            <i class="fa fa-list-alt"></i> Shipment Status Logs
                         </div>
-                        <table class="table-custom">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>User</th>
-                                    <th>Action</th>
-                                    <th>Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(log, idx) in form.history" :key="idx">
+                        <div style="overflow-x: auto;">
+                            <table class="table-custom" style="width: 100%;">
+                                <thead>
                                     <tr>
-                                        <td x-text="log.date"></td>
-                                        <td x-text="log.user"></td>
-                                        <td><span style="background: #4b77be; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 9px;" x-text="log.action"></span></td>
-                                        <td x-text="log.details"></td>
+                                        <th style="width: 190px;">Date</th>
+                                        <th style="width: 130px;">User</th>
+                                        <th>Details</th>
+                                        <th style="width: 130px; text-align: right;">Action</th>
                                     </tr>
-                                </template>
-                                <tr x-show="!form.history.length">
-                                    <td colspan="4" style="text-align: center; color: #999; padding: 10px;">No history records found.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(log, idx) in form.history" :key="log.id || idx">
+                                        <tr>
+                                            <td style="white-space: nowrap;" x-text="log.created_at ? new Date(log.created_at).toLocaleString() : (log.date || '')"></td>
+                                            <td x-text="log.user ? (typeof log.user === 'object' ? log.user.name : log.user) : 'System'"></td>
+                                            <td x-text="log.details"></td>
+                                            <td style="text-align: right;"><span style="background: #ebf5ff; color: #4b77be; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; border-left: 3px solid #4b77be; display: inline-block;" x-text="log.action"></span></td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="!form.history || !form.history.length">
+                                        <td colspan="4" style="text-align: center; color: #999; padding: 15px;">No history records found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1720,9 +2211,9 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                         <div class="form-grid-4">
                             <!-- Column 1 -->
                             <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><x-inline-select name="shipper_id" :options="$agents" module="trade-partner" x-model="form.shipper_id" class="form-control-gf" /> <button class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'shipper_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><x-inline-select name="bill_to_id" :options="$agents" module="trade-partner" x-model="form.bill_to_id" class="form-control-gf" /> <button class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'bill_to_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><x-inline-select name="oversea_agent_id" :options="$agents" module="trade-partner" x-model="form.oversea_agent_id" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><x-inline-select name="shipper_id" :options="$agents" module="trade-partner" x-model="form.shipper_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'shipper_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><x-inline-select name="bill_to_id" :options="$agents" module="trade-partner" x-model="form.bill_to_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'bill_to_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><x-inline-select name="oversea_agent_id" :options="$agents" module="trade-partner" x-model="form.oversea_agent_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'oversea_agent_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div style="height: 5px;"></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Trucker</label><div class="form-input-container"><select name="trucker_id" class="form-control-gf" x-model="form.trucker_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select> <button class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'trucker_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Ship Mode</label><div class="form-input-container"><select name="ship_mode" class="form-control-gf" x-model="form.ship_mode"><option value="FCL">FCL</option><option value="LCL">LCL</option></select></div></div>
@@ -1731,18 +2222,18 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
 
                             <!-- Column 2 -->
                             <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="consignee_id" :options="$agents" module="trade-partner" x-model="form.consignee_id" class="form-control-gf" /> <button class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'consignee_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="consignee_id" :options="$agents" module="trade-partner" x-model="form.consignee_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'consignee_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Sub B/L No.</label><div class="form-input-container"><input type="text" name="sub_bl_no" class="form-control-gf" x-model="form.sub_bl_no"></div></div>
                                 <div style="height: 5px;"></div>
                                 <div class="form-group-gf"><label class="form-label-gf">CY/CFS Loc.</label><div class="form-input-container"><select name="cy_location_id" class="form-control-gf" x-model="form.cy_location_id"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Final Dest.</label><div class="form-input-container"><x-inline-select name="fdest_id" :options="$ports" module="port" x-model="form.fdest_id" class="form-control-gf" /> <button class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('port', 'fdest_id')"><i class="fa fa-edit" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Final Dest.</label><div class="form-input-container"><x-inline-select name="fdest_id" :options="$ports" module="port" x-model="form.fdest_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('port', 'fdest_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select name="freight_term" class="form-control-gf" x-model="form.freight_term"><option value="Prepaid">PREPAID</option><option value="Collect">COLLECT</option></select></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">Expiry Date</label><div class="form-input-container"><input type="date" name="expiry_date" class="form-control-gf" x-model="form.expiry_date"></div></div>
                             </div>
 
                             <!-- Column 3 -->
                             <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><x-inline-select name="notify_id" :options="$agents" module="trade-partner" x-model="form.notify_id" class="form-control-gf" /> <button class="btn-default-gf" style="height:18px; padding: 0 4px;" @click="openAddNewModal('trade-partner', 'notify_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><x-inline-select name="notify_id" :options="$agents" module="trade-partner" x-model="form.notify_id" class="form-control-gf" /> <button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="openAddNewModal('trade-partner', 'notify_id')"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
                                 <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" value="{{ auth()->user()->name ?? 'DEMO_USER' }}" disabled style="background:#f5f5f5;"></div></div>
                                 <div style="height: 19px;"></div>
                                 <div style="height: 5px;"></div>
@@ -1887,14 +2378,14 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                         </div>
 
                         <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 0;">
-                            <button type="button" class="btn-default-gf" @click="clearSearch()">Clear</button>
-                            <button type="button" class="btn-gofreight" @click="applySearch()"><i class="fa fa-search"></i> Search</button>
+                           <button type="button" class="btn-default-gf" @click="clearSearch()">Clear</button>
+                           <button type="button" class="btn-freightx" @click="applySearch()"><i class="fa fa-search"></i> Search</button>
                         </div>
 
                         <hr style="border-top: 1px solid #e2e8f0; margin: 10px 0;">
 
                         <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
-                            <button type="button" class="btn-tool-secondary" @click="showQuoteConfig = !showQuoteConfig"><i class="fa fa-cogs"></i> Config</button>
+                           <button type="button" class="btn-tool-secondary" @click="showQuoteConfig = !showQuoteConfig"><i class="fa fa-cogs"></i> Config</button>
                         </div>
 
                         <div x-show="showQuoteConfig" style="margin-bottom: 10px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 10px;">
@@ -1926,17 +2417,20 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                             </thead>
                             <tbody>
                                 @foreach($quotations as $quote)
-                                <tr x-show="matchFilters({quote_no: '{{ $quote->quote_no }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}'})">
-                                    <td x-show="colVisibility.select" style="text-align: center;"><input type="radio" name="quote_sel" :checked="selectedQuote && selectedQuote.quote_no === '{{ $quote->quote_no }}'" @click="selectQuote({quote_no: '{{ $quote->quote_no }}', mbl_no: 'MBL-{{ $quote->quote_no }}', hbl_no: 'HBL-{{ $quote->quote_no }}', eta: '{{ $quote->expiry_date ? $quote->expiry_date->format('Y-m-d') : '' }}', etd: '{{ $quote->quote_date ? $quote->quote_date->format('Y-m-d') : '' }}', customer: '{{ $quote->customer->name ?? '' }}', customer_id: '{{ $quote->customer_id }}', sales: '{{ $quote->salesPerson->name ?? '' }}', sales_person_id: '{{ $quote->sales_person_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', pol_name: '{{ $quote->pol->name ?? '' }}', pod_name: '{{ $quote->pod->name ?? '' }}', carrier_name: '', oversea_agent: '', service_term: '{{ $quote->service_term ?? '' }}', op: '', incoterms: '{{ $quote->incoterms_id ?? '' }}', incoterms_id: '{{ $quote->incoterms_id ?? '' }}', detail: '{{ $quote->internal_remark ?? '' }}', ship_mode: '{{ $quote->transport_mode ?? 'FCL' }}'})"></td>
+                                <tr class="cursor-pointer hover:bg-blue-50"
+                                    :style="selectedQuote && selectedQuote.quote_no === '{{ addslashes($quote->quote_no) }}' ? 'background-color: #eff6ff;' : ''"
+                                    @click="selectQuote(quotationsMap['{{ addslashes($quote->quote_no) }}'])"
+                                    x-show="matchFilters({quote_no: '{{ addslashes($quote->quote_no) }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}', op: '{{ $quote->op_id }}', commodity: '{{ addslashes($quote->commodity ?? '') }}'})">
+                                    <td x-show="colVisibility.select" style="text-align: center;"><input type="radio" name="quote_sel" :checked="selectedQuote && selectedQuote.quote_no === '{{ addslashes($quote->quote_no) }}'" @click.stop="selectQuote(quotationsMap['{{ addslashes($quote->quote_no) }}'])"></td>
                                     <td x-show="colVisibility.quote_no"><a href="#" style="color: #3b82f6; font-weight: 600;">{{ $quote->quote_no }}</a></td>
                                     <td x-show="colVisibility.valid_date">{{ $quote->quote_date ? $quote->quote_date->format('m-d-Y') : '' }} ~ {{ $quote->expiry_date ? $quote->expiry_date->format('m-d-Y') : '' }}</td>
-                                    <td x-show="colVisibility.status"><span style="background: {{ $quote->status === 'ACCEPTED' ? '#10b981' : '#64748b' }}; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 9px; font-weight: 600;">{{ $quote->status }}</span></td>
-                                    <td x-show="colVisibility.creation_date">{{ $quote->created_at->format('Y-m-d') }}</td>
-                                    <td x-show="colVisibility.commodity">-</td>
-                                    <td x-show="colVisibility.pol">{{ $quote->pol->name ?? '' }}</td>
-                                    <td x-show="colVisibility.pod">{{ $quote->pod->name ?? '' }}</td>
-                                    <td x-show="colVisibility.carrier">-</td>
-                                    <td x-show="colVisibility.sales">{{ $quote->salesPerson->name ?? 'DEMO' }}</td>
+                                    <td x-show="colVisibility.status"><span style="background: {{ in_array(strtoupper($quote->status), ['WON', 'ACCEPTED']) ? '#10b981' : '#64748b' }}; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 9px; font-weight: 600;">{{ $quote->status }}</span></td>
+                                    <td x-show="colVisibility.creation_date">{{ $quote->created_at ? $quote->created_at->format('Y-m-d') : '' }}</td>
+                                    <td x-show="colVisibility.commodity">{{ $quote->commodity ?: '-' }}</td>
+                                    <td x-show="colVisibility.pol">{{ $quote->pol->name ?? '-' }}</td>
+                                    <td x-show="colVisibility.pod">{{ $quote->pod->name ?? '-' }}</td>
+                                    <td x-show="colVisibility.carrier">{{ $quote->carrier->name ?? '-' }}</td>
+                                    <td x-show="colVisibility.sales">{{ $quote->salesPerson->name ?? '-' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -2048,15 +2542,15 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn-default-gf" @click="showQuoteModal = false">Cancel</button>
-                    <button type="button" x-show="quoteStep > 1" class="btn-default-gf" @click="quoteStep--">Back</button>
+                   <button type="button" class="btn-default-gf" @click="showQuoteModal = false">Cancel</button>
+                   <button type="button" x-show="quoteStep > 1" class="btn-default-gf" @click="quoteStep--">Back</button>
 
-                    <button type="button" x-show="quoteStep < 3"
-                            :class="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.hbl_no || !quoteForm.customer || !quoteForm.eta))) ? 'btn-gofreight opacity-50 cursor-not-allowed' : 'btn-gofreight'"
+                   <button type="button" x-show="quoteStep < 3"
+                            :class="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.hbl_no || !quoteForm.customer || !quoteForm.eta))) ? 'btn-freightx opacity-50 cursor-not-allowed' : 'btn-freightx'"
                             :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.hbl_no || !quoteForm.customer || !quoteForm.eta))"
                             @click="quoteStep++">Next <i class="fa fa-arrow-right"></i></button>
 
-                    <button type="button" x-show="quoteStep === 3" class="btn-gofreight" @click="confirmQuoteSelection"><i class="fa fa-check"></i> Confirm</button>
+                   <button type="button" x-show="quoteStep === 3" class="btn-freightx" @click="confirmQuoteSelection"><i class="fa fa-check"></i> Confirm</button>
                 </div>
             </div>
         </div>
@@ -2067,6 +2561,28 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
 
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
+
+
+
+    <style>
+        .oi-tools-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 7px 16px;
+            font-size: 12px;
+            color: #374151;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .oi-tools-item:hover {
+            background: #f3f4f6;
+        }
+    </style>
 
     <script>
         function showToast(type, msg) {
@@ -2095,3 +2611,4 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
         @endif
     </script>
 </x-layout>
+

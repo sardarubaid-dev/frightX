@@ -33,7 +33,7 @@
 </head>
 <body>
     <div class="company">
-        <h1>GoFreight</h1>
+        <h1>FreightX</h1>
         <div class="addr">12F, No.186, Sec. 1, Fu-Xing S. Rd., Da-An District,<br>Taipei City 106, Taiwan R.O.C.<br>TEL: 886-2-2708-5068 &nbsp; FAX: 886-2-2708-5067</div>
     </div>
 

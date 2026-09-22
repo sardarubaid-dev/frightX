@@ -2,6 +2,43 @@
     @push('styles')
     <x-list-styles />
     <style>
+        /* Button Group Styling - Better Alignment */
+        .btn-group {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .btn-group .btn-tool:not(:first-child) {
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-group .btn-tool {
+            border-radius: 0;
+            margin: 0;
+        }
+        
+        .btn-group .btn-tool:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .btn-group .btn-tool:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .portlet-tool {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
         /* Mobile Responsive Enhancements - FIXED SCROLLING */
         @media (max-width: 768px) {
             .page-content { 
@@ -43,13 +80,14 @@
             .portlet-tool > div { width: 100%; }
             .btn-group { 
                 width: 100%; 
-                justify-content: space-between;
+                justify-content: flex-start;
+                flex-wrap: wrap;
             }
             .btn-tool { 
-                font-size: 9px !important; 
+                font-size: 8px !important; 
                 padding: 0 6px !important;
                 height: 20px !important;
-                flex: 1;
+                flex: 0 1 auto;
             }
             .input-inline { 
                 width: 100% !important; 
@@ -82,7 +120,7 @@
             .grid-table { 
                 font-size: 8px !important;
                 width: auto !important;
-                min-width: 1400px !important; /* Ensures horizontal scroll */
+                min-width: 1600px !important; /* Ensures horizontal scroll */
                 table-layout: auto !important;
             }
             
@@ -92,7 +130,7 @@
                 white-space: nowrap !important;
             }
             
-            /* CRITICAL: Reduce sticky columns on mobile for better scrolling */
+            /* Keep only 2 sticky columns on mobile */
             .sticky-col { 
                 font-size: 8px !important;
                 position: sticky !important;
@@ -100,23 +138,20 @@
                 background: #fff !important;
             }
             
-            /* Only keep first 2 columns sticky on mobile for better UX */
             .grid-table th:nth-child(1), .grid-table td:nth-child(1) { 
                 left: 0 !important; 
             }
             .grid-table th:nth-child(2), .grid-table td:nth-child(2) { 
-                left: 28px !important; 
+                left: 25px !important; 
             }
-            /* Remove sticky from other columns on mobile */
+            /* Remove sticky from other columns */
             .grid-table th:nth-child(3), .grid-table td:nth-child(3),
             .grid-table th:nth-child(4), .grid-table td:nth-child(4),
-            .grid-table th:nth-child(5), .grid-table td:nth-child(5),
-            .grid-table th:nth-child(6), .grid-table td:nth-child(6) {
+            .grid-table th:nth-child(5), .grid-table td:nth-child(5) {
                 position: static !important;
                 left: auto !important;
             }
             
-            /* Filter inputs on mobile */
             .filter-input { 
                 height: 18px !important; 
                 font-size: 8px !important;
@@ -180,15 +215,13 @@
             }
             .page-breadcrumb li { font-size: 10px !important; }
             
-            /* Selection badge */
             #sel-badge { font-size: 8px !important; }
         }
         
         @media (max-width: 480px) {
-            /* Extra small screens */
             .grid-table { 
                 font-size: 7px !important; 
-                min-width: 1200px !important;
+                min-width: 1400px !important;
             }
             .grid-table th, .grid-table td { 
                 padding: 2px 3px !important;
@@ -198,7 +231,6 @@
                 font-size: 8px !important;
                 padding: 0 4px !important;
             }
-            .caption-subject { font-size: 10px !important; }
             
             /* Keep only checkbox sticky on very small screens */
             .grid-table th:nth-child(2), .grid-table td:nth-child(2) {
@@ -207,7 +239,6 @@
             }
         }
         
-        /* Landscape orientation on mobile */
         @media (max-width: 768px) and (orientation: landscape) {
             .grid-wrapper { 
                 height: calc(100vh - 200px) !important;
@@ -220,7 +251,7 @@
                 min-height: 28px !important;
                 touch-action: manipulation;
             }
-            .filter-input {
+            .filter-input, .select-tool {
                 min-height: 24px !important;
                 touch-action: manipulation;
             }
@@ -229,8 +260,6 @@
                 height: 18px;
                 touch-action: manipulation;
             }
-            
-            /* Better touch scrolling */
             .grid-wrapper {
                 -webkit-overflow-scrolling: touch !important;
                 scroll-behavior: smooth;
@@ -327,7 +356,7 @@
             <div class="portlet-tool">
                 <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('ocean-import.create') }}" title="New Shipment" target="_blank">
+                        <a class="btn-tool green" href="{{ route('ocean-import.create') }}" title="New Shipment">
                             <i class="fa fa-plus"></i>
                         </a>
                         <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()">
@@ -830,15 +859,24 @@
         const id = _colorShipmentId;
         fetch('{{ route("ocean-import.update-color", "ID") }}'.replace('ID', id), {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+            },
             body: JSON.stringify({ color }),
         }).then(r => r.json()).then(data => {
             if (data.success) {
                 const span = document.querySelector(`#shipment-row-${id} .color-mark`);
                 if (span) span.style.background = color;
                 showToast('success', 'Status color updated');
+            } else {
+                showToast('error', data.message || 'Failed to update color');
             }
-        }).catch(() => showToast('error', 'Failed to update color'));
+        }).catch(err => {
+            console.error('Color update error:', err);
+            showToast('error', 'Failed to update color');
+        });
         closeColorPicker();
     }
 
@@ -848,18 +886,28 @@
     }
 
     function clearColor() {
+        if (!_colorShipmentId) return;
         const id = _colorShipmentId;
         fetch('{{ route("ocean-import.update-color", "ID") }}'.replace('ID', id), {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json', 
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+            },
             body: JSON.stringify({ color: '' }),
         }).then(r => r.json()).then(data => {
             if (data.success) {
                 const span = document.querySelector(`#shipment-row-${id} .color-mark`);
                 if (span) span.style.background = '#94a3b8';
                 showToast('success', 'Status color cleared');
+            } else {
+                showToast('error', data.message || 'Failed to clear color');
             }
-        }).catch(() => showToast('error', 'Failed to clear color'));
+        }).catch(err => {
+            console.error('Color clear error:', err);
+            showToast('error', 'Failed to clear color');
+        });
         closeColorPicker();
     }
 

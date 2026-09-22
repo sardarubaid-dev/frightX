@@ -1,6 +1,61 @@
 <x-layout>
     @push('styles')
     <x-form-styles />
+    <style>
+        .tools-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s ease;
+        }
+        .tools-menu-item:hover:not(:disabled) {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        .tools-menu-item.disabled, .tools-menu-item:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .tools-menu-divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 4px 0;
+        }
+        .btn-filter {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 5px 14px;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4b77be;
+            font-weight: 500;
+        }
+        .btn-filter:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+        .btn-filter-active {
+            background: #337ab7;
+            border: 1px solid #2e6da4;
+            padding: 5px 14px;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 600;
+        }
+    </style>
     @endpush
 
     <script>
@@ -93,11 +148,12 @@
                 hawbs: [],
                 
                 form: {
+                    id: '{{ isset($airExport) ? $airExport->id : "" }}',
                     file_no: '{{ isset($airExport) ? $airExport->file_no : "MAE-" . date("YmdHis") }}',
                     mawb_no: '{{ isset($airExport) ? $airExport->mawb_no : "" }}',
                     office: '{{ isset($airExport) ? $airExport->office_id : "" }}',
                     carrier: '{{ isset($airExport) ? $airExport->carrier_id : "" }}',
-                    issuing_carrier: 'GOFREIGHT',
+                    issuing_carrier: 'FREIGHTX',
                     awb_type: 'NORMAL',
                     awb_date: '',
                     shipper: '',
@@ -142,11 +198,426 @@
                         final: { airport_id: '', eta: '', ata: '' }
                     },
                     other_charges: [],
+                    charges: @json($chargesData ?? []),
                     accounting_info: [],
                     commodities: [],
                     memo: ''
                 },
-                addCharge() { this.form.other_charges.push({ charge_code: '', description: '', term: 'P', rate: '', amount: '' }); },
+                activeChargeFilter: 'All',
+                manifestFilters: {
+                    party: 'All',
+                    sal: 'All',
+                    pr: 'All',
+                    ppc: 'All',
+                    currency: 'All',
+                    invoiced: 'All'
+                },
+                resetManifestFilters() {
+                    this.manifestFilters = {
+                        party: 'All',
+                        sal: 'All',
+                        pr: 'All',
+                        ppc: 'All',
+                        currency: 'All',
+                        invoiced: 'All'
+                    };
+                    this.activeChargeFilter = 'All';
+                },
+                calculateLocalAmount(charge) {
+                    let rate = parseFloat(charge.rate) || 0;
+                    let qty = parseFloat(charge.qty) || 0;
+                    let roe = parseFloat(charge.roe) || 1.0;
+                    let vat = parseFloat(charge.vat) || 0;
+                    let foreignAmount = rate * qty;
+                    let localAmount = foreignAmount * roe;
+                    if (vat > 0) {
+                        localAmount += (localAmount * (vat / 100));
+                    }
+                    return localAmount;
+                },
+                calculateTotalCharges() {
+                    if (!this.form.charges || this.form.charges.length === 0) return 0;
+                    return this.form.charges.reduce((sum, charge) => {
+                        return sum + this.calculateLocalAmount(charge);
+                    }, 0);
+                },
+                calculateArCharges() {
+                    if (!this.form.charges || this.form.charges.length === 0) return 0;
+                    return this.form.charges.filter(c => c.pr === 'Rec').reduce((sum, charge) => {
+                        return sum + this.calculateLocalAmount(charge);
+                    }, 0);
+                },
+                calculateApCharges() {
+                    if (!this.form.charges || this.form.charges.length === 0) return 0;
+                    return this.form.charges.filter(c => c.pr === 'Pay').reduce((sum, charge) => {
+                        return sum + this.calculateLocalAmount(charge);
+                    }, 0);
+                },
+                updateChargeAmount(idx) {
+                    this.$forceUpdate && this.$forceUpdate();
+                },
+                updateLocalAmount(idx) {
+                    this.$forceUpdate && this.$forceUpdate();
+                },
+                getChargeFilters() {
+                    let list = [
+                        { name: 'All', value: 'All' },
+                        { name: 'Revenue (A/R)', value: 'AR' },
+                        { name: 'Cost (A/P)', value: 'AP' }
+                    ];
+                    if (this.form.file_no) {
+                        list.push({ name: 'MAWB: ' + this.form.file_no, value: this.form.file_no });
+                    }
+                    if (this.hawbs && this.hawbs.length > 0) {
+                        this.hawbs.forEach(h => {
+                            if (h.hawb_no) {
+                                list.push({ name: 'HAWB: ' + h.hawb_no, value: h.hawb_no });
+                            }
+                        });
+                    }
+                    return list;
+                },
+                get filteredCharges() {
+                    let list = this.form.charges || [];
+                    if (this.activeChargeFilter === 'AR') {
+                        list = list.filter(c => c.pr === 'Rec');
+                    } else if (this.activeChargeFilter === 'AP') {
+                        list = list.filter(c => c.pr === 'Pay');
+                    } else if (this.activeChargeFilter === 'DC') {
+                        list = list.filter(c => c.pr === 'DC');
+                    }
+                    if (this.manifestFilters) {
+                        if (this.manifestFilters.party && this.manifestFilters.party !== 'All') {
+                            list = list.filter(c => c.party === this.manifestFilters.party);
+                        }
+                        if (this.manifestFilters.sal && this.manifestFilters.sal !== 'All') {
+                            list = list.filter(c => c.sal === this.manifestFilters.sal);
+                        }
+                        if (this.manifestFilters.pr && this.manifestFilters.pr !== 'All') {
+                            list = list.filter(c => c.pr === this.manifestFilters.pr);
+                        }
+                        if (this.manifestFilters.ppc && this.manifestFilters.ppc !== 'All') {
+                            list = list.filter(c => c.ppc === this.manifestFilters.ppc);
+                        }
+                        if (this.manifestFilters.currency && this.manifestFilters.currency !== 'All') {
+                            list = list.filter(c => c.currency === this.manifestFilters.currency);
+                        }
+                        if (this.manifestFilters.invoiced && this.manifestFilters.invoiced !== 'All') {
+                            if (this.manifestFilters.invoiced === 'Invoiced') {
+                                list = list.filter(c => c.inv_no && c.inv_no.trim() !== '');
+                            } else if (this.manifestFilters.invoiced === 'Uninvoiced') {
+                                list = list.filter(c => !c.inv_no || c.inv_no.trim() === '');
+                            }
+                        }
+                    }
+                    return list;
+                },
+                shouldShowChargeRow(charge) {
+                    if (this.activeChargeFilter === 'All') return true;
+                    if (this.activeChargeFilter === 'AR') return charge.pr === 'Rec';
+                    if (this.activeChargeFilter === 'AP') return charge.pr === 'Pay';
+                    let filterVal = this.activeChargeFilter.trim().toLowerCase();
+                    let mbl = (charge.mbl_no || '').trim().toLowerCase();
+                    let eqBl = (charge.eq_bl_no || '').trim().toLowerCase();
+                    return mbl === filterVal || eqBl === filterVal;
+                },
+                addNewCharge() {
+                    this.addCharge();
+                },
+                addCharge() {
+                    if (!this.form.charges) this.form.charges = [];
+                    let initialPr = 'Rec';
+                    if (this.activeChargeFilter === 'AP') {
+                        initialPr = 'Pay';
+                    } else if (this.activeChargeFilter === 'DC') {
+                        initialPr = 'DC';
+                    }
+                    this.form.charges.push({
+                        id: null,
+                        selected: false,
+                        expanded: false,
+                        party: 'Custom',
+                        party_name_id: '',
+                        sal: 'Air',
+                        pr: initialPr,
+                        ppc: 'Colle',
+                        chrg_code: '',
+                        charge_name: '',
+                        currency: 'USD',
+                        rate: 0,
+                        qty: 1,
+                        qty_type: 'B/L',
+                        roe: 1.0,
+                        vat: 0,
+                        inv_no: '',
+                        financial_date: new Date().toISOString().split('T')[0],
+                        eq_bl_no: '',
+                        remark: false,
+                        mbl_no: this.form.file_no || ''
+                    });
+                    const tabLabel = initialPr === 'Pay' ? 'A/P' : (initialPr === 'DC' ? 'D/C' : 'A/R');
+                    showToast('success', `New ${tabLabel} charge row added.`);
+                },
+                deleteCharge(chargeOrIdx) {
+                    if (!confirm('Delete this charge row?')) return;
+                    if (typeof chargeOrIdx === 'object' && chargeOrIdx !== null) {
+                        const index = (this.form.charges || []).indexOf(chargeOrIdx);
+                        if (index > -1) {
+                            this.form.charges.splice(index, 1);
+                            showToast('success', 'Charge row removed.');
+                        }
+                    } else if (typeof chargeOrIdx === 'number') {
+                        this.form.charges.splice(chargeOrIdx, 1);
+                        showToast('success', 'Charge row removed.');
+                    }
+                },
+                deleteSelectedCharges() {
+                    const selected = (this.form.charges || []).filter(c => c.selected);
+                    if (selected.length === 0) {
+                        showToast('error', 'Please select charges using checkbox.');
+                        return;
+                    }
+                    if (confirm(`Are you sure you want to delete ${selected.length} selected charge(s)?`)) {
+                        this.form.charges = this.form.charges.filter(c => !c.selected);
+                        showToast('success', `${selected.length} charge(s) removed.`);
+                    }
+                },
+                deleteAllCharges() {
+                    if (!this.form.charges || this.form.charges.length === 0) {
+                        showToast('error', 'No charges to delete.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to delete ALL charges?')) {
+                        this.form.charges = [];
+                        showToast('success', 'All charges cleared.');
+                    }
+                },
+                duplicateSelectedCharges() {
+                    const selected = (this.form.charges || []).filter(c => c.selected);
+                    if (selected.length === 0) {
+                        showToast('error', 'Please select at least one charge row to duplicate.');
+                        return;
+                    }
+                    selected.forEach(c => {
+                        const copy = JSON.parse(JSON.stringify(c));
+                        copy.id = null;
+                        copy.selected = false;
+                        copy.inv_no = '';
+                        this.form.charges.push(copy);
+                    });
+                    showToast('success', `Duplicated ${selected.length} charge(s).`);
+                },
+                applyChargeTemplate() {
+                    const templates = [
+                        { party: 'Custom', sal: 'Air', pr: 'Rec', ppc: 'Colle', chrg_code: 'AIR-FRT', charge_name: 'Air Freight Charge', currency: 'USD', rate: 250.00, qty: 1, qty_type: 'B/L', roe: 1.0, vat: 0 },
+                        { party: 'Custom', sal: 'Air', pr: 'Rec', ppc: 'Colle', chrg_code: 'TERM-FEE', charge_name: 'Terminal Handling Fee', currency: 'USD', rate: 75.00, qty: 1, qty_type: 'B/L', roe: 1.0, vat: 0 },
+                        { party: 'Custom', sal: 'Air', pr: 'Rec', ppc: 'Colle', chrg_code: 'DOC-FEE', charge_name: 'Documentation Fee', currency: 'USD', rate: 50.00, qty: 1, qty_type: 'B/L', roe: 1.0, vat: 0 }
+                    ];
+                    if (!this.form.charges) this.form.charges = [];
+                    templates.forEach(tpl => {
+                        this.form.charges.push({
+                            id: null,
+                            selected: false,
+                            expanded: false,
+                            party: tpl.party,
+                            party_name_id: '',
+                            sal: tpl.sal,
+                            pr: tpl.pr,
+                            ppc: tpl.ppc,
+                            chrg_code: tpl.chrg_code,
+                            charge_name: tpl.charge_name,
+                            currency: tpl.currency,
+                            rate: tpl.rate,
+                            qty: tpl.qty,
+                            qty_type: tpl.qty_type,
+                            roe: tpl.roe,
+                            vat: tpl.vat,
+                            inv_no: '',
+                            financial_date: new Date().toISOString().split('T')[0],
+                            eq_bl_no: '',
+                            remark: false,
+                            mbl_no: this.form.file_no || ''
+                        });
+                    });
+                    showToast('success', 'Applied standard Air Export Charge Template (3 charges added).');
+                },
+                toggleAllCharges(e) {
+                    const checked = e.target.checked;
+                    (this.form.charges || []).forEach(c => c.selected = checked);
+                },
+                saveCharges() {
+                    const formEl = document.getElementById('airExportForm') || document.querySelector('form[action*="air-export"]');
+                    if (formEl) {
+                        showToast('info', 'Saving charges...');
+                        formEl.submit();
+                    } else {
+                        showToast('error', 'Form element not found.');
+                    }
+                },
+                openCertificateModal() {
+                    showToast('info', 'Certificate feature for Air Export Charges.');
+                },
+                setDefaultCharges() {
+                    this.form.charges = [
+                        { id: null, selected: false, party: 'Custom', party_name_id: '', sal: 'Air', pr: 'Rec', ppc: 'Colle', chrg_code: 'AIR-FRT', charge_name: 'Air Freight Charge', currency: 'USD', rate: 250, qty: 1, qty_type: 'B/L', roe: 1.0, vat: 0, inv_no: '', financial_date: new Date().toISOString().split('T')[0], eq_bl_no: '', remark: false, mbl_no: this.form.file_no || '' },
+                        { id: null, selected: false, party: 'Custom', party_name_id: '', sal: 'Air', pr: 'Rec', ppc: 'Colle', chrg_code: 'TERM-FEE', charge_name: 'Terminal Handling Fee', currency: 'USD', rate: 75, qty: 1, qty_type: 'B/L', roe: 1.0, vat: 0, inv_no: '', financial_date: new Date().toISOString().split('T')[0], eq_bl_no: '', remark: false, mbl_no: this.form.file_no || '' },
+                        { id: null, selected: false, party: 'Custom', party_name_id: '', sal: 'Air', pr: 'Rec', ppc: 'Colle', chrg_code: 'DOC-FEE', charge_name: 'Documentation Fee', currency: 'USD', rate: 50, qty: 1, qty_type: 'B/L', roe: 1.0, vat: 0, inv_no: '', financial_date: new Date().toISOString().split('T')[0], eq_bl_no: '', remark: false, mbl_no: this.form.file_no || '' }
+                    ];
+                    showToast('success', 'Default Air Export charges loaded.');
+                },
+                reloadCharges() {
+                    if (confirm('Discard unsaved changes and reload charges from database?')) {
+                        window.location.reload();
+                    }
+                },
+                createInvoice() {
+                    if (!this.form.id) {
+                        showToast('error', 'Please save shipment first before generating invoice.');
+                        return;
+                    }
+                    if (!confirm('Generate Freight Invoice for this Air Export shipment?')) return;
+                    fetch(`/air-export/${this.form.id}/charges/invoice`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ charges: this.form.charges || [] })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('success', data.message || 'Invoice generated successfully.');
+                            if (data.freight_invoice_url) {
+                                window.open(data.freight_invoice_url, '_blank');
+                            }
+                            setTimeout(() => { window.location.reload(); }, 800);
+                        } else {
+                            showToast('error', 'Failed to create invoice: ' + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        showToast('error', 'Error generating invoice.');
+                    });
+                },
+                generateFreightInvoice() {
+                    if (!this.form.id) {
+                        showToast('error', 'Please save shipment first before generating invoice.');
+                        return;
+                    }
+                    window.open(`/shipments/air-export/${this.form.id}/freight-invoice`, '_blank');
+                },
+                prorataCharges() {
+                    let chargeCode = prompt('Enter Charge Code to prorate across HAWBs:');
+                    if (!chargeCode) return;
+                    showToast('info', 'Prorating charge ' + chargeCode + ' across HAWBs...');
+                },
+                exportChargesToExcel() {
+                    if (this.form.id) {
+                        window.location.href = `/air-export/${this.form.id}/charges/export`;
+                    } else {
+                        let csv = "Party,Party Name,SAL,P/R,PP/C,Chrg Code,Charge Name,Currency,Rate,Qty,ROE,VAT %,Amount,Inv No\n";
+                        (this.form.charges || []).forEach(c => {
+                            const amt = (parseFloat(c.rate) || 0) * (parseFloat(c.qty) || 0) * (parseFloat(c.roe) || 1);
+                            csv += `"${c.party || ''}","${c.party_name_id || ''}","${c.sal || ''}","${c.pr || ''}","${c.ppc || ''}","${c.chrg_code || ''}","${c.charge_name || ''}","${c.currency || 'USD'}",${c.rate || 0},${c.qty || 1},${c.roe || 1},${c.vat || 0},${amt.toFixed(2)},"${c.inv_no || ''}"\n`;
+                        });
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.setAttribute('href', url);
+                        a.setAttribute('download', `air_export_charges_${new Date().toISOString().split('T')[0]}.csv`);
+                        a.click();
+                    }
+                },
+                printCharges() {
+                    if (this.form.id) {
+                        window.open(`/air-export/${this.form.id}/charges/print`, '_blank');
+                    } else {
+                        let printWin = window.open('', '_blank', 'width=900,height=700');
+                        let rowsHtml = '';
+                        let totalAmount = 0;
+                        if (this.form.charges && this.form.charges.length > 0) {
+                            this.form.charges.forEach(c => {
+                                let amt = (parseFloat(c.rate) || 0) * (parseFloat(c.qty) || 1) * (parseFloat(c.roe) || 1);
+                                let vat = parseFloat(c.vat) || 0;
+                                let tot = amt + (amt * (vat / 100));
+                                totalAmount += tot;
+                                rowsHtml += `<tr>
+                                    <td>${c.party || '-'}</td>
+                                    <td>${c.sal || '-'}</td>
+                                    <td>${c.pr || '-'}</td>
+                                    <td>${c.ppc || '-'}</td>
+                                    <td>${c.chrg_code || '-'}</td>
+                                    <td>${c.charge_name || '-'}</td>
+                                    <td>${c.currency || 'USD'}</td>
+                                    <td>${parseFloat(c.rate || 0).toFixed(2)}</td>
+                                    <td>${c.qty || 1}</td>
+                                    <td>${c.qty_type || 'B/L'}</td>
+                                    <td>${parseFloat(c.roe || 1).toFixed(4)}</td>
+                                    <td>$${amt.toFixed(2)}</td>
+                                    <td>$${tot.toFixed(2)}</td>
+                                </tr>`;
+                            });
+                        }
+                        printWin.document.write(`
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Air Export Charges Statement</title>
+                                <style>
+                                    body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 25px; color: #333; }
+                                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 20px; }
+                                    h1 { font-size: 22px; margin: 0; color: #1e3a8a; }
+                                    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+                                    th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; }
+                                    th { background: #3b82f6; color: #fff; text-transform: uppercase; font-size: 11px; }
+                                    .total-box { text-align: right; margin-top: 20px; font-size: 15px; font-weight: bold; color: #1e3a8a; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="header">
+                                    <div>
+                                        <h1>Air Export Charges Statement</h1>
+                                        <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">File No: ${this.form.file_no || 'Draft'} | MAWB: ${this.form.mawb_no || 'N/A'}</p>
+                                    </div>
+                                    <div style="text-align: right; font-size: 12px; color: #666;">Date: ${new Date().toISOString().split('T')[0]}</div>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Party</th><th>SAL</th><th>P/R</th><th>PP/C</th>
+                                            <th>Code</th><th>Charge Name</th><th>Curr</th>
+                                            <th>Rate</th><th>Qty</th><th>Unit</th><th>ROE</th>
+                                            <th>Amount</th><th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rowsHtml || '<tr><td colspan="13" style="text-align:center; color:#888;">No charges added</td></tr>'}</tbody>
+                                </table>
+                                <div class="total-box">Total Amount (Local): $${totalAmount.toFixed(2)}</div>
+                                <script>window.onload = function() { window.print(); }<\/script>
+                            </body>
+                            </html>
+                        `);
+                        printWin.document.close();
+                    }
+                },
+                bulkUpdateCurrency() {
+                    let newCurr = prompt('Enter new Currency code (e.g. USD, EUR, PKR):', 'USD');
+                    if (!newCurr) return;
+                    if (this.form.charges) {
+                        this.form.charges.forEach(c => c.currency = newCurr.toUpperCase());
+                        showToast('success', 'Updated currency for all charges to ' + newCurr.toUpperCase());
+                    }
+                },
+                applyVatToAll() {
+                    let vatPercent = prompt('Enter VAT percentage to apply to all charges:', '0');
+                    if (vatPercent === null) return;
+                    let num = parseFloat(vatPercent) || 0;
+                    if (this.form.charges) {
+                        this.form.charges.forEach(c => c.vat = num);
+                        showToast('success', 'Applied ' + num + '% VAT to all charges.');
+                    }
+                },
                 removeCharge(idx) { this.form.other_charges.splice(idx, 1); },
                 addAcctInfo() { this.form.accounting_info.push({ code: '', info: '' }); },
                 removeAcctInfo(idx) { this.form.accounting_info.splice(idx, 1); },
@@ -169,7 +640,7 @@
                         consignee: '',
                         notify: '',
                         oversea_agent: '',
-                        issuing_carrier: 'GOFREIGHT',
+                        issuing_carrier: 'FREIGHTX',
                         trucker: '',
                         sales: '',
                         op: this.form.op,
@@ -214,6 +685,14 @@
                         if(this.hawbs.length === 0) this.showMblSection = true;
                     }
                 },
+                printHawb(idx) {
+                    const shipmentId = this.form.id;
+                    if (!shipmentId) {
+                        showToast('error', 'Please save the Air Export shipment first before printing HAWB.');
+                        return;
+                    }
+                    window.open('/air-export/' + shipmentId + '/hawb-print/' + idx, '_blank');
+                },
                 saveShipment() {
                     document.getElementById('airExportForm').submit();
                 },
@@ -222,13 +701,13 @@
                     
                     // Load existing HAWBs if any
                     @if(isset($airExport) && $airExport->hbls->count() > 0)
-                        this.hawbs = {!! json_encode($airExport->hbls->map(function($hbl) {
+                        this.hawbs = {!! json_encode($airExport->hbls->map(function($hbl) use ($airExport) {
                             return [
-                                'id' => $hbl->id,
+                                'id' => $airExport->id ? $hbl->id : null,
                                 'show' => true,
                                 'showMore' => false,
                                 'showMemo' => false,
-                                'hawb_no' => $hbl->hawb_no,
+                                'hawb_no' => $airExport->id ? $hbl->hawb_no : ($hbl->hawb_no ? $hbl->hawb_no . '-COPY' : ''),
                                 'booking_no' => $hbl->booking_no ?? '',
                                 'booking_date' => $hbl->booking_date ?? '',
                                 'shipper' => $hbl->shipper_id,
@@ -311,6 +790,7 @@
                     if (q.op_id) this.form.op = q.op_id;
                     if (q.gross_weight_kg) this.form.gross_weight = q.gross_weight_kg;
                     if (q.volume_cbm) this.form.volume = q.volume_cbm;
+                    if (q.carrier_id) this.form.carrier = q.carrier_id;
                     if (q.oversea_agent_id) this.form.co_loader = q.oversea_agent_id; // Using co-loader for forwarding agent
                     
                     // HAWB
@@ -548,6 +1028,222 @@
                         showToast('info', 'Refreshing work orders...');
                     }
                     this.fetchWorkOrders();
+                },
+
+                // Tools Dropdown & Sub-Header
+                showToolsMenu: false,
+                showInfoModal: false,
+                isBlocked: {{ isset($airExport) && $airExport->is_blocked ? 'true' : 'false' }},
+                showDocPackageModal: false,
+                docPackageForm: {
+                    selectedReports: ['manifest', 'mawb_print', 'local_invoice', 'credit_debit', 'hawb_print', 'commercial_invoice', 'packing_list'],
+                    report_agent_type: 'master'
+                },
+                showConsolidatedManifestModal: false,
+                manifestForm: {
+                    agent_type: 'master'
+                },
+                showBookingConfirmationModal: false,
+                bookingConfirmationForm: {
+                    agent_type: 'master'
+                },
+                get masterAgentName() {
+                    return '{{ isset($airExport) && $airExport->overseaAgent ? addslashes($airExport->overseaAgent->name) : "SHAWON LOGISTICS CO., LTD" }}';
+                },
+                get subAgentName() {
+                    return '{{ isset($airExport) && $airExport->forwardingAgent ? addslashes($airExport->forwardingAgent->name) : "SUB AGENT LOGISTICS INC." }}';
+                },
+                portsMap: {
+                    @foreach($ports as $port)
+                    "{{ $port->id }}": "{!! addslashes($port->name) !!}",
+                    @endforeach
+                },
+                get depPortName() {
+                    return this.portsMap[this.form.departure] || '{{ isset($airExport) && $airExport->depPort ? addslashes($airExport->depPort->name) : "LOS ANGELES INT\'L" }}';
+                },
+                get dstPortName() {
+                    return this.portsMap[this.form.destination] || '{{ isset($airExport) && $airExport->dstPort ? addslashes($airExport->dstPort->name) : "AMSTERDAM AIRPORT" }}';
+                },
+                get etdDisplay() {
+                    if (this.form.etd) {
+                        let parts = this.form.etd.split('T')[0].split('-');
+                        if (parts.length === 3) return `${parts[1]}-${parts[2]}-${parts[0]}`;
+                    }
+                    return '{{ isset($airExport) && $airExport->etd ? \Carbon\Carbon::parse($airExport->etd)->format("m-d-Y") : date("m-d-Y") }}';
+                },
+                get etaDisplay() {
+                    if (this.form.eta) {
+                        let parts = this.form.eta.split('T')[0].split('-');
+                        if (parts.length === 3) return `${parts[1]}-${parts[2]}-${parts[0]}`;
+                    }
+                    return '{{ isset($airExport) && $airExport->eta ? \Carbon\Carbon::parse($airExport->eta)->format("m-d-Y") : date("m-d-Y") }}';
+                },
+                get mawbDisplay() {
+                    return this.form.mawb_no || this.form.file_no || 'MAE-NEW';
+                },
+                async toggleBlock() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('error', 'Please save shipment first');
+                        return;
+                    }
+                    const action = this.isBlocked ? 'unblock' : 'block';
+                    try {
+                        const res = await fetch(`/air-export/bulk-${action}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({ ids: [shipmentId] })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            this.isBlocked = !this.isBlocked;
+                            if (typeof showToast === 'function') showToast('success', data.message || `Shipment ${action}ed successfully`);
+                        } else {
+                            if (typeof showToast === 'function') showToast('error', data.message || 'Failed to update block status');
+                        }
+                    } catch (e) {
+                        if (typeof showToast === 'function') showToast('error', 'Failed to update block status');
+                    }
+                },
+                copyShipment() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : (request('copy') ? request('copy') : 0) }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('error', 'Please save shipment first before copying');
+                        return;
+                    }
+                    if (typeof showToast === 'function') showToast('info', 'Loading copied shipment data into fresh form...');
+                    window.location.href = `/air-export/create?copy=${shipmentId}`;
+                },
+                copyToAirImport() {
+                    if (typeof showToast === 'function') showToast('warning', 'Copy to Air Import is currently disabled.');
+                },
+                async deleteShipment() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('error', 'Shipment is not saved yet');
+                        return;
+                    }
+                    if (!confirm('Are you sure you want to delete this Air Export shipment? This action cannot be undone.')) return;
+                    try {
+                        const res = await fetch(`/air-export/${shipmentId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            if (typeof showToast === 'function') showToast('success', data.message || 'Shipment deleted successfully');
+                            setTimeout(() => {
+                                window.location.href = '/air-export/list';
+                            }, 500);
+                        } else {
+                            if (typeof showToast === 'function') showToast('error', data.message || 'Failed to delete shipment');
+                        }
+                    } catch (e) {
+                        if (typeof showToast === 'function') showToast('error', 'Error deleting shipment');
+                    }
+                },
+                printMawb() {
+                    if (typeof showToast === 'function') showToast('info', 'Opening MAWB Print view...');
+                    window.print();
+                },
+                openDocPackage() { 
+                    this.showDocPackageModal = true; 
+                },
+                selectAllDocReports() {
+                    this.docPackageForm.selectedReports = ['manifest', 'mawb_print', 'local_invoice', 'credit_debit', 'hawb_print', 'commercial_invoice', 'packing_list'];
+                },
+                clearAllDocReports() {
+                    this.docPackageForm.selectedReports = [];
+                },
+                submitDocPackage() {
+                    if (this.docPackageForm.selectedReports.length === 0) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please select at least one report type.');
+                        return;
+                    }
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first.');
+                        return;
+                    }
+                    const reportsParam = this.docPackageForm.selectedReports.join(',');
+                    const agentParam = this.docPackageForm.report_agent_type;
+                    const url = `/air-export/${shipmentId}/document-package?reports=${reportsParam}&agent_type=${agentParam}`;
+                    this.showDocPackageModal = false;
+                    window.open(url, '_blank');
+                },
+                openConsolidatedManifest() { 
+                    this.showConsolidatedManifestModal = true; 
+                },
+                submitConsolidatedManifest() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first.');
+                        return;
+                    }
+                    const agentParam = this.manifestForm.agent_type;
+                    const url = `/air-export/${shipmentId}/consolidated-manifest?agent_type=${agentParam}`;
+                    this.showConsolidatedManifestModal = false;
+                    window.open(url, '_blank');
+                },
+                openBookingConfirmation() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first.');
+                        return;
+                    }
+                    const url = `/air-export/${shipmentId}/booking-confirmation`;
+                    window.open(url, '_blank');
+                },
+                openMawbPackageLabel() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first.');
+                        return;
+                    }
+                    const url = `/air-export/${shipmentId}/mawb-package-label`;
+                    window.open(url, '_blank');
+                },
+                openPackageLabelList() {
+                    const shipmentId = {{ isset($airExport) && $airExport->id ? $airExport->id : 0 }};
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first.');
+                        return;
+                    }
+                    const url = `/air-export/${shipmentId}/package-label-list`;
+                    window.open(url, '_blank');
+                },
+                openPickupDeliveryOrder() { if (typeof showToast === 'function') showToast('info', 'Opening Pickup / Delivery Order...'); },
+                openSecurityEndorsement() { if (typeof showToast === 'function') showToast('info', 'Opening Security Endorsement...'); },
+                openOnHandReport() { if (typeof showToast === 'function') showToast('info', 'Opening On Hand Report...'); },
+                openScreenedCargoStatement() { if (typeof showToast === 'function') showToast('info', 'Opening Screened Cargo Statement (K9)...'); },
+                openProfitSummary() {
+                    const shipmentId = '{{ isset($airExport) && $airExport->id ? $airExport->id : '' }}';
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first');
+                        return;
+                    }
+                    window.open(`/air-export/${shipmentId}/profit-summary`, '_blank');
+                },
+                openProfitDetail() {
+                    const shipmentId = '{{ isset($airExport) && $airExport->id ? $airExport->id : '' }}';
+                    if (!shipmentId) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please save the shipment first');
+                        return;
+                    }
+                    window.open(`/air-export/${shipmentId}/profit-detail`, '_blank');
+                },
+                openTrackTrace() {
+                    const mawb = (this.form && this.form.mawb_no) ? this.form.mawb_no : (this.hawbs && this.hawbs.length > 0 ? this.hawbs[0].hawb_no : '');
+                    window.openTrackTrace({ type: 'aircargo', number: mawb });
                 }
             };
         };
@@ -569,18 +1265,153 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h1 class="caption-subject" style="font-size: 18px;">{{ isset($airExport) ? 'Edit Air Export Shipment' : 'Create Air Export Shipment' }}</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" class="btn-gofreight"><i class="fa fa-save"></i> SAVE SHIPMENT</button>
+                <button type="submit" class="btn-freightx"><i class="fa fa-save"></i> SAVE SHIPMENT</button>
                 <a href="/air-export/list" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
 
-        <!-- Main Tabs -->
-        <ul class="gf-tabs">
-            <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Basic</a></li>
-            <li :class="activeTab === 'accounting' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'accounting'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Accounting</a></li>
-            <li :class="activeTab === 'workorder' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'workorder'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Work Order</a></li>
-            <li :class="activeTab === 'status' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'status'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Status</a></li>
-        </ul>
+        <!-- Main Tabs + Tools Dropdown (Ocean Import Pattern) -->
+        <div style="display:flex; align-items:stretch; border-bottom:2px solid #e5e7eb; margin-bottom:15px; background:#fff;">
+            <ul class="gf-tabs" style="border-bottom:none; margin-bottom:0; flex:1; display:flex;">
+                <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Basic</a></li>
+                <li :class="activeTab === 'charges' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'charges'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Charges</a></li>
+                <li :class="activeTab === 'doc' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'doc'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Doc Center</a></li>
+                <li :class="activeTab === 'workorder' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'workorder'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Work Order</a></li>
+                <li :class="activeTab === 'status' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'status'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Status</a></li>
+            </ul>
+
+            <!-- Tools Dropdown -->
+            <div style="position:relative; display:flex; align-items:center; padding:0 8px;" @click.away="showToolsMenu = false">
+                <button type="button" @click="showToolsMenu = !showToolsMenu" style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #d1d5db; border-radius:4px; padding:4px 12px; font-size:12px; color:#374151; cursor:pointer; white-space:nowrap; height:26px;">
+                    <i class="fa fa-cogs" style="color:#6b7280;"></i> Tools
+                    <i class="fa fa-angle-down" style="font-size:10px; color:#9ca3af; transition: transform 0.2s;" :style="showToolsMenu ? 'transform: rotate(180deg)' : ''"></i>
+                </button>
+
+                <!-- Tools Dropdown Menu -->
+                <div x-show="showToolsMenu" x-cloak x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="position: absolute; right: 8px; top: calc(100% + 4px); background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); min-width: 240px; padding: 6px 0; z-index: 99999; text-align: left; color: #374151;">
+                    
+                    <!-- Block / Unblock -->
+                    <button type="button" @click="toggleBlock(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa" :class="isBlocked ? 'fa-unlock' : 'fa-lock'" :style="isBlocked ? 'color: #22c55e' : 'color: #ef4444'" style="width: 16px; text-align: center;"></i>
+                        <span x-text="isBlocked ? 'Unblock' : 'Block'"></span>
+                    </button>
+
+                    <!-- Copy -->
+                    <button type="button" @click="copyShipment(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-files-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Copy</span>
+                    </button>
+
+                    <!-- Copy to AI (Disabled) -->
+                    <button type="button" disabled class="tools-menu-item disabled" style="opacity: 0.5; cursor: not-allowed; color: #9ca3af;" @click="copyToAirImport(); showToolsMenu = false;">
+                        <i class="fa fa-exchange" style="color: #9ca3af; width: 16px; text-align: center;"></i>
+                        <span>Copy to AI</span>
+                    </button>
+
+                    <!-- Delete -->
+                    <button type="button" @click="deleteShipment(); showToolsMenu = false;" class="tools-menu-item" style="color: #dc2626;">
+                        <i class="fa fa-trash-o" style="color: #dc2626; width: 16px; text-align: center;"></i>
+                        <span>Delete</span>
+                    </button>
+
+                    <!-- FreightX EDI (disabled) -->
+                    <button type="button" disabled class="tools-menu-item disabled">
+                        <i class="fa fa-paper-plane" style="color: #9ca3af; width: 16px; text-align: center;"></i>
+                        <span>FreightX EDI</span>
+                    </button>
+
+                    <div class="tools-menu-divider"></div>
+
+                    <!-- Document Package -->
+                    <button type="button" @click="openDocPackage(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-file-text-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Document Package</span>
+                    </button>
+
+                    <!-- MAWB Print -->
+                    <button type="button" @click="printMawb(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-print" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>MAWB Print</span>
+                    </button>
+
+                    <!-- Consolidated Manifest -->
+                    <button type="button" @click="openConsolidatedManifest(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-list-alt" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Consolidated Manifest</span>
+                    </button>
+
+                    <!-- Manifest by Agent (disabled) -->
+                    <button type="button" disabled class="tools-menu-item disabled">
+                        <i class="fa fa-file-text-o" style="color: #9ca3af; width: 16px; text-align: center;"></i>
+                        <span>Manifest by Agent</span>
+                    </button>
+
+                    <!-- Booking Confirmation -->
+                    <button type="button" @click="openBookingConfirmation(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-file-text-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Booking Confirmation</span>
+                    </button>
+
+                    <!-- MAWB Package Label -->
+                    <button type="button" @click="openMawbPackageLabel(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-tag" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>MAWB Package Label</span>
+                    </button>
+
+                    <!-- Package Label List -->
+                    <button type="button" @click="openPackageLabelList(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-list" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Package Label List</span>
+                    </button>
+
+                    <!-- Pickup / Delivery Order -->
+                    <button type="button" @click="openPickupDeliveryOrder(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-truck" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Pickup / Delivery Order</span>
+                    </button>
+
+                    <!-- Security Endorsement -->
+                    <button type="button" @click="openSecurityEndorsement(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-shield" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Security Endorsement</span>
+                    </button>
+
+                    <!-- On Hand Report -->
+                    <button type="button" @click="openOnHandReport(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-clipboard" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>On Hand Report</span>
+                    </button>
+
+                    <!-- Screened Cargo Statement (K9) -->
+                    <button type="button" @click="openScreenedCargoStatement(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-file-pdf-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Screened Cargo Statement (K9)</span>
+                    </button>
+
+                    <div class="tools-menu-divider"></div>
+
+                    <!-- Profit Report - Summary -->
+                    <button type="button" @click="openProfitSummary(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-bar-chart" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Profit Report - Summary</span>
+                    </button>
+
+                    <!-- Profit Report - Detail -->
+                    <button type="button" @click="openProfitDetail(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-line-chart" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Profit Report - Detail</span>
+                    </button>
+
+                    <div class="tools-menu-divider"></div>
+
+                    <!-- Open in Track-Trace -->
+                    <button type="button" @click="openTrackTrace(); showToolsMenu = false;" class="tools-menu-item">
+                        <i class="fa fa-external-link" style="color: #4b5563; width: 16px; text-align: center;"></i>
+                        <span>Open in Track-Trace</span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div style="padding-bottom: 50px;">
             <!-- BASIC TAB -->
@@ -1033,8 +1864,22 @@
                     <div class="portlet light" style="margin-top: 5px;">
                         <div class="portlet-title" style="background: #f2bc00; color: #fff; cursor: pointer; min-height: 24px; padding: 2px 10px;" @click="hawb.show = !hawb.show">
                             <span class="caption-subject" style="color: #fff; font-size: 11px;"><i class="fa fa-user"></i> HAWB Information <small style="color:rgba(255,255,255,0.8); margin-left: 10px; font-weight: normal;" x-text="'OP: ' + hawb.op"></small></span>
-                            <div class="actions" style="display: flex; gap: 10px; align-items: center;">
-                                <i @click.stop="removeHawb(index)" class="fa fa-times" style="font-size: 12px; opacity: 0.8; cursor: pointer;"></i>
+                            <div class="actions" style="display: flex; gap: 8px; align-items: center;">
+                                <!-- HAWB Tools Dropdown -->
+                                <div style="position: relative;" @click.away="hawb.showTools = false">
+                                    <button type="button" @click.stop="hawb.showTools = !hawb.showTools"
+                                        style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 8px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                        <i class="fa fa-cogs" style="color: #4b5563; font-size: 10px;"></i> Tools
+                                        <i class="fa fa-angle-down" style="font-size: 9px; color: #6b7280;" :style="hawb.showTools ? 'transform:rotate(180deg)' : ''"></i>
+                                    </button>
+                                    <div x-show="hawb.showTools" x-cloak x-transition 
+                                        style="position: absolute; right: 0; top: calc(100% + 2px); background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 140px; padding: 4px 0; z-index: 999; text-align: left;">
+                                        <button type="button" class="tools-menu-item" @click.stop="printHawb(index); hawb.showTools = false" style="width: 100%; display: flex; align-items: center; gap: 8px; padding: 5px 12px; border: none; background: transparent; font-size: 11px; color: #374151; cursor: pointer; text-align: left;">
+                                            <i class="fa fa-print" style="color: #3b82f6;"></i> HAWB Print
+                                        </button>
+                                    </div>
+                                </div>
+                                <i @click.stop="removeHawb(index)" class="fa fa-times" style="font-size: 12px; opacity: 0.8; cursor: pointer;" title="Delete HAWB"></i>
                                 <i class="fa fa-angle-down transition-transform" :class="hawb.show ? 'rotate-180' : ''" style="font-size: 12px;"></i>
                             </div>
                         </div>
@@ -1221,142 +2066,258 @@
                 </template>
 
                 <div class="flex justify-end" style="margin-top: 5px; margin-bottom: 20px;">
-                    <button @click="addHawb" class="btn-gofreight" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HAWB</button>
+                    <button @click="addHawb" class="btn-freightx" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HAWB</button>
                 </div>
             </div>
 
-            <!-- ACCOUNTING TAB -->
-            <div x-show="activeTab === 'accounting'" class="main-grid" x-cloak style="flex-direction: row; gap: 10px;">
-                <!-- Main Accounting Area (col-10) -->
-                <div style="flex: 5;">
-                    <!-- MAWB Section -->
-                    <div class="portlet light">
-                        <div class="portlet-title" style="background: #666; color: #fff;">
-                            <div class="caption">
-                                <span style="font-size: 11px; margin-right: 5px;">MAWB</span>
-                                <span class="caption-subject" style="color: #fff;" x-text="form.mawb_no"></span>
-                            </div>
-                            <div class="actions" style="display: flex; gap: 5px; align-items: center;">
-                                <button class="btn-default-gf dark"><i class="fa fa-info"></i></button>
-                                <button class="btn-default-gf dark"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
-                            </div>
-                        </div>
-                        <div class="portlet-body">
-                            <div style="background: #eef1f5; padding: 5px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                <div style="display: flex; gap: 5px;">
-                                    <button type="button" class="btn-gofreight" style="background: #32c5d2;" @click.prevent="createInvoice('revenue')"><i class="fa fa-plus"></i> Origin Revenue (Invoice/AR) <i class="fa fa-angle-down"></i></button>
-                                    <button type="button" class="btn-gofreight" style="background: #32c5d2;" @click.prevent="createInvoice('dc_note')"><i class="fa fa-plus"></i> Destination Revenue/Cost (D/C Note) <i class="fa fa-angle-down"></i></button>
-                                    <button type="button" class="btn-gofreight" style="background: #32c5d2;" @click.prevent="createInvoice('cost')"><i class="fa fa-plus"></i> Origin Cost (AP) <i class="fa fa-angle-down"></i></button>
-                                </div>
-                                <div>
-                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 4px; color: #666; margin: 0;">
-                                        <input type="checkbox" disabled> Include Draft Amount
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <table class="table-custom" style="width: 100%; border-collapse: collapse; font-size: 10px;">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 20px;"></th>
-                                        <th style="width: 20px;"></th>
-                                        <th>Invoice No.</th>
-                                        <th>Party</th>
-                                        <th style="text-align: right;">Revenue</th>
-                                        <th style="text-align: right;">Cost</th>
-                                        <th style="text-align: right;">Balance</th>
-                                        <th style="text-align: center;">Status</th>
-                                        <th style="text-align: right;">Post Date</th>
-                                        <th style="text-align: right;">Invoice Date</th>
-                                        <th style="text-align: center;">Email</th>
-                                        <th style="text-align: center;">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="4" style="text-align: right; font-weight: 700;">Total</td>
-                                        <td style="text-align: right; color: #32c5d2; font-weight: 700;">0.00</td>
-                                        <td style="text-align: right; color: #32c5d2; font-weight: 700;">0.00</td>
-                                        <td style="text-align: right; color: #32c5d2; font-weight: 700;">0.00</td>
-                                        <td colspan="5"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="4" style="text-align: right; font-weight: 700;">Amount</td>
-                                        <td colspan="2" style="text-align: right; color: #32c5d2; font-weight: 700;">0.00</td>
-                                        <td colspan="6"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            
-                            <table class="table-custom" style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px;">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th style="text-align: right; width: 15%;">Amount</th>
-                                        <th style="text-align: right; width: 15%;">Profit Percentage</th>
-                                        <th style="text-align: right; width: 15%;">Profit Margin</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td style="text-align: right;">Total Profit</td>
-                                        <td style="text-align: right; color: #32c5d2; font-weight: 700;">0.00</td>
-                                        <td style="text-align: right; color: #32c5d2; font-weight: 700;">N/A</td>
-                                        <td style="text-align: right; color: #32c5d2; font-weight: 700;">N/A</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            <!-- Memo Section under Accounting -->
-                            <div class="memo-section" style="margin-bottom: 10px;">
-                                <div class="memo-header" style="background:#f1f3f6; border-bottom:1px solid #dcdcdc;">
-                                    <span style="color: #333;">Memo</span>
-                                    <div style="display: flex; gap: 10px; align-items: center;">
-                                        <button class="btn-default-gf" style="background:#fff; border:1px solid #ccc; font-size:10px; padding:2px 8px;">Document (0) <i class="fa fa-external-link"></i></button>
-                                        <i class="fa fa-angle-up"></i>
-                                    </div>
-                                </div>
-                                <div class="memo-body" style="padding: 0;">
-                                    <div style="display: flex;">
-                                        <div style="flex: 2; min-height: 80px; padding: 0;">
-                                            <table class="table-custom" style="width:100%; border:none; margin:0;">
-                                                <thead>
-                                                    <tr style="background:#a0a8b3;">
-                                                        <th style="width: 30px; text-align: center; color:#fff; border:none; background:#a0a8b3;"><i class="fa fa-plus" style="background:#32c5d2; padding:3px; border-radius:2px; cursor:pointer;"></i></th>
-                                                        <th style="color:#fff; border:none; background:#a0a8b3;"><i class="fa fa-bell"></i> Subject</th>
-                                                        <th style="color:#fff; border:none; background:#a0a8b3;">Last Modified</th>
-                                                        <th style="color:#fff; border:none; background:#a0a8b3;">Created</th>
-                                                        <th style="color:#fff; border:none; background:#a0a8b3;">Action / TP</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr><td colspan="5" style="background:#fff; border:none; min-height: 50px;"></td></tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div style="flex: 1; padding: 5px; border-left: 1px solid #eef1f5;">
-                                            <textarea class="form-control-gf" style="height: 100%; resize: none; background:#eee;" readonly></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                        </div>
+            <!-- CHARGES TAB -->
+            <div x-show="activeTab === 'charges' || activeTab === 'accounting'" class="main-grid" x-cloak style="flex-direction: column; gap: 10px;">
+                <div class="portlet light" style="padding: 12px; background: #fff; border: 1px solid #e2ebf2; border-radius: 4px;">
+                    <div style="color: #31708f; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-folder-open-o" style="font-size: 14px;"></i> CHARGES
                     </div>
-                </div>
+                    <div class="portlet-body">
 
-                <!-- HBL Sidebar (col-2) -->
-                <div style="flex: 1; display: flex; flex-direction: column;">
-                    <button class="btn-default-gf" style="width: 100%; padding: 6px; font-weight: 600; font-size: 11px; margin-bottom: 10px; justify-content: center;" @click="activeTab='basic'; showMblSection=false; addHawb()">+ Add HAWB</button>
-                    <hr style="margin: 0 0 10px 0; border-top: 1px solid #ddd;">
-                    <div style="background: #fff; border: 1px solid #e7ecf1; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 5px; flex: 1; height: 100%;">
-                        <template x-for="(hawb, index) in hawbs" :key="index">
-                            <div style="background: #f1f3f6; border: 1px solid #dcdcdc; border-left: 3px solid #f2bc00; padding: 8px; border-radius: 2px; cursor: pointer;">
-                                <div style="font-weight: 700; color: #4b77be; font-size: 11px;">HAWB No.</div>
-                                <div style="font-size: 10px; color: #666; margin-top: 2px;" x-text="hawb.hawb_no || 'TBD'"></div>
+                        <!-- Row 1: BKG, MBL, CM Total, Excel & Print Icons -->
+                        <div style="background: #eef6fc; border: 1px solid #d0e1f0; border-radius: 3px; padding: 6px 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span style="font-weight: 600; color: #555; font-size: 11px;">BKG :</span>
+                                    <input type="text" x-model="form.file_no" class="form-control-gf" style="width: 110px; height: 22px; font-size: 10px; background: #f9f9f9;" readonly>
+                                    <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 6px; font-weight: bold; color: #2b6889; border-color: #9cbacf; font-size: 10px;">GP</button>
+                                    
+                                    <div style="display: flex; align-items: center; margin-left: 5px;">
+                                        <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 5px; background: #31708f; color: #fff; border: none; border-radius: 2px 0 0 2px;"><i class="fa fa-angle-double-left"></i></button>
+                                        <input type="text" x-model="form.hawb_no" class="form-control-gf" style="width: 130px; height: 22px; font-size: 10px; border-radius: 0; text-align: center;" placeholder="ELCKSHA25120233">
+                                        <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 5px; background: #31708f; color: #fff; border: none; border-radius: 0 2px 2px 0;"><i class="fa fa-angle-double-right"></i></button>
+                                    </div>
+                                    <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 6px; font-weight: bold; color: #2b6889; border-color: #9cbacf; font-size: 10px;">GP</button>
+
+                                    <span style="font-weight: 600; color: #555; margin-left: 8px; font-size: 11px;">MBL :</span>
+                                    <input type="text" x-model="form.mawb_no" class="form-control-gf" style="width: 110px; height: 22px; font-size: 10px; background: #f9f9f9;" readonly>
+                                    <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 6px; font-weight: bold; color: #2b6889; border-color: #9cbacf; font-size: 10px;">GP</button>
+
+                                    <button type="button" class="btn-default-gf" style="height: 22px; padding: 0 8px; font-weight: bold; color: #1c5270; border-color: #31708f; background: #fff; margin-left: 5px; font-size: 10px;">Show All of this BKG</button>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 12px; font-weight: bold; color: #0f3750;">CM : <span x-text="calculateTotalCharges().toFixed(2)">0.00</span></span>
+                                </div>
                             </div>
-                        </template>
-                        <div x-show="hawbs.length === 0" style="text-align: center; color: #999; font-size: 10px; padding: 10px;">No HAWB created.</div>
+
+                            <!-- Row 2: Dynamic Dropdown Filters & Route Summary -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding-top: 4px; border-top: 1px solid #e2ebf2;">
+                                <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                                    <select x-model="manifestFilters.party" class="form-control-gf" style="height: 22px; width: 75px; font-size: 10px; padding: 1px 3px;">
+                                        <option value="All">All Parties</option>
+                                        <option value="Custom">Custom</option>
+                                        <option value="Shipper">Shipper</option>
+                                        <option value="Consignee">Consignee</option>
+                                        <option value="Agent">Agent</option>
+                                    </select>
+
+                                    <select x-model="manifestFilters.sal" class="form-control-gf" style="height: 22px; width: 60px; font-size: 10px; padding: 1px 3px;">
+                                        <option value="All">All SAL</option>
+                                        <option value="Air">Air</option>
+                                        <option value="Ocean">Ocean</option>
+                                        <option value="Truck">Truck</option>
+                                    </select>
+
+                                    <select x-model="manifestFilters.pr" class="form-control-gf" style="height: 22px; width: 60px; font-size: 10px; padding: 1px 3px;">
+                                        <option value="All">All P/R</option>
+                                        <option value="Rec">Rec</option>
+                                        <option value="Pay">Pay</option>
+                                    </select>
+
+                                    <select x-model="manifestFilters.ppc" class="form-control-gf" style="height: 22px; width: 65px; font-size: 10px; padding: 1px 3px;">
+                                        <option value="All">All PP/C</option>
+                                        <option value="Colle">Colle</option>
+                                        <option value="Prepaid">Prepaid</option>
+                                    </select>
+
+                                    <select x-model="manifestFilters.currency" class="form-control-gf" style="height: 22px; width: 60px; font-size: 10px; padding: 1px 3px;">
+                                        <option value="All">All Curr</option>
+                                        @foreach($currencies as $curr)
+                                            <option value="{{ $curr->code }}">{{ $curr->code }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <select x-model="manifestFilters.invoiced" class="form-control-gf" style="height: 22px; width: 65px; font-size: 10px; padding: 1px 3px;">
+                                        <option value="All">All Inv</option>
+                                        <option value="Invoiced">Invoiced</option>
+                                        <option value="Uninvoiced">Uninvoiced</option>
+                                    </select>
+
+                                    <button type="button" @click="resetManifestFilters()" class="btn-default-gf" style="height: 22px; padding: 0 8px; background: #31708f; color: #fff; border: none; border-radius: 2px; font-size: 10px; display: flex; align-items: center; gap: 4px;" title="Reset Filters"><i class="fa fa-filter"></i> Reset</button>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #333; flex-wrap: wrap;">
+                                    <span><strong>POL :</strong> <input type="text" :value="form.dep_port_id ? '{{ $ports->where('id', $airExport->dep_port_id ?? 0)->first()->name ?? "Shanghai" }}' : 'Shanghai'" class="form-control-gf" style="width: 85px; height: 20px; font-size: 10px; display: inline-block; padding: 0 4px;" readonly></span>
+                                    <span><strong>POD :</strong> <input type="text" :value="form.dst_port_id ? '{{ $ports->where('id', $airExport->dst_port_id ?? 0)->first()->name ?? "Chattogram" }}' : 'Chattogram'" class="form-control-gf" style="width: 85px; height: 20px; font-size: 10px; display: inline-block; padding: 0 4px;" readonly></span>
+                                    <span><strong>FOB</strong></span>
+                                    <input type="text" :value="form.referred_by_id ? 'YOUNGONE HI-TE' : 'YOUNGONE HI-TE'" class="form-control-gf" style="width: 120px; height: 20px; font-size: 10px;" readonly>
+                                    <span>C:<span x-text="form.charges ? form.charges.length : 0"></span></span>
+                                    <span>A:<span x-text="form.charges ? form.charges.filter(c => c.pr === 'Rec').length : 0"></span></span>
+                                    <span>R:<span x-text="form.charges ? form.charges.filter(c => c.pr === 'Pay').length : 0"></span></span>
+                                    <button type="button" @click="addCharge()" class="btn-default-gf" style="height: 22px; padding: 0 8px; background: #31708f; color: #fff; border: none; border-radius: 2px; font-size: 10px;" title="Add Charge Row"><i class="fa fa-plus"></i> Add Row</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charge Filters Pills -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; align-items: center;">
+                            <button type="button" @click="activeChargeFilter = 'All'" :class="activeChargeFilter === 'All' ? 'btn-filter-active' : 'btn-filter'">All (<span x-text="form.charges ? form.charges.length : 0"></span>)</button>
+                            <button type="button" @click="activeChargeFilter = 'AR'" :class="activeChargeFilter === 'AR' ? 'btn-filter-active' : 'btn-filter'">A/R (<span x-text="form.charges ? form.charges.filter(c => c.pr === 'Rec').length : 0"></span>)</button>
+                            <button type="button" @click="activeChargeFilter = 'AP'" :class="activeChargeFilter === 'AP' ? 'btn-filter-active' : 'btn-filter'">A/P (<span x-text="form.charges ? form.charges.filter(c => c.pr === 'Pay').length : 0"></span>)</button>
+                            <button type="button" @click="activeChargeFilter = 'DC'" :class="activeChargeFilter === 'DC' ? 'btn-filter-active' : 'btn-filter'">D/C (<span x-text="form.charges ? form.charges.filter(c => c.pr === 'DC').length : 0"></span>)</button>
+                            <button type="button" @click="deleteSelectedCharges()" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; margin-left: auto; height: 26px; padding: 0 12px; font-size: 11px; border-radius: 3px; font-weight: 600; white-space: nowrap; cursor: pointer;" title="Delete Selected Charges"><i class="fa fa-trash"></i> Delete Selected</button>
+                        </div>
+
+                        <!-- Charges Table -->
+                        <div class="table-responsive">
+                            <table class="table-custom" style="font-size: 11px; width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f1f3f6; font-size: 10px; border-bottom: 2px solid #e2ebf2;">
+                                        <th style="width: 30px; text-align: center;"><input type="checkbox" @change="toggleAllCharges($event)"></th>
+                                        <th style="width: 40px; text-align: center;">#</th>
+                                        <th style="width: 90px;">PARTY</th>
+                                        <th style="width: 140px;">PARTY NAME</th>
+                                        <th style="width: 55px;">SAL</th>
+                                        <th style="width: 55px;">P/R</th>
+                                        <th style="width: 65px;">PP/C</th>
+                                        <th style="width: 90px;">CHRG CODE</th>
+                                        <th style="width: 130px;">CHARGE NAME</th>
+                                        <th style="width: 65px;">CURRENCY</th>
+                                        <th style="width: 75px; text-align: right;">RATE</th>
+                                        <th style="width: 55px; text-align: right;">QTY</th>
+                                        <th style="width: 65px;">QTY TYPE</th>
+                                        <th style="width: 55px; text-align: right;">ROE</th>
+                                        <th style="width: 95px; text-align: right;">AMOUNT (USD)</th>
+                                        <th style="width: 55px; text-align: right;">VAT %</th>
+                                        <th style="width: 95px; text-align: right;">TOTAL (USD)</th>
+                                        <th style="width: 90px;">INV NO.</th>
+                                        <th style="width: 95px;">FINANCIAL DATE</th>
+                                        <th style="width: 90px;">EQ B/L NO.</th>
+                                        <th style="width: 45px; text-align: center;">ACTION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(charge, idx) in filteredCharges" :key="idx">
+                                        <tr :style="charge.selected ? 'background:#fef9e7;' : ''">
+                                            <td style="text-align: center;">
+                                                <input type="hidden" :name="'charges['+idx+'][id]'" :value="charge.id">
+                                                <input type="checkbox" x-model="charge.selected">
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <div style="display: flex; align-items: center; justify-content: center; gap: 3px;">
+                                                    <button type="button" @click="charge.expanded = !charge.expanded" class="btn-default-gf" style="padding: 0; height: 15px; width: 15px; line-height: 1; border-radius: 2px; background: #fff; border: 1px solid #ccc;">
+                                                        <i :class="charge.expanded ? 'fa fa-minus' : 'fa fa-plus'" style="font-size: 8px; color: #555;"></i>
+                                                    </button>
+                                                    <span x-text="idx + 1" style="font-weight: bold; font-size: 10px;"></span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][party]'" x-model="charge.party" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="Shipper">Shipper</option>
+                                                    <option value="Consignee">Consignee</option>
+                                                    <option value="Custom">Custom</option>
+                                                    <option value="Agent">Agent</option>
+                                                    <option value="C&F/CN">C&F/CN</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][party_name_id]'" x-model="charge.party_name_id" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="">Select...</option>
+                                                    @foreach($agents as $agent)
+                                                        <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][sal]'" x-model="charge.sal" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="Air">Air</option>
+                                                    <option value="Ocean">Ocean</option>
+                                                    <option value="Truck">Truck</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][pr]'" x-model="charge.pr" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="Rec">Rec</option>
+                                                    <option value="Pay">Pay</option>
+                                                    <option value="DC">D/C</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][ppc]'" x-model="charge.ppc" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="Colle">Colle</option>
+                                                    <option value="Prepaid">Prepaid</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" :name="'charges['+idx+'][chrg_code]'" x-model="charge.chrg_code" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;" placeholder="Code"></td>
+                                            <td><input type="text" :name="'charges['+idx+'][charge_name]'" x-model="charge.charge_name" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;" placeholder="Charge Name"></td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][currency]'" x-model="charge.currency" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="USD">USD</option>
+                                                    @foreach($currencies as $curr)
+                                                        <option value="{{ $curr->code }}">{{ $curr->code }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td><input type="number" :name="'charges['+idx+'][rate]'" x-model="charge.rate" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px; text-align: right;" step="0.01" @input="updateChargeAmount(idx)"></td>
+                                            <td><input type="number" :name="'charges['+idx+'][qty]'" x-model="charge.qty" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px; text-align: right;" step="0.01" @input="updateChargeAmount(idx)"></td>
+                                            <td>
+                                                <select :name="'charges['+idx+'][qty_type]'" x-model="charge.qty_type" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;">
+                                                    <option value="B/L">B/L</option>
+                                                    <option value="UNIT">UNIT</option>
+                                                    <option value="KG">KG</option>
+                                                    <option value="CBM">CBM</option>
+                                                    <option value="PCS">PCS</option>
+                                                    @foreach($packageUnits as $unit)
+                                                        <option value="{{ $unit->code }}">{{ $unit->code }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td><input type="number" :name="'charges['+idx+'][roe]'" x-model="charge.roe" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px; text-align: right;" step="0.0001" @input="updateLocalAmount(idx)"></td>
+                                            <td style="text-align: right; font-size: 10px;" x-text="((parseFloat(charge.rate) || 0) * (parseFloat(charge.qty) || 0) * (parseFloat(charge.roe) || 1)).toFixed(2)">0.00</td>
+                                            <td><input type="number" :name="'charges['+idx+'][vat]'" x-model="charge.vat" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px; text-align: right;" step="0.01" @input="updateLocalAmount(idx)"></td>
+                                            <td style="text-align: right; font-weight: bold; font-size: 10px;" x-text="(((parseFloat(charge.rate) || 0) * (parseFloat(charge.qty) || 0) * (parseFloat(charge.roe) || 1)) * (1 + (parseFloat(charge.vat) || 0) / 100)).toFixed(2)">0.00</td>
+                                            <td><input type="text" :name="'charges['+idx+'][inv_no]'" x-model="charge.inv_no" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;"></td>
+                                            <td><input type="date" :name="'charges['+idx+'][financial_date]'" x-model="charge.financial_date" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;"></td>
+                                            <td><input type="text" :name="'charges['+idx+'][eq_bl_no]'" x-model="charge.eq_bl_no" class="form-control-gf" style="font-size: 10px; height: 20px; padding: 2px;"></td>
+                                            <td style="text-align: center;">
+                                                <button type="button" @click="deleteCharge(charge)" class="btn-tool-icon" style="height: 20px; width: 20px; padding: 0; color: red; border-color: red;" title="Delete">
+                                                    <i class="fa fa-trash" style="font-size: 10px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="!filteredCharges || filteredCharges.length === 0">
+                                        <tr>
+                                            <td colspan="21" style="text-align: center; padding: 30px; color: #999;">
+                                                <i class="fa fa-inbox" style="font-size: 40px; opacity: 0.3; display: block; margin-bottom: 10px;"></i>
+                                                <span x-text="form.charges && form.charges.length === 0 ? 'No charges added yet. Click &quot;+ Add Row&quot; button to start.' : 'No charges match the selected filter.'"></span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                                <tfoot x-show="filteredCharges && filteredCharges.length > 0">
+                                    <tr style="background: #f9fafb; font-weight: bold; font-size: 10px;">
+                                        <td colspan="14" style="text-align: right; padding-right: 10px;">Total:</td>
+                                        <td style="text-align: right;" x-text="filteredCharges.reduce((sum, c) => sum + ((parseFloat(c.rate) || 0) * (parseFloat(c.qty) || 0) * (parseFloat(c.roe) || 1)), 0).toFixed(2)">0.00</td>
+                                        <td></td>
+                                        <td style="text-align: right;" x-text="filteredCharges.reduce((sum, c) => sum + (((parseFloat(c.rate) || 0) * (parseFloat(c.qty) || 0) * (parseFloat(c.roe) || 1)) * (1 + (parseFloat(c.vat) || 0) / 100)), 0).toFixed(2)">0.00</td>
+                                        <td colspan="4"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Bottom Action Buttons Row -->
+                        <div style="margin-top: 15px; display: flex; justify-content: flex-start; align-items: center; background: #f8fafc; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <button type="button" class="btn-freightx" style="background: #16a34a; color: white; border: none; padding: 7px 18px; font-weight: 600; border-radius: 4px; font-size: 11px; cursor: pointer;" @click.prevent="generateFreightInvoice()">
+                                Generate Freight Invoice
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -1382,14 +2343,13 @@
                                 <span class="caption-subject" style="color: #fff;" x-text="form.mawb_no"></span>
                             </div>
                             <div class="actions" style="display: flex; gap: 5px; align-items: center;">
-                                <button type="button" class="btn-default-gf dark" @click="refreshWorkOrders"><i class="fa fa-refresh"></i></button>
-                                <button type="button" class="btn-default-gf dark"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
+                                <button type="button" class="btn-default-gf dark" @click="refreshWorkOrders"><i class="fa fa-refresh"></i> Refresh</button>
                             </div>
                         </div>
                         <div class="portlet-body" style="padding: 10px;">
                             <div style="background: #eef1f5; padding: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
                                 <div class="btn-group" style="display: flex; gap: 5px;">
-                                    <button type="button" class="btn-gofreight" style="background: #32c5d2; padding: 6px 12px; border-radius: 3px; font-size: 11px;" @click="createWorkOrder">
+                                    <button type="button" class="btn-freightx" style="background: #32c5d2; padding: 6px 12px; border-radius: 3px; font-size: 11px;" @click="createWorkOrder">
                                         <i class="fa fa-plus"></i> New Work Order
                                     </button>
                                     <button type="button" 
@@ -1523,30 +2483,25 @@
                 <!-- Main Status Area (col-10) -->
                 <div style="flex: 5;">
                     <div class="portlet light">
-                        <div class="portlet-title" style="background: #666; color: #fff;">
-                            <div class="caption">
-                                <span style="font-size: 11px; margin-right: 5px;">MAWB</span>
-                            </div>
-                            <div class="actions" style="display: flex; gap: 5px; align-items: center;">
-                                <button class="btn-default-gf dark"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
-                                <i class="fa fa-angle-down" style="cursor: pointer; padding: 0 5px;"></i>
-                            </div>
-                        </div>
                         <div class="portlet-body" style="padding: 20px;">
                             <div style="display: flex; gap: 20px; margin-bottom: 30px;">
                                 <div style="flex: 1;">
                                     <h4 style="font-size: 13px; font-weight: 700; color: #333; margin: 0 0 10px 0;">Role</h4>
                                     <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; color: #333;">
                                         <span>OP :</span>
-                                        <div style="width: 20px; height: 20px; border-radius: 50% !important; background: #3598dc; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600;">D</div>
-                                        <select class="form-control-gf" style="width: 200px;">
-                                            <option>DEMO_925 (DEMO_925)</option>
+                                        <div style="width: 20px; height: 20px; border-radius: 50% !important; background: #3598dc; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                                            <i class="fa fa-user"></i>
+                                        </div>
+                                        <select class="form-control-gf" style="width: 200px;" x-model="form.op">
+                                            @foreach($users as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
                                 <div style="flex: 2;">
                                     <h4 style="font-size: 13px; font-weight: 700; color: #333; margin: 0 0 10px 0;">Internal Message</h4>
-                                    <textarea class="form-control-gf" style="width: 100%; height: 55px; resize: none;"></textarea>
+                                    <textarea class="form-control-gf" style="width: 100%; height: 55px; resize: none;" x-model="form.internal_remark"></textarea>
                                 </div>
                             </div>
 
@@ -1769,13 +2724,13 @@
                         </div>
                         <div style="text-align: center; margin-top: 15px;">
                             <button type="button" class="btn-default-gf" @click="clearSearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Clear</button>
-                            <button type="button" class="btn-gofreight" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
+                            <button type="button" class="btn-freightx" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
                         </div>
                         
                         <hr style="margin: 20px 0; border-top: 1px solid #eee;">
                         
                         <div style="text-align: right; margin-bottom: 5px;">
-                            <button type="button" class="btn-gofreight" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
+                            <button type="button" class="btn-freightx" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
                         </div>
                         
                         <div style="border: 1px solid #e7ecf1; height: 310px; overflow-y: auto; display: flex; flex-direction: column;">
@@ -1796,28 +2751,27 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $quotations = \App\Models\Quotation::with(['customer', 'salesPerson', 'pol', 'pod'])->latest()->get();
-                                    @endphp
                                     @foreach($quotations as $quote)
-                                    <tr x-show="matchFilters({quote_no: '{{ $quote->quote_no }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}'})" style="border-bottom: 1px solid #e7ecf1;">
+                                    <tr x-show="matchFilters({quote_no: '{{ addslashes($quote->quote_no) }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}', op: '{{ $quote->op_id }}', commodity: '{{ addslashes($quote->commodity ?? '') }}'})" style="border-bottom: 1px solid #e7ecf1;">
                                         <td style="text-align: center; padding: 6px;"><input type="radio" name="quote_sel" :checked="selectedQuote && selectedQuote.quote_no === '{{ $quote->quote_no }}'" 
                                              @click="selectQuote({
-    quote_no: '{{ $quote->quote_no }}',
-    mawb_no: 'MAWB-{{ $quote->quote_no }}',
-    hawb_no: 'HAWB-{{ $quote->quote_no }}',
+    quote_no: '{{ addslashes($quote->quote_no) }}',
+    mawb_no: 'MAWB-{{ addslashes($quote->quote_no) }}',
+    hawb_no: 'HAWB-{{ addslashes($quote->quote_no) }}',
     eta: '{{ $quote->expiry_date ? $quote->expiry_date->format('Y-m-d') : '' }}',
     etd: '{{ $quote->quote_date ? $quote->quote_date->format('Y-m-d') : '' }}',
     customer: '{{ addslashes($quote->customer->name ?? '') }}',
     customer_id: '{{ $quote->customer_id }}',
     sales: '{{ addslashes($quote->salesPerson->name ?? '') }}',
     sales_person_id: '{{ $quote->sales_person_id }}',
+    op: '{{ addslashes($quote->op->name ?? '') }}',
     op_id: '{{ $quote->op_id }}',
     pol_name: '{{ addslashes($quote->pol->name ?? '') }}',
     pod_name: '{{ addslashes($quote->pod->name ?? '') }}',
     pol_id: '{{ $quote->pol_id }}',
     pod_id: '{{ $quote->pod_id }}',
-    carrier_name: '',
+    carrier_name: '{{ addslashes($quote->carrier->name ?? '') }}',
+    carrier_id: '{{ $quote->carrier_id }}',
     oversea_agent_id: '{{ $quote->agent_id }}',
     service_term: '{{ addslashes($quote->service_term ?? '') }}',
     incoterms_id: '{{ $quote->incoterms_id }}',
@@ -1825,19 +2779,20 @@
     gross_weight_kg: '{{ $quote->weight_kg ?? '' }}',
     gross_weight_lb: '{{ $quote->weight_lb ?? '' }}',
     volume_cbm: '{{ $quote->volume_cbm ?? '' }}',
+    chargeable_weight_kg: '{{ $quote->chargeable_weight ?? '' }}',
     ship_mode: '{{ addslashes($quote->ship_mode ?? '') }}',
     items: (quoteItems && quoteItems['{{ $quote->quote_no }}']) ? quoteItems['{{ $quote->quote_no }}'].map(i => ({...i, selected: true})) : []
 })"></td>
                                         <td style="padding: 6px;"><a href="#" style="color: #337ab7; text-decoration: none;">{{ $quote->quote_no }}</a></td>
                                         <td style="padding: 6px;">{{ $quote->quote_date ? $quote->quote_date->format('m-d-Y') : '' }} ~ {{ $quote->expiry_date ? $quote->expiry_date->format('m-d-Y') : '' }}</td>
-                                        <td style="padding: 6px;"><span style="background: {{ $quote->status === 'ACCEPTED' ? '#26c281' : '#888' }}; color: #fff; padding: 2px 5px; border-radius: 2px; font-size: 10px;">{{ $quote->status }}</span></td>
-                                        <td style="padding: 6px;">{{ $quote->created_at->format('Y-m-d') }}</td>
-                                        <td style="padding: 6px;">{{ $quote->commodity ?? '' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->pol->name ?? '' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->pod->name ?? '' }}</td>
-                                        <td style="padding: 6px;"></td>
-                                        <td style="padding: 6px;">{{ $quote->salesPerson->name ?? '' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->op->name ?? '' }}</td>
+                                        <td style="padding: 6px;"><span style="background: {{ in_array(strtoupper($quote->status), ['WON', 'ACCEPTED']) ? '#26c281' : '#888' }}; color: #fff; padding: 2px 5px; border-radius: 2px; font-size: 10px;">{{ $quote->status }}</span></td>
+                                        <td style="padding: 6px;">{{ $quote->created_at ? $quote->created_at->format('Y-m-d') : '' }}</td>
+                                        <td style="padding: 6px;">{{ $quote->commodity ?: '-' }}</td>
+                                        <td style="padding: 6px;">{{ $quote->pol->name ?? '-' }}</td>
+                                        <td style="padding: 6px;">{{ $quote->pod->name ?? '-' }}</td>
+                                        <td style="padding: 6px;">{{ $quote->carrier->name ?? '-' }}</td>
+                                        <td style="padding: 6px;">{{ $quote->salesPerson->name ?? '-' }}</td>
+                                        <td style="padding: 6px;">{{ $quote->op->name ?? '-' }}</td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -1864,7 +2819,7 @@
                                     <td x-text="selectedQuote ? selectedQuote.pol_name : ''"></td>
                                     <td x-text="selectedQuote ? selectedQuote.pod_name : ''"></td>
                                     <td x-text="selectedQuote ? selectedQuote.pod_name : ''"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.carrier_name : 'DEMO CARRIER'"></td>
+                                    <td x-text="selectedQuote && selectedQuote.carrier_name ? selectedQuote.carrier_name : '-'"></td>
                                 </tr>
                                 <tr x-show="!selectedQuote">
                                     <td colspan="5" style="text-align: center; color: #999; padding: 10px;">No route information in this quotation</td>
@@ -1879,9 +2834,7 @@
                                     <td style="background: #f9fafb; font-weight: 600; width: 15%;">MAWB No.</td>
                                     <td style="width: 35%;">
                                         <div style="display: flex; gap: 5px;">
-                                            <input type="text" class="form-control-gf" x-model="quoteForm.mawb_no" style="height: 24px; flex: 1;">
-                                            <button class="btn-gofreight"><i class="fa fa-external-link-square"></i></button>
-                                            <button class="btn-gofreight" disabled><i class="fa fa-magic"></i></button>
+                                            <input type="text" class="form-control-gf" x-model="quoteForm.mawb_no" style="height: 24px; flex: 1;" placeholder="MAWB-...">
                                         </div>
                                     </td>
                                     <td style="background: #f9fafb; font-weight: 600; width: 15%;"><span style="color: red;">*</span>HAWB No.</td>
@@ -1897,14 +2850,14 @@
                                     <td>
                                         <div style="display: flex; width: 100%;">
                                             <input type="date" class="form-control-gf" x-model="quoteForm.etd" style="height: 24px; border-right: none;">
-                                            <div style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;"><i class="fa fa-calendar"></i></div>
+                                            <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
                                         </div>
                                     </td>
                                     <td style="background: #f9fafb; font-weight: 600;">Arrival Date/Time</td>
                                     <td>
                                         <div style="display: flex; width: 100%;">
                                             <input type="date" class="form-control-gf" x-model="quoteForm.eta" style="height: 24px; border-right: none;">
-                                            <div style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;"><i class="fa fa-calendar"></i></div>
+                                            <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
                                         </div>
                                     </td>
                                 </tr>
@@ -1928,7 +2881,7 @@
                                 </tr>
                                 <tr>
                                     <td style="background: #f9fafb; font-weight: 600;">Chargeable Weight</td>
-                                    <td>-</td>
+                                    <td><span x-text="quoteForm.chargeable_weight_kg || '0.00'"></span> KG</td>
                                     <td style="background: #f9fafb; font-weight: 600;">Sales</td>
                                     <td x-text="quoteForm.sales || '-'"></td>
                                 </tr>
@@ -1949,7 +2902,12 @@
                             </label>
                             <div style="display: flex; align-items: center; gap: 5px; font-size: 11px;">
                                 <span>Applied Unit</span> <i class="fa fa-info-circle" style="color: #4b77be;"></i>
-                                <select class="form-control-gf" style="width: 100px; height: 22px;"></select>
+                                <select class="form-control-gf" style="width: 100px; height: 22px;">
+                                    <option value="">Select...</option>
+                                    @foreach($packageUnits as $unit)
+                                        <option value="{{ $unit->name }}">{{ $unit->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
 
@@ -1991,12 +2949,137 @@
 
                 <div class="modal-footer" style="padding: 15px; border-top: 1px solid #e5e5e5; display: flex; justify-content: flex-end; gap: 10px; background: #f9fafb; border-radius: 0 0 4px 4px;">
                     <button type="button" class="btn-default-gf" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;" @click="closeQuoteModal()">Cancel</button>
-                    <button type="button" class="btn-gofreight" :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))" :style="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))) ? 'background: #ccc; border: none; color: #666; cursor: not-allowed; opacity: 0.7; padding: 6px 12px; font-size: 12px; border-radius: 4px;' : 'background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;'" x-show="quoteStep < 3" @click="quoteStep++">Next</button>
-                    <button type="button" class="btn-gofreight" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()">Confirm</button>
+                    <button type="button" class="btn-freightx" :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))" :style="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))) ? 'background: #ccc; border: none; color: #666; cursor: not-allowed; opacity: 0.7; padding: 6px 12px; font-size: 12px; border-radius: 4px;' : 'background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;'" x-show="quoteStep < 3" @click="quoteStep++">Next</button>
+                    <button type="button" class="btn-freightx" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()">Confirm</button>
                 </div>
                 </div>
             </div>
         </template>
+
+        <!-- Document Package Modal (Report Type) -->
+        <div class="modal-overlay" x-show="showDocPackageModal" style="display: none; z-index: 100000; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;" x-cloak :style="showDocPackageModal ? 'display: flex;' : 'display: none;'">
+            <div class="modal-content" @click.stop style="width: 480px; max-width: 95%; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; background: #fff;">
+                <div style="background: #ffffff; padding: 14px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #111827;">Report Type</h3>
+                    <div class="modal-close" @click="showDocPackageModal = false" style="cursor: pointer; font-size: 20px; color: #9ca3af; line-height: 1;">&times;</div>
+                </div>
+                
+                <div class="modal-body" style="padding: 16px 20px; color: #374151; font-size: 13px;">
+                    <!-- Action buttons: All & Clear -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                        <button type="button" @click="selectAllDocReports()" style="background: #26a69a; color: white; border: none; padding: 5px 16px; border-radius: 3px; font-weight: 600; font-size: 12px; cursor: pointer;">All</button>
+                        <button type="button" @click="clearAllDocReports()" style="background: #26a69a; color: white; border: none; padding: 5px 16px; border-radius: 3px; font-weight: 600; font-size: 12px; cursor: pointer;">Clear</button>
+                    </div>
+
+                    <!-- Checkboxes List -->
+                    <div style="display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="manifest" x-model="docPackageForm.selectedReports">
+                            <span>1. MAWB Export Manifest</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="mawb_print" x-model="docPackageForm.selectedReports">
+                            <span>2. MAWB Print</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="local_invoice" x-model="docPackageForm.selectedReports">
+                            <span>3. Local Invoice</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="credit_debit" x-model="docPackageForm.selectedReports">
+                            <span>4. Credit/Debit Note</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="hawb_print" x-model="docPackageForm.selectedReports">
+                            <span>5. HAWB Print</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="commercial_invoice" x-model="docPackageForm.selectedReports">
+                            <span>6. Commercial Invoice</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" value="packing_list" x-model="docPackageForm.selectedReports">
+                            <span>7. Packing List</span>
+                        </label>
+                    </div>
+
+                    <!-- Input & Selection Fields -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #f3f4f6; padding-top: 14px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="width: 90px; text-align: right; font-weight: 600; color: #4b5563; font-size: 12px;">MAWB No.</label>
+                            <input type="text" readonly :value="form.mawb_no || '02605203306'" style="flex: 1; padding: 5px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: #eef1f5; color: #374151; font-size: 12px;">
+                        </div>
+
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <label style="width: 90px; text-align: right; font-weight: 600; color: #4b5563; font-size: 12px; margin-top: 5px;">Master Agent</label>
+                            <textarea readonly :value="masterAgentName" rows="2" style="flex: 1; padding: 5px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: #eef1f5; color: #374151; font-size: 11px; resize: none;"></textarea>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="width: 90px; text-align: right; font-weight: 600; color: #4b5563; font-size: 12px;">Report</label>
+                            <div style="display: flex; gap: 18px;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;">
+                                    <input type="radio" name="doc_report_agent" value="master" x-model="docPackageForm.report_agent_type">
+                                    <span>Master Agent</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;">
+                                    <input type="radio" name="doc_report_agent" value="sub" x-model="docPackageForm.report_agent_type">
+                                    <span>Sub Agent</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 10px 20px 14px 20px; background: #ffffff; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" @click="showDocPackageModal = false" style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; padding: 5px 16px; border-radius: 4px; font-weight: 500; font-size: 12px; cursor: pointer;">Cancel</button>
+                    <button type="button" @click="submitDocPackage()" style="background: #26a69a; color: white; border: none; padding: 5px 20px; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer;">View</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consolidated Cargo Manifest Modal -->
+        <div class="modal-overlay" x-show="showConsolidatedManifestModal" style="display: none; z-index: 100000; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;" x-cloak :style="showConsolidatedManifestModal ? 'display: flex;' : 'display: none;'">
+            <div class="modal-content" @click.stop style="width: 480px; max-width: 95%; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; background: #fff;">
+                <div style="background: #ffffff; padding: 14px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #111827;">Cargo Manifest</h3>
+                    <div class="modal-close" @click="showConsolidatedManifestModal = false" style="cursor: pointer; font-size: 20px; color: #9ca3af; line-height: 1;">&times;</div>
+                </div>
+                
+                <div class="modal-body" style="padding: 16px 20px; color: #374151; font-size: 13px;">
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="width: 90px; text-align: right; font-weight: 600; color: #4b5563; font-size: 12px;">MAWB No.</label>
+                            <input type="text" readonly :value="form.mawb_no || '02605203306'" style="flex: 1; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: #eef1f5; color: #374151; font-size: 12px;">
+                        </div>
+
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <label style="width: 90px; text-align: right; font-weight: 600; color: #4b5563; font-size: 12px; margin-top: 5px;" x-text="manifestForm.agent_type === 'sub' ? 'Sub Agent' : 'Master Agent'"></label>
+                            <textarea readonly :value="manifestForm.agent_type === 'sub' ? subAgentName : masterAgentName" rows="3" style="flex: 1; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: #eef1f5; color: #374151; font-size: 11px; resize: none;"></textarea>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="width: 90px; text-align: right; font-weight: 600; color: #4b5563; font-size: 12px;">Report</label>
+                            <div style="display: flex; gap: 18px;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;">
+                                    <input type="radio" name="manifest_agent_type" value="master" x-model="manifestForm.agent_type">
+                                    <span>Master Agent</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;">
+                                    <input type="radio" name="manifest_agent_type" value="sub" x-model="manifestForm.agent_type">
+                                    <span>Sub Agent</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 10px 20px 14px 20px; background: #ffffff; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" @click="showConsolidatedManifestModal = false" style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; padding: 6px 18px; border-radius: 4px; font-weight: 500; font-size: 12px; cursor: pointer;">Cancel</button>
+                    <button type="button" @click="submitConsolidatedManifest()" style="background: #0ea5e9; color: white; border: none; padding: 6px 22px; border-radius: 4px; font-weight: 600; font-size: 12px; cursor: pointer;">View</button>
+                </div>
+            </div>
+        </div>
     </div>
 
 <div id="toast-container" class="toast-container"></div>
@@ -2023,6 +3106,33 @@
         @foreach($errors->all() as $error)
             showToast('error', '{!! addslashes($error) !!}');
         @endforeach
+    @endif
+
+    // FIELD DIAGNOSTIC - Console Output
+    @if(session('diagnostic'))
+        const diagnostic = @json(session('diagnostic'));
+        console.log('%c╔══════════════════════════════════════════════════════════════╗', 'color: #0066cc; font-weight: bold;');
+        console.log('%c║     AIR EXPORT FIELD DIAGNOSTIC REPORT                      ║', 'color: #0066cc; font-weight: bold;');
+        console.log('%c╚══════════════════════════════════════════════════════════════╝', 'color: #0066cc; font-weight: bold;');
+        console.log('');
+        console.log(`%c📊 Total Fields Tracked: ${diagnostic.total_fields}`, 'font-size: 13px; font-weight: bold;');
+        console.log(`%c✅ Filled: ${diagnostic.filled_count} (${diagnostic.percentage_filled}%)`, 'color: #22c55e; font-size: 13px; font-weight: bold;');
+        console.log(`%c❌ Empty: ${diagnostic.empty_count}`, 'color: #ef4444; font-size: 13px; font-weight: bold;');
+        console.log('');
+        console.log('%c╔═══ FILLED FIELDS ═══════════════════════════════════════════╗', 'color: #22c55e; font-weight: bold;');
+        diagnostic.filled_fields.forEach((field, idx) => {
+            console.log(`%c  ${idx + 1}. ✓ ${field}`, 'color: #22c55e;');
+        });
+        console.log('%c╚═════════════════════════════════════════════════════════════╝', 'color: #22c55e;');
+        console.log('');
+        console.log('%c╔═══ EMPTY FIELDS ═══════════════════════════════════════════╗', 'color: #ef4444; font-weight: bold;');
+        diagnostic.empty_fields.forEach((field, idx) => {
+            console.log(`%c  ${idx + 1}. ✗ ${field}`, 'color: #ef4444;');
+        });
+        console.log('%c╚═════════════════════════════════════════════════════════════╝', 'color: #ef4444;');
+        console.log('');
+        console.log('%c💡 Tip: Check storage/logs/laravel.log for detailed field values', 'color: #64748b; font-style: italic;');
+        console.log('');
     @endif
 </script>
 </x-layout>

@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class TruckShipment extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
-        'file_no', 'mbl_no', 'hbl_no', 'vessel_flight_no', 'carrier_bkg_no',
+        'company_id', 'file_no', 'mbl_no', 'hbl_no', 'vessel_flight_no', 'carrier_bkg_no',
         'post_date', 'office_id', 'op_id', 'sales_id',
         'customer_id', 'shipper_id', 'consignee_id', 'trucker_id', 'customer_ref_no', 'bill_to_id',
         'truck_no', 'driver_name', 'driver_phone',

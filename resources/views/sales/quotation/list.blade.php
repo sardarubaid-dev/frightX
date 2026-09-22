@@ -4,13 +4,6 @@
     <style>
         .grid-table th.sticky-col, .grid-table td.sticky-col { z-index: 2; }
         .grid-table th.sticky-col-header { z-index: 3; }
-        .status-badge-grid {
-            display: inline-flex; align-items: center; gap: 3px;
-            padding: 0 8px 0 6px; border-radius: 10px;
-            font-size: 10px; font-weight: 600; color: #fff;
-            line-height: 16px;
-            white-space: nowrap;
-        }
         .col-link { color: #3b82f6; text-decoration: none; font-weight: 500; }
         .col-link:hover { text-decoration: underline; }
         .grid-table td { padding: 2px 6px; font-size: 10px; }
@@ -19,6 +12,30 @@
         .rate-cell .rate-type { color: #94a3b8; font-size: 9px; }
         .filter-select { width: 100%; height: 18px; border: 1px solid #93c5fd; font-size: 9px; border-radius: 2px; padding: 0 2px; box-sizing: border-box; background: #fff; outline: none; }
         .filter-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,0.2); }
+
+        /* Button Group Styling - Matching Ocean Import */
+        .btn-group {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .btn-group .btn-tool:not(:first-child) {
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-group .btn-tool {
+            border-radius: 0;
+            margin: 0;
+        }
+        .btn-group .btn-tool:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        .btn-group .btn-tool:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
 
         /* Status dropdown (toolbar button) */
         .status-dropdown-wrap { position: relative; display: inline-flex; }
@@ -40,6 +57,63 @@
         }
         th.freeze-divider { border-left: 2px solid #3b82f6 !important; }
         td.freeze-divider { border-left: 2px solid #3b82f6 !important; }
+
+        /* Mobile Responsive Enhancements - FIXED SCROLLING */
+        @media (max-width: 768px) {
+            .page-content { padding: 2px !important; overflow-x: hidden !important; }
+            .portlet.light { margin: 0 !important; border-radius: 0 !important; overflow: hidden !important; }
+            .portlet-title { flex-direction: column !important; align-items: flex-start !important; padding: 6px !important; gap: 6px; }
+            .portlet-title .caption { width: 100%; }
+            .portlet-title .actions { width: 100%; flex-wrap: wrap; gap: 3px !important; }
+            .btn-action-round { font-size: 9px !important; padding: 0 6px !important; height: 18px !important; }
+            .portlet-tool { flex-direction: column !important; align-items: flex-start !important; padding: 6px !important; gap: 6px !important; }
+            .portlet-tool > div { width: 100%; }
+            .btn-group { width: 100%; justify-content: space-between; }
+            .btn-tool { font-size: 9px !important; padding: 0 6px !important; height: 20px !important; flex: 1; }
+            .input-inline { width: 100% !important; font-size: 9px !important; }
+            .portlet-body { padding: 0 !important; overflow: hidden !important; }
+            .grid-container { width: 100% !important; overflow: hidden !important; background: #fff; position: relative; }
+            .grid-wrapper { width: 100% !important; height: calc(100vh - 350px) !important; min-height: 200px !important; overflow-x: auto !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; position: relative; }
+            .grid-table { font-size: 8px !important; width: auto !important; min-width: 1400px !important; table-layout: auto !important; }
+            .grid-table th, .grid-table td { padding: 2px 4px !important; height: 22px !important; white-space: nowrap !important; }
+            .sticky-col { font-size: 8px !important; position: sticky !important; z-index: 5 !important; background: #fff !important; }
+            .grid-table th:nth-child(1), .grid-table td:nth-child(1) { left: 0 !important; }
+            .grid-table th:nth-child(2), .grid-table td:nth-child(2) { left: 28px !important; }
+            .grid-table th:nth-child(3), .grid-table td:nth-child(3),
+            .grid-table th:nth-child(4), .grid-table td:nth-child(4),
+            .grid-table th:nth-child(5), .grid-table td:nth-child(5),
+            .grid-table th:nth-child(6), .grid-table td:nth-child(6) { position: static !important; left: auto !important; }
+            .filter-input { height: 18px !important; font-size: 8px !important; padding: 0 3px !important; }
+            .modal-box, .confirm-box { margin: 10px; width: calc(100% - 20px); max-width: 100%; min-width: 0 !important; }
+            .modal-body { padding: 8px !important; min-width: 0 !important; }
+            .confirm-box { padding: 16px !important; }
+            .config-panel { right: 0; left: 0; top: 22px; max-width: 100%; max-height: 250px; }
+            .portlet-tool.bottom { flex-direction: column !important; gap: 6px; }
+            .portlet-tool.bottom > div { width: 100% !important; }
+            .pagination { justify-content: center; font-size: 9px !important; }
+            .tp-page-btn { min-width: 20px !important; height: 18px !important; padding: 0 4px !important; font-size: 8px !important; }
+            .toast-container { top: 10px; right: 10px; left: 10px; }
+            .toast { font-size: 10px !important; padding: 6px 10px !important; }
+            .page-bar { padding: 6px 10px !important; margin-bottom: 8px !important; }
+            .page-breadcrumb li { font-size: 10px !important; }
+            #sel-badge { font-size: 8px !important; }
+        }
+        @media (max-width: 480px) {
+            .grid-table { font-size: 7px !important; min-width: 1200px !important; }
+            .grid-table th, .grid-table td { padding: 2px 3px !important; height: 20px !important; }
+            .btn-action-round, .btn-tool { font-size: 8px !important; padding: 0 4px !important; }
+            .caption-subject { font-size: 10px !important; }
+            .grid-table th:nth-child(2), .grid-table td:nth-child(2) { position: static !important; left: auto !important; }
+        }
+        @media (max-width: 768px) and (orientation: landscape) {
+            .grid-wrapper { height: calc(100vh - 200px) !important; }
+        }
+        @media (hover: none) and (pointer: coarse) {
+            .btn-tool, .btn-action-round, .tp-page-btn { min-height: 28px !important; touch-action: manipulation; }
+            .filter-input { min-height: 24px !important; touch-action: manipulation; }
+            input[type="checkbox"] { width: 18px; height: 18px; touch-action: manipulation; }
+            .grid-wrapper { -webkit-overflow-scrolling: touch !important; scroll-behavior: smooth; }
+        }
     </style>
     @endpush
 
@@ -93,9 +167,9 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <a class="btn-action-round white" href="{{ route('sales.quotations.list', array_merge(request()->query(), ['export' => 'csv'])) }}" title="Download as CSV/Excel" target="_blank">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
-                    </a>
+                    <button class="btn-action-round white" onclick="exportExcel()" title="Download as CSV/Excel" id="btn-excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
+                    </button>
                 </div>
             </div>
 
@@ -145,8 +219,7 @@
                                         </th>
                                         <th class="sticky-col sticky-col-header" data-col="quote_no"  style="width:120px;left:25px;">Quote No.</th>
                                         <th class="sticky-col sticky-col-header" data-col="date"      style="width:85px;left:145px;">Create Date</th>
-                                        <th class="sticky-col sticky-col-header" data-col="pub_status" style="width:85px;left:230px;">Publication Status</th>
-                                        <th class="sticky-col sticky-col-header" data-col="status"     style="width:80px;left:315px;">Status</th>
+                                        <th class="sticky-col sticky-col-header" data-col="status"     style="width:85px;left:230px;">Status</th>
                                         <th class="freeze-divider" data-col="office"      style="width:100px;">Office</th>
                                         <th data-col="customer"    style="width:140px;">Customer</th>
                                         <th data-col="agent"       style="width:100px;">Agent</th>
@@ -191,10 +264,10 @@
                                     {{-- ── FILTER ROW (hidden by default) ── --}}
                                     <tr id="filter-row" style="display:none;">
                                         <td class="sticky-col" style="left:0;"></td>
-                                        <td class="sticky-col" style="left:25px;"><input class="filter-input" data-col-idx="1" placeholder="Quote..." oninput="filterDebounce()"></td>
-                                        <td class="sticky-col" style="left:145px;"><input class="filter-input" data-col-idx="2" type="date" oninput="filterDebounce()"></td>
+                                        <td class="sticky-col" style="left:25px;"><input class="filter-input" data-param="quote_no" placeholder="Quote..." oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
+                                        <td class="sticky-col" style="left:145px;"><input class="filter-input" data-param="date" type="date" oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
                                         <td class="sticky-col" style="left:230px;">
-                                            <select class="filter-input filter-select" data-col-idx="3" onchange="applyFilters()">
+                                            <select class="filter-input filter-select" data-param="status" onchange="applyFilters()">
                                                 <option value="">All</option>
                                                 <option value="Draft">Draft</option>
                                                 <option value="Sent">Sent</option>
@@ -206,25 +279,12 @@
                                                 <option value="Ghosted">Ghosted</option>
                                             </select>
                                         </td>
-                                        <td class="sticky-col" style="left:315px;">
-                                            <select class="filter-input filter-select" data-col-idx="4" onchange="applyFilters()">
-                                                <option value="">All</option>
-                                                <option value="Draft">Draft</option>
-                                                <option value="Sent">Sent</option>
-                                                <option value="Pending">Pending</option>
-                                                <option value="Won">Won</option>
-                                                <option value="Lost">Lost</option>
-                                                <option value="Expired">Expired</option>
-                                                <option value="Cancelled">Cancelled</option>
-                                                <option value="Ghosted">Ghosted</option>
-                                            </select>
-                                        </td>
-                                        <td><input class="filter-input" data-col-idx="5"  placeholder="Office..." oninput="filterDebounce()"></td>
-                                        <td><input class="filter-input" data-col-idx="6"  placeholder="Customer..." oninput="filterDebounce()"></td>
-                                        <td><input class="filter-input" data-col-idx="7"  placeholder="Agent..."    oninput="filterDebounce()"></td>
-                                        <td><input class="filter-input" data-col-idx="8"  placeholder="Term..."      oninput="filterDebounce()"></td>
+                                        <td><input class="filter-input" data-param="office"  placeholder="Office..." oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
+                                        <td><input class="filter-input" data-param="customer"  placeholder="Customer..." oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
+                                        <td><input class="filter-input" data-param="agent"  placeholder="Agent..."    oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
+                                        <td><input class="filter-input" data-param="term"  placeholder="Term..."      oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
                                         <td>
-                                            <select class="filter-input filter-select" data-col-idx="9" onchange="applyFilters()">
+                                            <select class="filter-input filter-select" data-param="type" onchange="applyFilters()">
                                                 <option value="">All</option>
                                                 <option value="Ocean Import">Ocean Import</option>
                                                 <option value="Ocean Export">Ocean Export</option>
@@ -233,90 +293,14 @@
                                                 <option value="Truck">Truck</option>
                                             </select>
                                         </td>
-                                        <td><input class="filter-input" data-col-idx="10" placeholder="POL..." oninput="filterDebounce()"></td>
-                                        <td><input class="filter-input" data-col-idx="11" placeholder="POD..." oninput="filterDebounce()"></td>
+                                        <td><input class="filter-input" data-param="pol" placeholder="POL..." oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
+                                        <td><input class="filter-input" data-param="pod" placeholder="POD..." oninput="applyFiltersTyping()" onkeyup="if(event.key === 'Enter') applyFilters()"></td>
                                         <td colspan="26"></td>
                                     </tr>
                                 </thead>
 
                                 <tbody id="grid-body">
-                                @forelse($quotations as $q)
-                                    @php
-                                        $arItems = $q->items->where('type', 'AR')->values();
-                                        $dcItems = $q->items->where('type', 'DC_NOTE')->values();
-                                        $stParts = explode('~', $q->service_term ?? '');
-                                        $stDisplay = trim(($stParts[0] ?? '') . ' / ' . ($stParts[1] ?? ''), ' /');
-                                    @endphp
-                                    <tr id="quote-row-{{ $q->id }}"
-                                        data-id="{{ $q->id }}"
-                                        data-quote="{{ $q->quote_no }}"
-                                        data-customer="{{ $q->customer?->name ?? '' }}"
-                                        data-status="{{ $q->status }}"
-                                        onclick="rowClick(event, this)"
-                                    >
-                                        <td class="sticky-col" style="width:25px;text-align:center;left:0;" onclick="event.stopPropagation()">
-                                            <input type="checkbox" name="ids[]" value="{{ $q->id }}" class="row-check" onchange="updateToolbar()">
-                                        </td>
-                                        <td class="sticky-col" style="width:120px;left:25px;" onclick="event.stopPropagation()">
-                                            <a href="{{ route('sales.quotations.edit', $q->id) }}" class="col-link">{{ $q->quote_no }}</a>
-                                        </td>
-                                        <td class="sticky-col" style="width:85px;left:145px;">{{ ($q->quote_date ?? $q->created_at)?->format('Y-m-d') ?? '--' }}</td>
-                                        <td class="sticky-col" style="width:85px;left:230px;text-align:center;">
-                                            <div class="status-badge-grid" style="background:{{ $statusColors[$q->status] ?? '#888' }}">
-                                                <span>{{ $q->status }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="sticky-col" style="width:80px;left:315px;text-align:center;">
-                                            <span style="font-size:9px;color:#64748b;">{{ $q->status }}</span>
-                                        </td>
-                                        <td class="freeze-divider">{{ $q->office?->name ?? '--' }}</td>
-                                        <td>{{ $q->customer?->name ?? '--' }}</td>
-                                        <td>{{ $q->agent?->name ?? '--' }}</td>
-                                        <td>{{ $stDisplay ?: '--' }}</td>
-                                        <td>{{ $q->transport_mode ?? '--' }}</td>
-                                        <td>{{ $q->pol?->name ?? '--' }}</td>
-                                        <td>{{ $q->pod?->name ?? '--' }}</td>
-                                        @for($i = 0; $i < 7; $i++)
-                                        <td>
-                                            <div class="rate-cell">
-                                                @isset($arItems[$i])<span class="rate-val">{{ number_format($arItems[$i]->rate, 2) }}</span> <span class="rate-type">{{ $arItems[$i]->currency->code ?? '' }} {{ $arItems[$i]->unit }}</span>@else<span class="rate-val" style="color:#ccc;">--</span>@endisset
-                                            </div>
-                                        </td>
-                                        @endfor
-                                        <td title="{{ $q->quotation_remark ?? '' }}">{{ Str::limit($q->quotation_remark ?? '', 30) ?: '--' }}</td>
-                                        <td>{{ $q->expiry_date?->format('Y-m-d') ?? '--' }}</td>
-                                        <td>{{ $q->departure ?? '--' }}</td>
-                                        <td>{{ $q->destination ?? '--' }}</td>
-                                        <td>{{ $q->carrier?->name ?? '--' }}</td>
-                                        <td>{{ $q->via ?? '--' }}</td>
-                                        <td>{{ $q->tt ?? '--' }}</td>
-                                        <td title="{{ $q->commodity ?? '' }}">{{ Str::limit($q->commodity ?? '', 20) ?: '--' }}</td>
-                                        <td>{{ $q->createdBy?->name ?? '--' }}</td>
-                                        <td>{{ $q->salesPerson?->name ?? '--' }}</td>
-                                        <td>{{ $q->op?->name ?? '--' }}</td>
-                                        <td title="{{ $q->internal_remark ?? '' }}">{{ Str::limit($q->internal_remark ?? '', 25) ?: '--' }}</td>
-                                        <td>{{ $q->liner_code ?? '--' }}</td>
-                                        <td>{{ $q->final_destination ?? '--' }}</td>
-                                        <td>{{ $q->place_of_receipt ?? '--' }}</td>
-                                        <td>{{ $q->place_of_delivery ?? '--' }}</td>
-                                        <td>{{ $q->schedule?->schedule_no ?? '--' }}</td>
-                                        @for($i = 0; $i < 7; $i++)
-                                        <td>
-                                            <div class="rate-cell">
-                                                @isset($dcItems[$i])<span class="rate-val">{{ number_format($dcItems[$i]->rate, 2) }}</span> <span class="rate-type">{{ $dcItems[$i]->currency->code ?? '' }}</span>@else<span class="rate-val" style="color:#ccc;">--</span>@endisset
-                                            </div>
-                                        </td>
-                                        @endfor
-                                        <td>{{ $q->ship_mode ?? '--' }}</td>
-                                    </tr>
-                                @empty
-                                    <tr id="empty-row">
-                                        <td colspan="50" style="text-align:center;padding:30px 10px;color:#94a3b8;">
-                                            <i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>
-                                            No quotations found.
-                                        </td>
-                                    </tr>
-                                @endforelse
+                                @include('sales.quotation.partials.list-rows')
                                 </tbody>
                             </table>
                         </div>
@@ -327,7 +311,7 @@
             {{-- ── PAGINATION ── --}}
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $quotations->withQueryString()->links() }}</div>
+                    <div id="pagination-container">{{ $quotations->withQueryString()->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
                         Showing <span id="stat-first">{{ $quotations->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $quotations->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $quotations->total() }}</span> records
                     </div>
@@ -517,73 +501,6 @@
     /* ================================================================
        FILTER — AJAX-based, no full page reload
     ================================================================ */
-    function toggleFilter() {
-        var filterRow = document.getElementById('filter-row');
-        var isVisible = filterRow.style.display === 'table-row';
-        filterRow.style.display = isVisible ? 'none' : 'table-row';
-        document.getElementById('btn-filter').classList.toggle('active', !isVisible);
-        if (!isVisible) {
-            filterRow.querySelectorAll('.filter-input').forEach(function(inp) { inp.value = ''; });
-            var urlParams = new URLSearchParams(window.location.search);
-            document.querySelectorAll('.filter-input').forEach(function(inp) {
-                var idx = parseInt(inp.dataset.colIdx);
-                var paramMap = { 1: 'quote_no', 2: 'date', 3: 'status', 4: 'status', 6: 'customer', 7: 'agent', 8: 'term', 9: 'type', 10: 'pol', 11: 'pod' };
-                if (paramMap[idx]) inp.value = urlParams.get(paramMap[idx]) || '';
-            });
-            var first = document.querySelector('.filter-input');
-            if (first) first.focus();
-        } else {
-            document.querySelectorAll('.filter-input').forEach(function(i) { i.value = ''; });
-            applyFilters();
-        }
-    }
-
-    function filterDebounce() {
-        clearTimeout(window._filterTimer);
-        window._filterTimer = setTimeout(function() { applyFilters(); }, 350);
-    }
-
-    function applyFilters() {
-        var inputs = [...document.querySelectorAll('#filter-row .filter-input')];
-        var url = new URL(window.location.pathname, window.location.origin);
-        var existingSearch = new URLSearchParams(window.location.search).get('search');
-        if (existingSearch) url.searchParams.set('search', existingSearch);
-        var filterMap = {
-            1: 'quote_no', 2: 'date', 3: 'status', 4: 'status', 6: 'customer',
-            7: 'agent', 8: 'term', 9: 'type', 10: 'pol', 11: 'pod'
-        };
-        inputs.forEach(function(inp) {
-            var v = inp.value.trim();
-            if (!v) return;
-            var param = filterMap[inp.dataset.colIdx];
-            if (param) url.searchParams.set(param, v);
-        });
-        updateGrid(url.toString());
-    }
-
-    /* ================================================================
-       QUICK SEARCH — AJAX, no full page reload
-    ================================================================ */
-    var searchDebounce;
-    function quickSearch(val) {
-        clearTimeout(searchDebounce);
-        searchDebounce = setTimeout(function() {
-            var q = val.trim();
-            var url = new URL(window.location.pathname, window.location.origin);
-            if (q) url.searchParams.set('search', q);
-            var params = new URLSearchParams(window.location.search);
-            params.forEach(function(v, k) {
-                if (k !== 'search' && k !== 'export') url.searchParams.set(k, v);
-            });
-            updateGrid(url.toString());
-        }, 300);
-    }
-
-    /* ================================================================
-       CONFIG PANEL — column visibility
-    ================================================================ */
-    var PINNED_COLS = ['check', 'quote_no', 'date', 'pub_status', 'status'];
-
     function toggleConfig() {
         var panel = document.getElementById('config-panel');
         var open  = panel.style.display === 'none';
@@ -628,40 +545,131 @@
     });
 
     /* ================================================================
+       FILTER ROW TOGGLE
+    ================================================================ */
+    function toggleFilter() {
+        var filterRow = document.getElementById('filter-row');
+        var isVisible = filterRow.style.display === 'table-row';
+        filterRow.style.display = isVisible ? 'none' : 'table-row';
+        document.getElementById('btn-filter').classList.toggle('active', !isVisible);
+        
+        if (!isVisible) {
+            const params = new URLSearchParams(window.location.search);
+            document.querySelectorAll('#filter-row .filter-input').forEach(inp => {
+                const param = inp.dataset.param;
+                if (param) {
+                    const val = params.get(param);
+                    if (val) inp.value = val;
+                }
+            });
+            document.querySelector('#filter-row .filter-input')?.focus();
+        } else {
+            document.querySelectorAll('#filter-row .filter-input').forEach(i => { i.value = ''; });
+            applyFilters();
+        }
+    }
+
+    var filterDebounce;
+    
+    function applyFiltersTyping() {
+        clearTimeout(filterDebounce);
+        filterDebounce = setTimeout(applyFilters, 400);
+    }
+    
+    function applyFilters() {
+        clearTimeout(filterDebounce);
+        filterDebounce = setTimeout(() => {
+            var url = new URL(window.location.href);
+            url.search = '';
+
+            var searchVal = document.getElementById('quick-search')?.value?.trim();
+            if (searchVal) url.searchParams.set('search', searchVal);
+
+            document.querySelectorAll('#filter-row .filter-input').forEach(inp => {
+                var v = inp.value?.trim();
+                var param = inp.dataset.param;
+                if (param && v) url.searchParams.set(param, v);
+            });
+
+            updateGrid(url.toString());
+        }, 200);
+    }
+
+    /* ================================================================
+       QUICK SEARCH — AJAX, no full page reload
+    ================================================================ */
+    var searchDebounce;
+    function quickSearch(val) {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function() {
+            var q = val.trim();
+            var url = new URL(window.location.href);
+            url.searchParams.delete('page');
+            if (!q) url.searchParams.delete('search'); else url.searchParams.set('search', q);
+            updateGrid(url.toString());
+        }, 400);
+    }
+
+    document.addEventListener('click', function(e) {
+        var panel = document.getElementById('config-panel');
+        var btn   = document.getElementById('btn-config');
+        if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.style.display = 'none';
+            btn.classList.remove('active');
+        }
+    });
+
+    /* ================================================================
        AJAX GRID UPDATE (pagination, filter, search)
     ================================================================ */
-    function updateGrid(url) {
-        fetch(url, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        }).then(function(response) {
+    async function updateGrid(url) {
+        try {
+            const response = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            });
             if (!response.ok) throw new Error('Network response was not ok');
-            return response.text();
-        }).then(function(html) {
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(html, 'text/html');
+            const data = await response.json();
+            if (!data.html) throw new Error('Invalid response: missing html');
+            
             window.history.pushState({}, '', url);
-
-            var newBody = doc.getElementById('grid-body');
-            var newPagination = doc.getElementById('pagination-container');
-
-            if (newBody) document.getElementById('grid-body').innerHTML = newBody.innerHTML;
-            if (newPagination) document.getElementById('pagination-container').innerHTML = newPagination.innerHTML;
-
-            var stats = doc.querySelector('.portlet-tool.bottom div:last-child');
-            if (stats) {
-                var text = stats.textContent;
-                var matches = text.match(/\d+/g);
-                if (matches && matches.length >= 3) {
-                    document.getElementById('stat-first').textContent = matches[0];
-                    document.getElementById('stat-last').textContent = matches[1];
-                    document.getElementById('stat-total').textContent = matches[2];
-                }
-            }
+            document.getElementById('grid-body').innerHTML = data.html;
+            
+            var pagination = document.getElementById('pagination-container');
+            if (pagination) pagination.innerHTML = data.pagination || '';
+            
+            document.getElementById('stat-first').textContent = data.first || 0;
+            document.getElementById('stat-last').textContent = data.last || 0;
+            document.getElementById('stat-total').textContent = data.total || 0;
+            
             updateToolbar();
-        }).catch(function(e) {
-            console.error(e);
+        } catch (e) {
+            console.error('updateGrid error:', e);
             showToast('error', 'Failed to update grid');
-        });
+        }
+    }
+
+    /* ================================================================
+       EXCEL EXPORT WITHOUT HARD REFRESH
+    ================================================================ */
+    function exportExcel() {
+        showToast('info', 'Preparing Excel export...');
+        
+        const url = new URL(window.location.href);
+        url.searchParams.set('export', 'csv');
+        
+        let iframe = document.getElementById('download-iframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'download-iframe';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+        }
+        
+        iframe.src = url.toString();
+        
+        setTimeout(() => {
+            showToast('success', 'Excel file downloaded!');
+        }, 1000);
     }
 
     document.addEventListener('click', function(e) {

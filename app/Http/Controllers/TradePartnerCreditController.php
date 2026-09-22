@@ -181,7 +181,8 @@ class TradePartnerCreditController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Credit entries saved successfully.',
-                'updated_count' => count($entries)
+                'updated_count' => count($entries),
+                'totalCreditLimitAll' => TradePartner::sum('credit_limit')
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

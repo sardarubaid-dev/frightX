@@ -61,13 +61,13 @@ class QuotationController extends Controller
                 $remark = json_decode($item->remark, true) ?: [];
                 return [
                     'selected' => false,
-                    'pol' => $remark['pol'] ?? '',
-                    'pod' => $remark['pod'] ?? '',
-                    'carrier' => $item->vendor_id ?? '',
-                    'currency_id' => $item->currency_id ?? '',
-                    'rate_20gp' => $remark['rate_20gp'] ?? '',
-                    'rate_40gp' => $remark['rate_40gp'] ?? '',
-                    'rate_40hc' => $remark['rate_40hc'] ?? '',
+                    'pol' => (string)($remark['pol'] ?? ''),
+                    'pod' => (string)($remark['pod'] ?? ''),
+                    'carrier' => (string)($item->vendor_id ?? ''),
+                    'currency_id' => (string)($item->currency_id ?? ''),
+                    'rate_20gp' => (string)($remark['rate_20gp'] ?? ''),
+                    'rate_40gp' => (string)($remark['rate_40gp'] ?? ''),
+                    'rate_40hc' => (string)($remark['rate_40hc'] ?? ''),
                 ];
             })->toJson();
         }
@@ -76,20 +76,20 @@ class QuotationController extends Controller
             $remark = json_decode($item->remark, true) ?: [];
             return [
                 'show' => true,
-                'freight_code' => $item->charge_code ?? '',
-                'unit' => $item->unit ?? '',
-                'currency_id' => $item->currency_id ?? '',
-                'all_qty' => $remark['all_qty'] ?? '1',
-                'all_rate' => $remark['all_rate'] ?? '',
-                'separate_qty' => $remark['separate_qty'] ?? '1',
-                'separate_rate' => $remark['separate_rate'] ?? '',
-                'rate_20gp_qty' => $remark['rate_20gp_qty'] ?? '1',
-                'rate_20gp' => $remark['rate_20gp'] ?? '',
-                'rate_40gp_qty' => $remark['rate_40gp_qty'] ?? '1',
-                'rate_40gp' => $remark['rate_40gp'] ?? '',
-                'rate_40hc_qty' => $remark['rate_40hc_qty'] ?? '1',
-                'rate_40hc' => $remark['rate_40hc'] ?? '',
-                'remark' => $remark['row_remark'] ?? '',
+                'freight_code' => (string)($item->charge_code ?? ''),
+                'unit' => (string)($item->unit ?? ''),
+                'currency_id' => (string)($item->currency_id ?? ''),
+                'all_qty' => (string)($remark['all_qty'] ?? '1'),
+                'all_rate' => (string)($remark['all_rate'] ?? ''),
+                'separate_qty' => (string)($remark['separate_qty'] ?? '1'),
+                'separate_rate' => (string)($remark['separate_rate'] ?? ''),
+                'rate_20gp_qty' => (string)($remark['rate_20gp_qty'] ?? '1'),
+                'rate_20gp' => (string)($remark['rate_20gp'] ?? ''),
+                'rate_40gp_qty' => (string)($remark['rate_40gp_qty'] ?? '1'),
+                'rate_40gp' => (string)($remark['rate_40gp'] ?? ''),
+                'rate_40hc_qty' => (string)($remark['rate_40hc_qty'] ?? '1'),
+                'rate_40hc' => (string)($remark['rate_40hc'] ?? ''),
+                'remark' => (string)($remark['row_remark'] ?? ''),
             ];
         })->toJson();
     }
@@ -128,6 +128,15 @@ class QuotationController extends Controller
         $query = Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency', 'agent', 'carrier', 'office', 'createdBy', 'op', 'schedule'])
             ->orderBy('created_at', 'desc');
 
+        $moduleFilter = $request->input('module') 
+                     ?? $request->input('transport_mode') 
+                     ?? $request->input('shipping_type') 
+                     ?? $request->input('type');
+
+        if ($moduleFilter) {
+            $query->forModule($moduleFilter);
+        }
+
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
@@ -148,7 +157,6 @@ class QuotationController extends Controller
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('customer')) $query->whereHas('customer', fn($q) => $q->where('name', 'like', '%'.$request->customer.'%'));
         if ($request->filled('agent')) $query->whereHas('agent', fn($q) => $q->where('name', 'like', '%'.$request->agent.'%'));
-        if ($request->filled('type')) $query->where('transport_mode', $request->type);
         if ($request->filled('term')) $query->where('service_term', 'like', '%'.$request->term.'%');
         if ($request->filled('pol')) $query->whereHas('pol', fn($q) => $q->where('name', 'like', '%'.$request->pol.'%'));
         if ($request->filled('pod')) $query->whereHas('pod', fn($q) => $q->where('name', 'like', '%'.$request->pod.'%'));
@@ -176,7 +184,7 @@ class QuotationController extends Controller
             return response()->stream($callback, 200, $headers);
         }
 
-        if ($request->wantsJson() || $request->is('api/*')) {
+        if ($request->is('api/*')) {
             $quotations = $query->get()->map(function ($q) {
                 return [
                     'id' => $q->id,
@@ -200,6 +208,17 @@ class QuotationController extends Controller
 
         $quotations = $query->paginate(25);
         $statusColors = array_combine(array_column($this->getStatuses(), 'label'), array_column($this->getStatuses(), 'color'));
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html' => view('sales.quotation.partials.list-rows', compact('quotations', 'statusColors'))->render(),
+                'pagination' => (string) $quotations->withQueryString()->links(),
+                'first' => $quotations->firstItem() ?? 0,
+                'last' => $quotations->lastItem() ?? 0,
+                'total' => $quotations->total(),
+            ]);
+        }
+
         return view('sales.quotation.list', compact('quotations', 'statusColors'));
     }
 
@@ -343,6 +362,9 @@ class QuotationController extends Controller
         ]);
 
         $data = $this->mapFormToDb($validated);
+        if (empty($data['quote_no']) && !empty($quote->quote_no)) {
+            $data['quote_no'] = $quote->quote_no;
+        }
         $quote->update($data);
 
         $this->syncCharges($quote, $request);
@@ -359,7 +381,11 @@ class QuotationController extends Controller
         $quote = Quotation::findOrFail($id);
         $quote->delete();
 
-        return redirect()->back()->with('success', 'Quotation deleted successfully.');
+        if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Quotation deleted successfully.']);
+        }
+
+        return redirect()->route('sales.quotations.list')->with('success', 'Quotation deleted successfully.');
     }
 
     private function mapFormToDb(array $validated): array
@@ -428,14 +454,20 @@ class QuotationController extends Controller
 
     private function syncCharges(Quotation $quote, Request $request)
     {
-        $arRows = json_decode($request->input('freight_rows', '[]'), true) ?: [];
-        $dcRows = json_decode($request->input('dest_rows', '[]'), true) ?: [];
+        $rawFreight = $request->input('freight_rows');
+        $arRows = is_array($rawFreight) ? $rawFreight : (json_decode($rawFreight ?? '[]', true) ?: []);
+
+        $rawDest = $request->input('dest_rows');
+        $dcRows = is_array($rawDest) ? $rawDest : (json_decode($rawDest ?? '[]', true) ?: []);
 
         $quote->items()->where('type', 'AR')->delete();
         $quote->items()->where('type', 'DC_NOTE')->delete();
 
         foreach ($arRows as $row) {
-            if (empty($row['currency_id']) && empty($row['rate_20gp']) && empty($row['rate_40gp']) && empty($row['rate_40hc'])) {
+            $hasContent = !empty($row['pol']) || !empty($row['pod']) || !empty($row['carrier']) || 
+                          !empty($row['currency_id']) || !empty($row['rate_20gp']) || 
+                          !empty($row['rate_40gp']) || !empty($row['rate_40hc']);
+            if (!$hasContent) {
                 continue;
             }
             $rate = (float)($row['rate_20gp'] ?? 0) + (float)($row['rate_40gp'] ?? 0) + (float)($row['rate_40hc'] ?? 0);
@@ -445,12 +477,12 @@ class QuotationController extends Controller
                 'type' => 'AR',
                 'charge_code' => 'FREIGHT',
                 'charge_name' => 'Freight',
-                'currency_id' => $row['currency_id'] ?? null,
+                'currency_id' => !empty($row['currency_id']) ? $row['currency_id'] : null,
                 'qty' => 1,
                 'unit' => 'SET',
                 'rate' => $rate,
                 'amount' => $amount,
-                'vendor_id' => $row['carrier'] ?? null,
+                'vendor_id' => !empty($row['carrier']) ? $row['carrier'] : null,
                 'remark' => json_encode([
                     'pol' => $row['pol'] ?? '',
                     'pod' => $row['pod'] ?? '',
@@ -462,7 +494,10 @@ class QuotationController extends Controller
         }
 
         foreach ($dcRows as $row) {
-            if (empty($row['freight_code']) && empty($row['all_rate']) && empty($row['rate_20gp']) && empty($row['rate_40gp']) && empty($row['rate_40hc'])) {
+            $hasContent = !empty($row['freight_code']) || !empty($row['unit']) || !empty($row['currency_id']) ||
+                          !empty($row['all_rate']) || !empty($row['separate_rate']) || !empty($row['rate_20gp']) ||
+                          !empty($row['rate_40gp']) || !empty($row['rate_40hc']) || !empty($row['remark']);
+            if (!$hasContent) {
                 continue;
             }
             $allAmt = (float)($row['all_rate'] ?? 0) * (float)($row['all_qty'] ?? 1);
@@ -475,14 +510,14 @@ class QuotationController extends Controller
             $chargeName = match($row['freight_code'] ?? '') {
                 'THC' => 'THC', 'DOC' => 'Documentation', 'CUSTOMS' => 'Customs Clearance',
                 'CLEANING' => 'Cleaning', 'SEAL' => 'Seal Fee', 'CHASSIS' => 'Chassis',
-                'STORAGE' => 'Storage', default => $row['freight_code'] ?? 'Other',
+                'STORAGE' => 'Storage', default => ($row['freight_code'] ?? '') ?: 'Other',
             };
 
             $quote->items()->create([
                 'type' => 'DC_NOTE',
                 'charge_code' => $row['freight_code'] ?? '',
                 'charge_name' => $chargeName,
-                'currency_id' => $row['currency_id'] ?? null,
+                'currency_id' => !empty($row['currency_id']) ? $row['currency_id'] : null,
                 'qty' => 1,
                 'unit' => $row['unit'] ?? '',
                 'rate' => $total,

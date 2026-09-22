@@ -19,7 +19,7 @@
                 <div style="font-size: 10px; color: #888; font-weight: 700;">MB/L NO: <span style="color: #3b82f6;">MSC-U-902111-AF</span></div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="btn-gofreight"><i class="fa fa-paper-plane"></i> POST & SHIP</button>
+                <button class="btn-freightx"><i class="fa fa-paper-plane"></i> POST & SHIP</button>
             </div>
         </div>
 
@@ -39,7 +39,7 @@
                     <div class="portlet light">
                         <div class="portlet-title">
                             <span class="caption-subject"><i class="fa fa-barcode"></i> Manifested SKU Content</span>
-                            <button @click="addSKU" class="btn-gofreight" style="padding: 2px 10px; font-size: 10px;"><i class="fa fa-plus"></i> ADD SKU</button>
+                            <button @click="addSKU" class="btn-freightx" style="padding: 2px 10px; font-size: 10px;"><i class="fa fa-plus"></i> ADD SKU</button>
                         </div>
                         <div class="portlet-body" style="padding: 0;">
                             <table class="table-custom">
@@ -140,7 +140,7 @@
                         <textarea x-model="editingSku.description" class="form-control-gf" style="height: 60px;"></textarea>
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button @click="saveSKU" class="btn-gofreight" style="flex: 1;">SAVE CHANGES</button>
+                        <button @click="saveSKU" class="btn-freightx" style="flex: 1;">SAVE CHANGES</button>
                         <button @click="showModal = false" class="btn-default-gf" style="flex: 1;">CANCEL</button>
                     </div>
                 </div>

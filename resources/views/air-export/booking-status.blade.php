@@ -196,7 +196,7 @@
 
         <!-- Floating Save Button -->
         <div class="footer-save">
-            <button type="button" class="btn-gofreight" @click="saveStatus()">
+            <button type="button" class="btn-freightx" @click="saveStatus()">
                 <i class="fa fa-save mr-2"></i> SAVE STATUS UPDATES
             </button>
         </div>

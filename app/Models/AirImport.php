@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class AirImport extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
-        'file_no', 'mawb_no', 'post_date', 'office_id', 'op_id',
+        'company_id', 'file_no', 'mawb_no', 'post_date', 'office_id', 'op_id',
         'forwarding_agent_id', 'oversea_agent_id', 'carrier_id', 'acct_carrier_id',
         'flight_no', 'dep_port_id', 'dst_port_id', 'etd', 'eta', 'atd', 'ata',
         'pkg_qty', 'pkg_unit_id', 'gross_weight', 'weight_unit', 'chargeable_weight',

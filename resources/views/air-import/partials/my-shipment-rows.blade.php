@@ -33,9 +33,12 @@
         <td>{{ $shipment->atd ? $shipment->atd->format('m-d-Y') : '--' }}</td>
         <td>{{ $shipment->hbls->pluck('hawb_no')->implode(', ') ?: '--' }}</td>
         <td>{{ $shipment->flight_no ?? '--' }}</td>
+        <td style="text-align:right;">{{ $shipment->ar_balance ?? '0.00' }}</td>
+        <td style="text-align:right;">{{ $shipment->ap_balance ?? '0.00' }}</td>
+        <td style="text-align:right;">{{ $shipment->dc_balance ?? '0.00' }}</td>
         <td>{{ $shipment->dmSalesPerson->name ?? '--' }}</td>
         <td>{{ $shipment->operator->name ?? '--' }}</td>
-        <td>{{ $shipment->created_at ? $shipment->created_at->format('m-d-Y') : '--' }}</td>
+        <td>{{ $shipment->status ?? '--' }}</td>
     </tr>
 @empty
     <tr id="empty-row">

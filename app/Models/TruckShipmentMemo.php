@@ -11,7 +11,7 @@ class TruckShipmentMemo extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'truck_shipment_id', 'subject', 'content', 'user_id'
+        'truck_shipment_id', 'subject', 'content', 'has_alert', 'user_id'
     ];
 
     public function truckShipment()

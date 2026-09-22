@@ -11,39 +11,174 @@
         .rpt-row .rpt-label { min-width: 120px; max-width: 160px; flex-shrink: 0; }
         .rpt-row .rpt-input-wrap { flex: 1; min-width: 0; }
         .rpt-chk-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .rpt-chk-group label { font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: #334155; white-space: nowrap; }
-        .rpt-chk-group input[type="checkbox"] { width: 12px !important; height: 12px !important; accent-color: #3b82f6; }
+        .rpt-chk-group label { font-size: 10px; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #334155; white-space: nowrap; user-select: none; }
+        .rpt-chk-group input[type="checkbox"] { width: 13px !important; height: 13px !important; accent-color: #3b82f6; cursor: pointer; }
         .rpt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
         .rpt-filter-section { padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .rpt-view-btn { background: #3b82f6; color: #fff; border: none; padding: 6px 24px; font-size: 11px; font-weight: 700; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; transition: all 0.2s; }
         .rpt-view-btn:hover { background: #2563eb; }
         .rpt-view-btn:active { transform: translateY(1px); }
-        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: box-shadow 0.2s; }
-        .kpi-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.06); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s; }
+        .kpi-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.06); transform: translateY(-1px); }
         .kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
         .kpi-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
-        .kpi-icon { font-size: 20px; opacity: 0.15; }
+        .kpi-icon { font-size: 20px; opacity: 0.2; }
         .chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; }
-        .chart-title { font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 4px; }
-        .spinner { width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .tab-nav { display: flex; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; gap: 2px; }
         .tab-btn { background: none; border: none; padding: 8px 16px; font-size: 11px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .tab-btn:hover { color: #0f172a; background: #f1f5f9; }
-        .tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+        .tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; background: #fff; }
         .margin-bar { display: inline-flex; align-items: center; gap: 5px; }
-        .margin-bar-track { width: 40px; height: 4px; background: #f0f3f8; border-radius: 2px; }
+        .margin-bar-track { width: 40px; height: 4px; background: #f0f3f8; border-radius: 2px; overflow: hidden; }
         .margin-bar-fill { height: 100%; border-radius: 2px; }
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 4px; backdrop-filter: blur(1px); }
+        .spinner { width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .table-custom { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .table-custom thead th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .table-custom tbody td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        .table-custom tbody tr:hover { background: #f8fafc; }
+        .total-row td { background: #f1f5f9; font-weight: 700; color: #0f172a; border-top: 2px solid #e2e8f0; border-bottom: 2px solid #e2e8f0; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .rpt-grid-2 { grid-template-columns: 1fr; gap: 8px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .rpt-row { flex-direction: column; align-items: stretch; margin-bottom: 8px; }
+            .rpt-row .rpt-label { min-width: 100%; max-width: 100%; border-radius: 2px 2px 0 0; border-right: 1px solid #e2e8f0; height: 24px; }
+            .rpt-row .rpt-input-wrap { border-radius: 0 0 2px 2px; }
+            .tab-btn { padding: 6px 10px; font-size: 10px; }
+            .table-custom { font-size: 10px; }
+            .table-custom thead th, .table-custom tbody td { padding: 6px 8px; }
+        }
+
+        .print-header { display: none; }
+        .print-section-title { display: none; }
+
+        /* Print Media Styles */
+        @media print {
+            aside, header, nav, .sidebar, .top-navbar, .page-bar, .portlet-title, .rpt-filter-section, .tab-nav, .loading-overlay, button, .btn-freightx, .rpt-view-btn, .no-print, [onclick*="sidebar"] {
+                display: none !important;
+            }
+
+            html, body, .app-wrapper, .main-content-wrapper, main {
+                background: #fff !important;
+                color: #000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            .portlet.light {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            .print-header {
+                display: block !important;
+                margin-bottom: 16px !important;
+            }
+
+            .print-section-title {
+                display: block !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                color: #0f172a !important;
+                text-transform: uppercase !important;
+                margin-top: 16px !important;
+                margin-bottom: 6px !important;
+                border-bottom: 1.5px solid #cbd5e1 !important;
+                padding-bottom: 3px !important;
+            }
+
+            .tab-panel {
+                display: block !important;
+                margin-bottom: 20px !important;
+                page-break-inside: avoid !important;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 8px !important;
+                margin-bottom: 15px !important;
+                page-break-inside: avoid !important;
+            }
+
+            .kpi-card {
+                border: 1px solid #94a3b8 !important;
+                box-shadow: none !important;
+                padding: 6px 8px !important;
+                background: #fff !important;
+            }
+
+            .kpi-icon {
+                display: none !important;
+            }
+
+            .chart-card {
+                border: none !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .table-custom {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 9px !important;
+            }
+
+            .table-custom th, .table-custom td {
+                border: 1px solid #cbd5e1 !important;
+                padding: 5px 7px !important;
+                color: #000 !important;
+            }
+
+            .table-custom thead th {
+                background-color: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .margin-bar {
+                display: none !important;
+            }
+        }
     </style>
     @endpush
 
     <div style="background: #eef1f5; min-height: 100vh; padding: 12px;">
         <div x-data="advancedReport()" x-init="init()" style="position: relative;">
-            <div x-show="loading" class="loading-overlay"><div class="spinner"></div></div>
+            <div x-show="loading" class="loading-overlay no-print"><div class="spinner"></div></div>
 
-            <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+            <!-- Print Header (Visible only when printing) -->
+            <div class="print-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase;">FreightX - Advanced Analytical Report</h2>
+                        <div style="font-size: 10px; color: #475569; margin-top: 4px;">
+                            <strong>Analysis Period:</strong> <span x-text="filters.date_from + ' ~ ' + filters.date_to"></span> | 
+                            <strong>Office:</strong> <span x-text="getOfficeName(filters.office_id)"></span> | 
+                            <strong>Currency:</strong> Report Currency: USD
+                        </div>
+                    </div>
+                    <div style="text-align: right; font-size: 9px; color: #64748b;">
+                        <div>Printed Date: {{ date('Y-m-d H:i:s') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;" class="no-print">
                 <a href="/" style="color: #64748b; text-decoration: none;" target="_blank"><i class="fa fa-home"></i> Home</a>
                 <i class="fa fa-angle-right" style="margin: 0 4px; opacity: 0.5;"></i>
                 <a href="/report" style="color: #64748b; text-decoration: none;">Reports</a>
@@ -52,18 +187,18 @@
             </div>
 
             <div class="portlet light">
-                <div class="portlet-title">
+                <div class="portlet-title no-print" style="flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa fa-gears" style="color: #3b82f6; font-size: 12px;"></i>
-                        <span class="caption-subject">Advanced Analytical Report</span>
+                        <i class="fa fa-gears" style="color: #3b82f6; font-size: 14px;"></i>
+                        <span class="caption-subject" style="font-weight: 700;">Advanced Analytical Report</span>
                     </div>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn-gofreight" @click="printReport()"><i class="fa fa-print"></i> PRINT</button>
-                        <button class="btn-gofreight" style="background: #10b981;" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> EXPORT</button>
+                    <div style="display: flex; gap: 6px; margin-left: auto;">
+                        <button class="btn-freightx" @click="printReport()"><i class="fa fa-print"></i> PRINT</button>
+                        <button class="btn-freightx" style="background: #10b981;" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> EXPORT</button>
                     </div>
                 </div>
 
-                <div class="rpt-filter-section">
+                <div class="rpt-filter-section no-print">
                     <div class="rpt-grid-2">
                         <div>
                             <div class="rpt-row">
@@ -71,7 +206,7 @@
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-chk-group">
                                         @foreach($shippingTypes as $st)
-                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types"> {{ $st }}</label>
+                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types" @change="fetchData()"> {{ $st }}</label>
                                         @endforeach
                                     </div>
                                 </div>
@@ -80,9 +215,9 @@
                                 <div class="rpt-label">Analysis Period</div>
                                 <div class="rpt-input-wrap" style="flex-direction:column; align-items:stretch; gap:4px; padding:4px 6px;">
                                     <div style="display:flex; gap:4px; align-items:center;">
-                                        <input type="date" x-model="filters.date_from" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_from" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                         <span style="font-size:10px; color:#64748b;">~</span>
-                                        <input type="date" x-model="filters.date_to" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_to" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                     </div>
                                 </div>
                             </div>
@@ -91,7 +226,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Office</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.office_id" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.office_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         <option value="">All Offices</option>
                                         @foreach($offices as $o)
                                         <option value="{{ $o->id }}">{{ $o->code }} - {{ $o->name }}</option>
@@ -102,7 +237,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Currency</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.currency_id" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.currency_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         <option value="">Report Currency: USD</option>
                                         @foreach($currencies as $c)
                                         <option value="{{ $c->id }}">{{ $c->code }} - {{ $c->name }}</option>
@@ -113,20 +248,21 @@
                             <div class="rpt-row" style="align-items:center;">
                                 <div class="rpt-label">&nbsp;</div>
                                 <div class="rpt-input-wrap">
-                                    <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer; color:#334155;">
-                                        <input type="checkbox" x-model="filters.include_internal" style="width:12px !important; height:12px !important;"> Include Internal Profit
+                                    <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer; color:#334155; user-select:none;">
+                                        <input type="checkbox" x-model="filters.include_internal" @change="fetchData()" style="width:13px !important; height:13px !important; accent-color: #3b82f6;"> Include Internal Profit
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div style="text-align:center; margin-top:4px;">
-                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Execute Analysis</button>
+                    <div style="text-align:center; margin-top:6px;">
+                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Analysis</button>
                     </div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px;">
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
                 <div class="kpi-card">
                     <div>
                         <div class="kpi-label">Total Revenue</div>
@@ -157,8 +293,9 @@
                 </div>
             </div>
 
+            <!-- Multi-Tab Table Panel -->
             <div class="chart-card" style="margin-bottom: 14px;">
-                <div style="display: flex; border-bottom: 1px solid #e2e8f0;">
+                <div class="tab-nav">
                     <button class="tab-btn" :class="{ active: activeTab === 'shipping' }" @click="switchTab('shipping')">By Shipping Type</button>
                     <button class="tab-btn" :class="{ active: activeTab === 'partner' }" @click="switchTab('partner')">By Trade Partner</button>
                     <button class="tab-btn" :class="{ active: activeTab === 'office' }" @click="switchTab('office')">By Office</button>
@@ -166,6 +303,7 @@
                 </div>
 
                 <div class="tab-panel" :class="{ active: activeTab === 'shipping' }">
+                    <div class="print-section-title">Breakdown by Shipping Type</div>
                     <div style="overflow-x: auto;">
                         <table class="table-custom">
                             <thead>
@@ -199,13 +337,13 @@
                             </tbody>
                             <tfoot>
                                 <tr class="total-row">
-                                    <td class="total-label-cell">TOTAL</td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_revenue)"></td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_cost)"></td>
-                                    <td class="total-val-cell" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
-                                    <td class="total-val-cell" x-text="data.summary.margin + '%'"></td>
-                                    <td class="total-val-cell" x-text="fmt(data.summary.total_volume)"></td>
-                                    <td class="total-val-cell" x-text="data.summary.total_count"></td>
+                                    <td class="total-label-cell" style="text-align:left;">TOTAL</td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_revenue)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_cost)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
+                                    <td class="total-val-cell" style="text-align:center;" x-text="data.summary.margin + '%'"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="fmt(data.summary.total_volume)"></td>
+                                    <td class="total-val-cell" style="text-align:center;" x-text="data.summary.total_count"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -213,6 +351,7 @@
                 </div>
 
                 <div class="tab-panel" :class="{ active: activeTab === 'partner' }">
+                    <div class="print-section-title">Breakdown by Trade Partner</div>
                     <div style="overflow-x: auto;">
                         <table class="table-custom">
                             <thead>
@@ -246,13 +385,13 @@
                             </tbody>
                             <tfoot>
                                 <tr class="total-row">
-                                    <td class="total-label-cell">TOTAL</td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_revenue)"></td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_cost)"></td>
-                                    <td class="total-val-cell" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
-                                    <td class="total-val-cell" x-text="data.summary.margin + '%'"></td>
-                                    <td class="total-val-cell" x-text="fmt(data.summary.total_volume)"></td>
-                                    <td class="total-val-cell" x-text="data.summary.total_count"></td>
+                                    <td class="total-label-cell" style="text-align:left;">TOTAL</td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_revenue)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_cost)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
+                                    <td class="total-val-cell" style="text-align:center;" x-text="data.summary.margin + '%'"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="fmt(data.summary.total_volume)"></td>
+                                    <td class="total-val-cell" style="text-align:center;" x-text="data.summary.total_count"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -260,6 +399,7 @@
                 </div>
 
                 <div class="tab-panel" :class="{ active: activeTab === 'office' }">
+                    <div class="print-section-title">Breakdown by Office</div>
                     <div style="overflow-x: auto;">
                         <table class="table-custom">
                             <thead>
@@ -286,12 +426,12 @@
                             </tbody>
                             <tfoot>
                                 <tr class="total-row">
-                                    <td class="total-label-cell">TOTAL</td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_revenue)"></td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_cost)"></td>
-                                    <td class="total-val-cell" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
-                                    <td class="total-val-cell" x-text="fmt(data.summary.total_volume)"></td>
-                                    <td class="total-val-cell" x-text="data.summary.total_count"></td>
+                                    <td class="total-label-cell" style="text-align:left;">TOTAL</td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_revenue)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_cost)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="fmt(data.summary.total_volume)"></td>
+                                    <td class="total-val-cell" style="text-align:center;" x-text="data.summary.total_count"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -299,6 +439,7 @@
                 </div>
 
                 <div class="tab-panel" :class="{ active: activeTab === 'sales' }">
+                    <div class="print-section-title">Breakdown by Sales Person</div>
                     <div style="overflow-x: auto;">
                         <table class="table-custom">
                             <thead>
@@ -323,11 +464,11 @@
                             </tbody>
                             <tfoot>
                                 <tr class="total-row">
-                                    <td class="total-label-cell">TOTAL</td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_revenue)"></td>
-                                    <td class="total-val-cell" x-text="'$' + fmt(data.summary.total_cost)"></td>
-                                    <td class="total-val-cell" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
-                                    <td class="total-val-cell" x-text="data.summary.total_count"></td>
+                                    <td class="total-label-cell" style="text-align:left;">TOTAL</td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_revenue)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" x-text="'$' + fmt(data.summary.total_cost)"></td>
+                                    <td class="total-val-cell" style="text-align:right;" :style="'color:' + (data.summary.gross_profit >= 0 ? '#10b981' : '#ef4444')" x-text="'$' + fmt(data.summary.gross_profit)"></td>
+                                    <td class="total-val-cell" style="text-align:center;" x-text="data.summary.total_count"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -343,7 +484,7 @@
             loading: false,
             activeTab: 'shipping',
             filters: {
-                date_from: '{{ now()->subMonths(6)->startOfMonth()->format("Y-m-d") }}',
+                date_from: '2025-01-01',
                 date_to: '{{ now()->endOfMonth()->format("Y-m-d") }}',
                 shipping_types: [],
                 office_id: '',
@@ -361,6 +502,12 @@
             },
 
             init() { this.fetchData(); },
+
+            getOfficeName(officeId) {
+                if (!officeId) return 'All Offices';
+                const off = this.offices.find(o => o.id == officeId);
+                return off ? `${off.code} - ${off.name}` : 'All Offices';
+            },
 
             async fetchData() {
                 this.loading = true;

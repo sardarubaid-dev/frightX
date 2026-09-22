@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use App\Models\Document;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ShipmentMemoAutoPopulationService;
 
 class InvoiceController extends Controller
 {
@@ -84,7 +85,11 @@ class InvoiceController extends Controller
         $offices = Office::where('is_active', true)->get();
         $users = User::all();
         $defaultType = $request->input('type', 'AR');
-        return view('accounting.invoice-create', compact('tradePartners', 'currencies', 'offices', 'users', 'defaultType'));
+        
+        $invoiceableType = $request->input('invoiceable_type');
+        $invoiceableId = $request->input('invoiceable_id');
+
+        return view('accounting.invoice-create', compact('tradePartners', 'currencies', 'offices', 'users', 'defaultType', 'invoiceableType', 'invoiceableId'));
     }
 
     public function store(StoreInvoiceRequest $request)
@@ -394,6 +399,277 @@ class InvoiceController extends Controller
         }
 
         return Storage::disk('public')->download($document->file_path, $document->file_name);
+    }
+
+    /**
+     * Generate dynamic Freight Invoice matching Silk Container Lines Ltd UI.
+     * Now with Shipment Memo Auto-Load integration
+     */
+    public function generateFreightInvoice($type, $id)
+    {
+        $this->ensureCleanFreightInvoiceBg();
+        $shipment = null;
+        $modeType = 'ocean';
+        $module = str_replace('_', '-', strtolower($type)); // Convert type to module format
+
+        switch (strtolower($type)) {
+            case 'ocean-export':
+                $shipment = \App\Models\OceanExport::with([
+                    'charges.currency', 'charges.billTo', 'dmShipper', 'dmConsignee', 
+                    'forwardingAgent', 'dmBillTo', 'vessel', 'portOfLoading', 
+                    'portOfDischarge', 'placeOfDelivery', 'placeOfReceipt', 'containers.packageUnit', 'hbls'
+                ])->findOrFail($id);
+                $modeType = 'ocean';
+                break;
+
+            case 'ocean-import':
+                $shipment = \App\Models\OceanImport::with([
+                    'charges.currency', 'charges.billTo', 'dmShipper', 'dmConsignee', 
+                    'forwardingAgent', 'dmBillTo', 'vessel', 'portOfLoading', 
+                    'portOfDischarge', 'placeOfDelivery', 'receipt', 'containers.packageUnit', 'hbls'
+                ])->findOrFail($id);
+                $modeType = 'ocean';
+                break;
+
+            case 'air-export':
+                $shipment = \App\Models\AirExport::with([
+                    'charges.currency', 'charges.billTo', 'dmShipper', 'dmConsignee', 
+                    'shipper', 'consignee', 'depPort', 'dstPort', 'hbls', 'packageUnit'
+                ])->findOrFail($id);
+                $modeType = 'air';
+                break;
+
+            case 'air-import':
+                $shipment = \App\Models\AirImport::with([
+                    'charges.currency', 'charges.billTo', 'dmShipper', 'dmConsignee', 
+                    'shipper_rel', 'consignee_rel', 'depPort', 'dstPort', 'hbls', 'packageUnit'
+                ])->findOrFail($id);
+                $modeType = 'air';
+                break;
+
+            default:
+                abort(404, 'Invalid shipment module type.');
+        }
+
+        // Bill To party resolution
+        $billToParty = $shipment->dmBillTo ?? $shipment->billTo ?? $shipment->forwardingAgent ?? $shipment->dmCustomer ?? $shipment->customer ?? null;
+        $billToName = $billToParty?->name ?? ($shipment->customer?->name ?? 'CIRCLE MARINE LIMITED');
+        $billToAddress = $billToParty?->address ?? $shipment->customer?->address ?? "SHAFI BHABAN (2ND FLOOR), 1216/A SK MUJIB ROAD\n6 AGRABAD C/A, CHATTOGRAM-4100, BANGLADESH.";
+        $accountNo = $billToParty?->code ?? $shipment->customer?->code ?? 'CIRMARCGP';
+
+        // Shipper & Consignee
+        $consignor = $shipment->dmShipper?->name ?? (is_object($shipment->shipper) ? $shipment->shipper?->name : $shipment->shipper) ?? $shipment->shipper_rel?->name ?? $shipment->actual_shipper ?? '-';
+        $consignee = $shipment->dmConsignee?->name ?? (is_object($shipment->consignee) ? $shipment->consignee?->name : $shipment->consignee) ?? $shipment->consignee_rel?->name ?? '-';
+
+        // Reference / Booking / Document
+        $fileNo = $shipment->file_no ?? ('S' . sprintf('%08d', $shipment->id));
+        $invoiceNo = 'SCL' . sprintf('%08d', $shipment->id);
+        $clientRef = ($shipment->booking_no ?? $shipment->ref_no ?? $fileNo) . ' /';
+
+        // Package & Weight Aggregation
+        $totalPkg = (float)($shipment->pkg_qty ?? 0);
+        $totalWeight = (float)($shipment->gross_weight ?? $shipment->weight_kg ?? $shipment->weight ?? 0);
+        $totalVolume = (float)($shipment->volume ?? $shipment->measure_cbm ?? $shipment->cbm ?? 0);
+        $totalChgWeight = (float)($shipment->chargeable_weight ?? $totalWeight);
+
+        if (isset($shipment->containers) && $shipment->containers->count() > 0) {
+            foreach ($shipment->containers as $c) {
+                $totalPkg += (float)($c->pkg_qty ?? $c->pkg ?? 0);
+                $totalWeight += (float)($c->weight_kg ?? $c->weight ?? 0);
+                $totalVolume += (float)($c->measure_cbm ?? $c->measurement ?? 0);
+            }
+        }
+
+        // Dynamic Package Unit resolution
+        $pkgUnitCode = $shipment->packageUnit?->code ?? $shipment->packageUnit?->name;
+        if (!$pkgUnitCode && isset($shipment->containers) && $shipment->containers->first()) {
+            $firstContainer = $shipment->containers->first();
+            $pkgUnitCode = $firstContainer->packageUnit?->code ?? $firstContainer->packageUnit?->name;
+        }
+        if (!$pkgUnitCode && isset($shipment->hbls) && $shipment->hbls->first()) {
+            $firstHbl = $shipment->hbls->first();
+            $pkgUnitCode = $firstHbl->packageUnit?->code ?? $firstHbl->packageUnit?->name;
+        }
+        if (!$pkgUnitCode) {
+            $pkgUnitCode = 'CTN';
+        } else {
+            $pkgUnitCode = strtoupper($pkgUnitCode);
+        }
+
+        $weightStr = $totalWeight > 0 ? (number_format($totalWeight, 0) . ' KG') : '-';
+        $volumeStr = $totalVolume > 0 ? (number_format($totalVolume, 2) . ' M3') : '-';
+        $chgWeightStr = $totalChgWeight > 0 ? (number_format($totalChgWeight, 0) . ' KG') : $weightStr;
+        $packagesStr = $totalPkg > 0 ? (number_format($totalPkg, 0) . ' ' . $pkgUnitCode) : '-';
+
+        // Vessel / Flight Particulars
+        $vesselFlightName = $shipment->flight_no ?? (is_object($shipment->vessel) ? $shipment->vessel?->name : $shipment->vessel) ?? $shipment->vessel_name ?? '-';
+        $voyage = $shipment->voyage ?? '';
+        $etdStr = $shipment->etd ? (is_string($shipment->etd) ? \Carbon\Carbon::parse($shipment->etd)->format('d-M-y') : $shipment->etd->format('d-M-y')) : '-';
+        $vesselFlightDate = $vesselFlightName . ($voyage ? " / {$voyage}" : '') . ($etdStr !== '-' ? " / {$etdStr}" : '');
+
+        $mawbMbl = $shipment->mawb_no ?? $shipment->mbl_no ?? '-';
+        $hawbHbl = $shipment->hbls?->first()?->hbl_no ?? $shipment->sub_bl_no ?? $shipment->hawb_no ?? '-';
+
+        $origin = (is_object($shipment->depPort) ? $shipment->depPort?->name : null) ?? (is_object($shipment->portOfLoading) ? $shipment->portOfLoading?->name : null) ?? (is_object($shipment->pol) ? $shipment->pol?->name : null) ?? '-';
+        $destination = (is_object($shipment->dstPort) ? $shipment->dstPort?->name : null) ?? (is_object($shipment->portOfDischarge) ? $shipment->portOfDischarge?->name : null) ?? (is_object($shipment->pod) ? $shipment->pod?->name : null) ?? '-';
+        $etaStr = $shipment->eta ? (is_string($shipment->eta) ? \Carbon\Carbon::parse($shipment->eta)->format('d-M-y') : $shipment->eta->format('d-M-y')) : '-';
+
+        // Charges Formatting
+        $items = [];
+        $subtotal = 0;
+        $vatTotal = 0;
+
+        if ($shipment->charges && $shipment->charges->count() > 0) {
+            foreach ($shipment->charges as $c) {
+                $qty = (float)($c->qty ?? 1);
+                $rate = (float)($c->rate ?? 0);
+                $amt = (float)($c->total_amount ?: ($qty * $rate));
+                $taxPct = (float)($c->tax_percent ?? $c->vat ?? 0);
+                $taxAmt = (float)($c->tax_amount ?: ($amt * ($taxPct / 100)));
+
+                $currencyCode = is_object($c->currency) ? ($c->currency->code ?? 'USD') : ($c->currency ?: 'USD');
+                $roe = (float)($c->roe ?? 1.0);
+                $localRateAmt = $amt * ($roe ?: 1);
+
+                $desc = ($c->charge_name ?: $c->charge_code ?: 'FREIGHT CHARGE');
+                if ($qty > 0 && $rate > 0) {
+                    $desc .= " {$currencyCode}" . number_format($rate, 2) . "/KG x " . number_format($qty, 0) . " KG @" . number_format($roe, 2);
+                }
+
+                $items[] = [
+                    'description' => $desc,
+                    'vat_text' => $taxPct > 0 ? (number_format($taxPct, 2) . '%') : 'Zero Rated',
+                    'amount' => $localRateAmt,
+                ];
+
+                $subtotal += $localRateAmt;
+                $vatTotal += ($taxAmt * ($roe ?: 1));
+            }
+        }
+
+        $grandTotal = $subtotal + $vatTotal;
+
+        // ===== AUTO-POPULATION INTEGRATION =====
+        // Load auto-populated data based on Shipment Memo Auto-Load configuration
+        $autoPopService = new ShipmentMemoAutoPopulationService();
+        $autoPopulatedData = [
+            'master_bl' => $autoPopService->getAutoPopulatedData($module, $shipment, 'master_bl'),
+            'house_bl' => $autoPopService->getAutoPopulatedData($module, $shipment, 'house_bl'),
+        ];
+
+        // Apply auto-populated values (Master B/L has priority, fallback to existing values)
+        $billToNameFinal = $autoPopulatedData['master_bl']['customer'] ?? 
+                          $autoPopulatedData['master_bl']['consignee'] ?? 
+                          $billToName;
+        
+        $consignorFinal = $autoPopulatedData['master_bl']['shipper'] ?? 
+                         $autoPopulatedData['house_bl']['mbl_shipper'] ?? 
+                         $consignor;
+        
+        $consigneeFinal = $autoPopulatedData['master_bl']['consignee'] ?? 
+                         $autoPopulatedData['house_bl']['mbl_consignee'] ?? 
+                         $consignee;
+
+        $data = [
+            'invoice_no' => $invoiceNo,
+            'bin_no' => '000408318',
+            'bill_to_name' => $billToNameFinal,
+            'bill_to_attention' => 'THE ACCOUNTS PAYABLE MANAGER',
+            'bill_to_address' => $billToAddress,
+            'account_no' => $accountNo,
+            'invoice_date' => date('d-M-y'),
+            'due_date' => date('d-M-y'),
+            'terms' => 'Cash on Delivery',
+            
+            // Auto-populated fields from configuration
+            'auto_populated' => $autoPopulatedData, // Pass to view for debugging/reference
+            'shipment_no' => $fileNo,
+            'consol_no' => $shipment->mbl_no ?? $shipment->mawb_no ?? 'C00013606',
+            'consignor' => $consignorFinal, // Using auto-populated value
+            'consignee' => $consigneeFinal, // Using auto-populated value
+            'client_ref' => $clientRef,
+            'goods_description' => $shipment->hbls?->first()?->description ?? '',
+            'broker' => '',
+            'weight' => $weightStr,
+            'volume' => $volumeStr,
+            'chargeable_weight' => $chgWeightStr,
+            'packages' => $packagesStr,
+            'vessel_flight_date' => $vesselFlightDate,
+            'mawb_mbl' => $mawbMbl,
+            'hawb_hbl' => $hawbHbl,
+            'origin' => $origin,
+            'etd' => $etdStr,
+            'destination' => $destination,
+            'eta' => $etaStr,
+            'mode_type' => $modeType,
+            'currency_code' => 'BDT',
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'vat_total' => $vatTotal,
+            'total' => $grandTotal,
+            'bank_name' => 'MUTUAL TRUST BANK LTD',
+            'bank_branch' => 'PANTHAPATH BRANCH, DHAKA',
+            'bank_account' => '0003-0320000241',
+            'bank_swift' => 'MTBLBDDHPPB',
+            'pay_ref' => $accountNo . ' ' . $invoiceNo,
+        ];
+
+        return view('invoices.freight-invoice', compact('data', 'shipment'));
+    }
+
+    /**
+     * Automatically clean hardcoded sample text baked into freight-invoice-page-1.png
+     */
+    private function ensureCleanFreightInvoiceBg()
+    {
+        // Restore silk-container-page-1.png if corrupted or overwritten
+        $silkOrig = public_path('assets/images/hbl/silk-1.png');
+        $silkTarget = public_path('hbl-backgrounds/silk-container-page-1.png');
+        if (file_exists($silkOrig)) {
+            @copy($silkOrig, $silkTarget);
+        }
+
+        $srcPath = public_path('hbl-backgrounds/freight-invoice-page-1.png');
+        $cleanPath = public_path('hbl-backgrounds/freight-invoice-page-1-clean.png');
+
+        if (file_exists($srcPath) && extension_loaded('gd')) {
+            $img = @imagecreatefrompng($srcPath);
+            if ($img) {
+                $w = imagesx($img);
+                $h = imagesy($img);
+                $white = imagecolorallocate($img, 255, 255, 255);
+
+                $cleanRect = function($x1_pct, $y1_pct, $x2_pct, $y2_pct) use ($img, $w, $h, $white) {
+                    imagefilledrectangle($img, (int)($w * $x1_pct), (int)($h * $y1_pct), (int)($w * $x2_pct), (int)($h * $y2_pct), $white);
+                };
+
+                // 1. Header SCL00000001 (next to FREIGHT INVOICE)
+                $cleanRect(0.35, 0.160, 0.70, 0.198);
+                // 2. Sub-header 000408318
+                $cleanRect(0.08, 0.190, 0.25, 0.212);
+                // 3. Bill To area
+                $cleanRect(0.20, 0.200, 0.63, 0.305);
+                // 4. Right meta box hardcoded values
+                $cleanRect(0.64, 0.200, 0.98, 0.305);
+                // 5. Consignor / Consignee text values
+                $cleanRect(0.05, 0.315, 0.95, 0.338);
+                // 6. Client / Order Ref text values
+                $cleanRect(0.05, 0.342, 0.95, 0.362);
+                // 7. Goods Description text values
+                $cleanRect(0.05, 0.365, 0.95, 0.385);
+                // 8. Particulars table data rows
+                $cleanRect(0.05, 0.388, 0.95, 0.470);
+                // 9. Charges line items area
+                $cleanRect(0.05, 0.475, 0.95, 0.805);
+                // 10. Summary totals area
+                $cleanRect(0.68, 0.806, 0.95, 0.860);
+                // 11. Footer bank details & amounts
+                $cleanRect(0.10, 0.861, 0.95, 0.980);
+
+                imagepng($img, $cleanPath);
+                imagedestroy($img);
+            }
+        }
     }
 }
 

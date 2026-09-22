@@ -95,7 +95,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -104,25 +104,25 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="mblExportCsv()" title="Export to CSV">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                    <button class="btn-action-round white" onclick="mblExportCsv()" title="Download as CSV/Excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             {{-- ── TOOLBAR ── --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('air-export.create') }}" title="New Shipment" target="_blank">
+                        <a class="btn-tool green" href="{{ route('air-export.create') }}" title="New Shipment">
                             <i class="fa fa-plus"></i>
                         </a>
-                        <button class="btn-tool" id="btn-copy"   disabled title="Copy (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                        <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
                     <div class="btn-group">
                         <select class="select-tool" id="sel-op" disabled onchange="changeOp(this)">
@@ -135,7 +135,7 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:150px;"
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;"
                            placeholder="Quick search..." value="{{ request('search') }}"
                            oninput="quickSearch(this.value)">
                 </div>
@@ -359,9 +359,9 @@
             {{-- ── PAGINATION FOOTER ── --}}
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $shipments->links() }}</div>
+                    <div id="pagination-container">{{ $shipments->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
-                        Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span> &ndash; <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $shipments->total() }}</span> records
+                        Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $shipments->total() }}</span> records
                     </div>
                 </div>
             </div>

@@ -16,7 +16,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h1 class="caption-subject" style="font-size: 18px;">Warehouse Receipt Entry</h1>
             <div style="display: flex; gap: 8px;">
-                <button @click="saveReceipt" class="btn-gofreight"><i class="fa fa-save"></i> SAVE RECEIPT</button>
+                <button @click="saveReceipt" class="btn-freightx"><i class="fa fa-save"></i> SAVE RECEIPT</button>
                 <a href="/warehouse/receipts" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -84,7 +84,7 @@
                 <div class="portlet light">
                     <div class="portlet-title">
                         <span class="caption-subject"><i class="fa fa-cubes"></i> Cargo Dimension & Weight Items</span>
-                        <button @click="addItem" class="btn-gofreight" style="padding: 2px 10px; font-size: 10px;"><i class="fa fa-plus"></i> ADD ROW</button>
+                        <button @click="addItem" class="btn-freightx" style="padding: 2px 10px; font-size: 10px;"><i class="fa fa-plus"></i> ADD ROW</button>
                     </div>
                     <div class="portlet-body" style="padding: 0;">
                         <table class="table-custom">

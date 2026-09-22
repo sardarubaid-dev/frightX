@@ -1,7 +1,306 @@
 <x-layout>
     @push('styles')
     <x-list-styles />
+    <style>
+        .nav-tabs-custom { margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; gap: 4px; background: #fff; padding: 4px 8px 0 8px; border-radius: 2px 2px 0 0; }
+        .nav-tabs-custom .tab-item { padding: 6px 14px; font-size: 11px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+        .nav-tabs-custom .tab-item:hover { color: #2563eb; background: #f8fafc; }
+        .nav-tabs-custom .tab-item.active { color: #2563eb; font-weight: 700; border-bottom-color: #2563eb; background: #eff6ff; }
+
+        .btn-group { display: inline-flex; gap: 0; border-radius: 2px; overflow: hidden; }
+        .btn-group .btn-tool { border-radius: 0; margin: 0; }
+        .btn-group .btn-tool:not(:first-child) { border-left: 1px solid rgba(0,0,0,0.1); }
+        .btn-group .btn-tool:first-child { border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+        .btn-group .btn-tool:last-child { border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+
+        #grid-loading { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.7); z-index: 100; align-items: center; justify-content: center; }
+        #grid-loading.show { display: flex; }
+        #grid-loading .spinner { width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media print {
+            /* Hide all UI elements except table */
+            .page-sidebar-wrapper,
+            .page-header,
+            .page-bar,
+            .portlet-title,
+            .portlet-tool,
+            .nav-tabs-custom,
+            .btn-group,
+            .btn-action-round,
+            .actions,
+            .caption-subject,
+            #filter-row,
+            .pagination,
+            .portlet-tool.bottom,
+            body > *:not(.page-wrapper):not(.page-container) {
+                display: none !important;
+            }
+            
+            /* Show only the table */
+            .page-wrapper,
+            .page-container,
+            .page-content-wrapper,
+            .page-content,
+            .portlet,
+            .portlet-body,
+            .grid-container,
+            .grid-wrapper,
+            .grid-table {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            
+            /* Remove sticky positioning for print */
+            .sticky-col {
+                position: static !important;
+                left: auto !important;
+            }
+            
+            /* Hide checkboxes, color marks */
+            th[data-col="check"], td:nth-child(1),
+            th[data-col="color"], td:nth-child(2) {
+                display: none !important;
+            }
+            
+            /* Table styling for print */
+            .grid-table {
+                border-collapse: collapse !important;
+                font-size: 10px !important;
+                min-width: auto !important;
+            }
+            
+            .grid-table th,
+            .grid-table td {
+                border: 1px solid #ddd !important;
+                padding: 4px 6px !important;
+                text-align: left !important;
+            }
+            
+            .grid-table th {
+                background: #f3f4f6 !important;
+                font-weight: bold !important;
+                color: #000 !important;
+            }
+            
+            /* Links - show as normal text */
+            a {
+                color: #000 !important;
+                text-decoration: none !important;
+            }
+            
+            /* Page breaks */
+            tr {
+                page-break-inside: avoid !important;
+            }
+        }
+
+        /* Mobile Responsive - copied from Ocean Import */
+        @media (max-width: 768px) {
+            .page-content { 
+                padding: 2px !important; 
+                overflow-x: hidden !important;
+            }
+            .portlet.light { 
+                margin: 0 !important; 
+                border-radius: 0 !important; 
+                overflow: hidden !important;
+            }
+            
+            .portlet-title { 
+                flex-direction: column !important; 
+                align-items: flex-start !important; 
+                padding: 6px !important;
+                gap: 6px;
+            }
+            .portlet-title .caption { width: 100%; }
+            .portlet-title .actions { 
+                width: 100%; 
+                flex-wrap: wrap; 
+                gap: 3px !important;
+            }
+            
+            .portlet-tool { 
+                flex-direction: column !important; 
+                align-items: flex-start !important; 
+                padding: 6px !important;
+                gap: 6px !important;
+            }
+            .portlet-tool > div { width: 100%; }
+            .btn-group { 
+                width: 100%; 
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+            .btn-tool { 
+                font-size: 8px !important; 
+                padding: 0 6px !important;
+                height: 20px !important;
+                flex: 0 1 auto;
+            }
+            .input-inline { 
+                width: 100% !important; 
+                font-size: 9px !important;
+            }
+            
+            /* CRITICAL FIX: Table scrolling on mobile */
+            .portlet-body {
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+            
+            .grid-container { 
+                width: 100% !important;
+                overflow: hidden !important;
+                background: #fff;
+                position: relative;
+            }
+            
+            .grid-wrapper { 
+                width: 100% !important;
+                height: calc(100vh - 350px) !important;
+                min-height: 200px !important;
+                overflow-x: auto !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                position: relative;
+            }
+            
+            .grid-table { 
+                font-size: 8px !important;
+                width: auto !important;
+                min-width: 1400px !important; /* Ensures horizontal scroll */
+                table-layout: auto !important;
+            }
+            
+            .grid-table th, .grid-table td { 
+                padding: 2px 4px !important;
+                height: 22px !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Keep only 2 sticky columns on mobile */
+            .sticky-col { 
+                font-size: 8px !important;
+                position: sticky !important;
+                z-index: 5 !important;
+                background: #fff !important;
+            }
+            
+            .grid-table th:nth-child(1), .grid-table td:nth-child(1) { 
+                left: 0 !important; 
+            }
+            .grid-table th:nth-child(2), .grid-table td:nth-child(2) { 
+                left: 25px !important; 
+            }
+            /* Remove sticky from all other columns on mobile */
+            .grid-table th:nth-child(n+3), .grid-table td:nth-child(n+3) {
+                position: static !important;
+                left: auto !important;
+            }
+            
+            .filter-input { 
+                height: 18px !important; 
+                font-size: 8px !important;
+                padding: 0 3px !important;
+            }
+            
+            /* Modals on mobile */
+            .modal-box, .confirm-box { 
+                margin: 10px;
+                width: calc(100% - 20px);
+                max-width: 100%;
+                min-width: 0 !important;
+            }
+            .modal-body { 
+                padding: 8px !important;
+                min-width: 0 !important;
+            }
+            .confirm-box { padding: 16px !important; }
+            
+            /* Config Panel on mobile */
+            .config-panel {
+                right: 0;
+                left: 0;
+                top: 22px;
+                max-width: 100%;
+                max-height: 250px;
+            }
+            
+            /* Pagination on mobile */
+            .portlet-tool.bottom { 
+                flex-direction: column !important; 
+                gap: 6px;
+            }
+            .portlet-tool.bottom > div { width: 100% !important; }
+            .pagination { 
+                justify-content: center;
+                font-size: 9px !important;
+            }
+            
+            /* Toast on mobile */
+            .toast-container { 
+                top: 10px; 
+                right: 10px;
+                left: 10px;
+            }
+            .toast { 
+                font-size: 10px !important;
+                padding: 6px 10px !important;
+            }
+            
+            /* Breadcrumbs on mobile */
+            .page-bar { 
+                padding: 6px 10px !important;
+                margin-bottom: 8px !important;
+            }
+            .page-breadcrumb li { font-size: 10px !important; }
+            
+            #sel-badge { font-size: 8px !important; }
+            
+            /* Nav tabs on mobile */
+            .nav-tabs-custom {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap !important;
+            }
+            .nav-tabs-custom .tab-item {
+                font-size: 9px !important;
+                padding: 4px 8px !important;
+                white-space: nowrap;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid-table { 
+                font-size: 7px !important; 
+                min-width: 1200px !important;
+            }
+            .grid-table th, .grid-table td { 
+                padding: 2px 3px !important;
+                height: 20px !important;
+            }
+            .btn-action-round, .btn-tool { 
+                font-size: 8px !important;
+                padding: 0 4px !important;
+            }
+            
+            /* Keep only checkbox sticky on very small screens */
+            .grid-table th:nth-child(2), .grid-table td:nth-child(2) {
+                position: static !important;
+                left: auto !important;
+            }
+        }
+    </style>
     @endpush
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- TOAST CONTAINER --}}
     <div class="toast-container" id="toast-container"></div>
@@ -10,7 +309,7 @@
     <div class="overlay" id="confirm-overlay" onclick="if(event.target===this) closeConfirm()">
         <div class="confirm-box">
             <div class="confirm-icon"><i class="fa fa-exclamation-triangle"></i></div>
-            <h4>Delete Record(s)?</h4>
+            <h4>Delete Shipping Record(s)?</h4>
             <p id="confirm-msg">This action cannot be undone.</p>
             <div class="confirm-actions">
                 <button class="btn-tool" style="padding:0 18px;height:26px;" onclick="closeConfirm()">Cancel</button>
@@ -37,6 +336,22 @@
 
     {{-- MAIN PAGE --}}
     <div class="page-content">
+        {{-- TOP TABS --}}
+        <div class="nav-tabs-custom">
+            <a href="{{ route('receiving.create') }}" class="tab-item {{ request()->routeIs('receiving.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Receiving
+            </a>
+            <a href="{{ route('receiving.list') }}" class="tab-item {{ request()->routeIs('receiving.list') || request()->routeIs('receiving.index') ? 'active' : '' }}">
+                <i class="fa fa-list"></i> Receiving List
+            </a>
+            <a href="{{ route('shipping.create') }}" class="tab-item {{ request()->routeIs('shipping.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Shipping
+            </a>
+            <a href="{{ route('shipping.list') }}" class="tab-item {{ request()->routeIs('shipping.list') || request()->routeIs('shipping.index') ? 'active' : '' }}">
+                <i class="fa fa-truck"></i> Shipping List
+            </a>
+        </div>
+
         <div class="page-bar">
             <ul class="page-breadcrumb">
                 <li><i class="fa fa-home"></i> <a href="/">Home</a> <i class="fa fa-angle-right"></i></li>
@@ -45,7 +360,12 @@
             </ul>
         </div>
 
-        <div class="portlet light">
+        <div class="portlet light" style="position:relative;">
+            {{-- LOADING SPINNER OVERLAY --}}
+            <div id="grid-loading">
+                <div class="spinner"></div>
+            </div>
+
             {{-- PORTLET TITLE --}}
             <div class="portlet-title">
                 <div class="caption" style="display:flex;align-items:center;gap:8px;">
@@ -65,19 +385,17 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round" onclick="refreshGrid()" title="Refresh"><i class="fa fa-refresh"></i></button>
-                    <button class="btn-action-round" onclick="window.print()" title="Print"><i class="fa fa-print"></i></button>
-                    <a class="btn-action-round white" href="{{ route('shipping.export-csv') }}" title="Download as CSV/Excel" target="_blank">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                    <a class="btn-action-round white" href="{{ route('shipping.export-csv') }}" id="btn-excel" title="Download as CSV/Excel" target="_blank">
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </a>
                 </div>
             </div>
 
             {{-- TOOLBAR --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:10px;align-items:center;">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:nowrap;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('shipping.create') }}" title="New Shipping" target="_blank">
+                        <a class="btn-tool green" href="{{ route('shipping.create') }}" title="New Shipping">
                             <i class="fa fa-plus"></i>
                         </a>
                         <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()">
@@ -90,11 +408,9 @@
                     <input type="text" id="quick-search" class="input-inline" style="width:160px;"
                            placeholder="Quick search..." value="{{ request('search') }}"
                            oninput="quickSearch(this.value)">
-                    @if(request()->has('search'))
-                        <a href="{{ route('shipping.index') }}" style="font-size:10px;color:#3b82f6;text-decoration:none;" target="_blank">
-                            <i class="fa fa-times-circle"></i>
-                        </a>
-                    @endif
+                    <a href="javascript:;" id="clear-search-btn" onclick="clearSearch()" style="display:{{ request()->has('search') && request('search') ? 'inline' : 'none' }};font-size:10px;color:#3b82f6;text-decoration:none;cursor:pointer;" title="Clear search">
+                        <i class="fa fa-times-circle"></i>
+                    </a>
                 </div>
             </div>
 
@@ -108,57 +424,59 @@
                             <table class="grid-table" id="main-grid">
                                 <thead>
                                     <tr id="header-row">
-                                        <th class="sticky-col sticky-col-header" data-col="check"   style="width:25px;text-align:center;">
+                                        <th class="sticky-col sticky-col-header" data-col="check" style="width:25px;text-align:center;">
                                             <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" title="Select All">
                                         </th>
-                                        <th class="sticky-col sticky-col-header" data-col="color"   style="width:30px;left:25px;text-align:center;">Color</th>
-                                        <th class="sticky-col sticky-col-header" data-col="file_no" style="width:130px;left:55px;">
-                                            <a href="javascript:;" onclick="toggleSort('shipping_no')" style="color:inherit;text-decoration:none;">Shipping No. <i class="fa fa-sort" id="sort-shipping_no"></i></a>
+                                        <th class="sticky-col sticky-col-header" data-col="color" style="width:30px;left:25px;text-align:center;">Color</th>
+                                        <th class="sticky-col sticky-col-header" data-col="shipping_no" style="width:130px;left:55px;cursor:pointer;" onclick="toggleSort('shipping_no')">
+                                            Shipping No. <i class="fa fa-sort" id="sort-shipping_no"></i>
                                         </th>
                                         <th class="sticky-col sticky-col-header" data-col="customer" style="width:150px;left:185px;">Customer</th>
-                                        <th data-col="office"       style="width:80px;">Office</th>
-                                        <th data-col="shipping_date" style="width:90px;">
-                                            <a href="javascript:;" onclick="toggleSort('shipping_date')" style="color:inherit;text-decoration:none;">Post Date <i class="fa fa-sort" id="sort-shipping_date"></i></a>
+                                        <th data-col="office" style="width:80px;">Office</th>
+                                        <th data-col="shipping_date" style="width:90px;cursor:pointer;" onclick="toggleSort('shipping_date')">
+                                            Post Date <i class="fa fa-sort" id="sort-shipping_date"></i>
                                         </th>
-                                        <th data-col="out_date"     style="width:90px;">
-                                            <a href="javascript:;" onclick="toggleSort('out_date')" style="color:inherit;text-decoration:none;">Out Date <i class="fa fa-sort" id="sort-out_date"></i></a>
+                                        <th data-col="out_date" style="width:90px;cursor:pointer;" onclick="toggleSort('out_date')">
+                                            Out Date <i class="fa fa-sort" id="sort-out_date"></i>
                                         </th>
-                                        <th data-col="order_date"   style="width:90px;">
-                                            <a href="javascript:;" onclick="toggleSort('order_date')" style="color:inherit;text-decoration:none;">Order Date <i class="fa fa-sort" id="sort-order_date"></i></a>
+                                        <th data-col="order_date" style="width:90px;cursor:pointer;" onclick="toggleSort('order_date')">
+                                            Order Date <i class="fa fa-sort" id="sort-order_date"></i>
                                         </th>
-                                        <th data-col="order_no"     style="width:100px;">Order No.</th>
-                                        <th data-col="truck_bl_no"  style="width:120px;">Truck B/L</th>
-                                        <th data-col="warehouse"    style="width:150px;">Warehouse</th>
-                                        <th data-col="ship_to"      style="width:150px;">Ship To</th>
-                                        <th data-col="trucker"      style="width:130px;">Trucker</th>
-                                        <th data-col="pallet"       style="width:100px;">Pallet</th>
-                                        <th data-col="status"       style="width:100px;">
-                                            <a href="javascript:;" onclick="toggleSort('status')" style="color:inherit;text-decoration:none;">Status <i class="fa fa-sort" id="sort-status"></i></a>
+                                        <th data-col="order_no" style="width:100px;">Order No.</th>
+                                        <th data-col="truck_bl_no" style="width:120px;">Truck B/L</th>
+                                        <th data-col="warehouse" style="width:150px;">Warehouse</th>
+                                        <th data-col="ship_to" style="width:150px;">Ship To</th>
+                                        <th data-col="trucker" style="width:130px;">Trucker</th>
+                                        <th data-col="pallet" style="width:100px;cursor:pointer;" onclick="toggleSort('pallet')">
+                                            Pallet <i class="fa fa-sort" id="sort-pallet"></i>
                                         </th>
-                                        <th data-col="operator"     style="width:100px;">OP</th>
-                                        <th data-col="created_at"   style="width:90px;">
-                                            <a href="javascript:;" onclick="toggleSort('created_at')" style="color:inherit;text-decoration:none;">Created <i class="fa fa-sort" id="sort-created_at"></i></a>
+                                        <th data-col="status" style="width:100px;cursor:pointer;" onclick="toggleSort('status')">
+                                            Status <i class="fa fa-sort" id="sort-status"></i>
+                                        </th>
+                                        <th data-col="operator" style="width:100px;">OP</th>
+                                        <th data-col="created_at" style="width:90px;cursor:pointer;" onclick="toggleSort('created_at')">
+                                            Created <i class="fa fa-sort" id="sort-created_at"></i>
                                         </th>
                                     </tr>
 
                                     {{-- FILTER ROW --}}
                                     <tr id="filter-row" style="display:none;">
-                                        <td class="sticky-col" style="left:0;"></td>
-                                        <td class="sticky-col" style="left:25px;"></td>
-                                        <td class="sticky-col" style="left:55px;"><input class="filter-input" data-col-idx="2" placeholder="Shipping No..." oninput="applyFilters()"></td>
-                                        <td class="sticky-col" style="left:185px;"><input class="filter-input" data-col-idx="3" placeholder="Customer..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="4" placeholder="Office..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="5" placeholder="Post Date..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="6" placeholder="Out Date..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="7" placeholder="Order Date..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="8" placeholder="Order No..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="9" placeholder="Truck B/L..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="10" placeholder="Warehouse..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="11" placeholder="Ship To..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="12" placeholder="Trucker..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="13" placeholder="Pallet..." oninput="applyFilters()"></td>
-                                        <td><input class="filter-input" data-col-idx="14" placeholder="Status..." oninput="applyFilters()"></td>
-                                        <td colspan="2"></td>
+                                        <td data-col="check" class="sticky-col" style="left:0;"></td>
+                                        <td data-col="color" class="sticky-col" style="left:25px;"></td>
+                                        <td data-col="shipping_no" class="sticky-col" style="left:55px;"><input class="filter-input" data-col-idx="2" placeholder="Shipping No..." oninput="applyFilters()"></td>
+                                        <td data-col="customer" class="sticky-col" style="left:185px;"><input class="filter-input" data-col-idx="3" placeholder="Customer..." oninput="applyFilters()"></td>
+                                        <td data-col="office"><input class="filter-input" data-col-idx="4" placeholder="Office..." oninput="applyFilters()"></td>
+                                        <td data-col="shipping_date"><input class="filter-input" data-col-idx="5" placeholder="Post Date..." oninput="applyFilters()"></td>
+                                        <td data-col="out_date"><input class="filter-input" data-col-idx="6" placeholder="Out Date..." oninput="applyFilters()"></td>
+                                        <td data-col="order_date"><input class="filter-input" data-col-idx="7" placeholder="Order Date..." oninput="applyFilters()"></td>
+                                        <td data-col="order_no"><input class="filter-input" data-col-idx="8" placeholder="Order No..." oninput="applyFilters()"></td>
+                                        <td data-col="truck_bl_no"><input class="filter-input" data-col-idx="9" placeholder="Truck B/L..." oninput="applyFilters()"></td>
+                                        <td data-col="warehouse"><input class="filter-input" data-col-idx="10" placeholder="Warehouse..." oninput="applyFilters()"></td>
+                                        <td data-col="ship_to"><input class="filter-input" data-col-idx="11" placeholder="Ship To..." oninput="applyFilters()"></td>
+                                        <td data-col="trucker"><input class="filter-input" data-col-idx="12" placeholder="Trucker..." oninput="applyFilters()"></td>
+                                        <td data-col="pallet"><input class="filter-input" data-col-idx="13" placeholder="Pallet..." oninput="applyFilters()"></td>
+                                        <td data-col="status"><input class="filter-input" data-col-idx="14" placeholder="Status..." oninput="applyFilters()"></td>
+                                        <td data-col="operator" colspan="2"></td>
                                     </tr>
                                 </thead>
 
@@ -208,7 +526,15 @@
                                         {{-- Status --}}
                                         <td>
                                             @if($shipping->status)
-                                                <span class="badge-status {{ $shipping->status === 'Shipped' ? 'bg-green' : ($shipping->status === 'Delivered' ? 'bg-green' : 'bg-blue') }}">{{ $shipping->status }}</span>
+                                                @php
+                                                    $statusClass = match($shipping->status) {
+                                                        'Shipped', 'Delivered', 'Complete' => 'bg-green',
+                                                        'Shipping', 'In Transit' => 'bg-blue',
+                                                        'Pending' => 'bg-yellow',
+                                                        default => 'bg-blue',
+                                                    };
+                                                @endphp
+                                                <span class="badge-status {{ $statusClass }}">{{ $shipping->status }}</span>
                                             @endif
                                         </td>
                                         {{-- Operator --}}
@@ -246,21 +572,38 @@
     @push('scripts')
     <script>
     /* ================================================================
+       STATE PERSISTENCE & FILTER MAPPING
+    ================================================================ */
+    const STATE_KEY = 'warehouse_shipping_state';
+    const FILTER_MAP = {
+        2: 'filter_shipping_no', 3: 'filter_customer', 4: 'filter_office',
+        5: 'filter_shipping_date', 6: 'filter_out_date', 7: 'filter_order_date',
+        8: 'filter_order_no', 9: 'filter_truck_bl_no', 10: 'filter_warehouse',
+        11: 'filter_ship_to', 12: 'filter_trucker', 13: 'filter_pallet',
+        14: 'filter_status'
+    };
+
+    /* ================================================================
        TOOLBAR — checkbox management
     ================================================================ */
     function updateToolbar() {
-        const checked  = [...document.querySelectorAll('.row-check:checked')];
-        const all      = [...document.querySelectorAll('.row-check')];
-        const n        = checked.length;
-        const sa       = document.getElementById('select-all');
-        sa.checked        = n === all.length && all.length > 0;
-        sa.indeterminate  = n > 0 && n < all.length;
+        const checked = [...document.querySelectorAll('.row-check:checked')];
+        const all     = [...document.querySelectorAll('.row-check')];
+        const n       = checked.length;
+        const sa      = document.getElementById('select-all');
+        if (sa) {
+            sa.checked       = n === all.length && all.length > 0;
+            sa.indeterminate = n > 0 && n < all.length;
+        }
 
-        document.getElementById('btn-delete').disabled  = n === 0;
+        const delBtn = document.getElementById('btn-delete');
+        if (delBtn) delBtn.disabled = n === 0;
 
         const badge = document.getElementById('sel-badge');
-        badge.style.display = n > 0 ? 'inline' : 'none';
-        badge.textContent   = n + ' selected';
+        if (badge) {
+            badge.style.display = n > 0 ? 'inline' : 'none';
+            badge.textContent   = n + ' selected';
+        }
 
         document.querySelectorAll('#grid-body tr[data-id]').forEach(row => {
             const cb = row.querySelector('.row-check');
@@ -274,10 +617,43 @@
     }
 
     function rowClick(e, row) {
-        const skip = ['A', 'INPUT', 'BUTTON', 'I'];
+        const skip = ['A', 'INPUT', 'BUTTON', 'I', 'SPAN'];
         if (skip.includes(e.target.tagName)) return;
         const cb = row.querySelector('.row-check');
         if (cb) { cb.checked = !cb.checked; updateToolbar(); }
+    }
+
+    /* ================================================================
+       LOADING OVERLAY
+    ================================================================ */
+    function showLoading() {
+        const el = document.getElementById('grid-loading');
+        if (el) el.classList.add('show');
+    }
+    function hideLoading() {
+        const el = document.getElementById('grid-loading');
+        if (el) el.classList.remove('show');
+    }
+
+    /* ================================================================
+       EXCEL LINK CARRY FILTERS
+    ================================================================ */
+    function updateExcelLink() {
+        const url = new URL(window.location.href);
+        const btn = document.getElementById('btn-excel');
+        if (btn) btn.href = '{{ route("shipping.export-csv") }}' + url.search;
+    }
+
+    /* ================================================================
+       CLEAR SEARCH
+    ================================================================ */
+    function clearSearch() {
+        document.getElementById('quick-search').value = '';
+        document.getElementById('clear-search-btn').style.display = 'none';
+        const url = new URL(window.location.href);
+        url.searchParams.delete('search');
+        url.searchParams.delete('page');
+        updateGrid(url.toString());
     }
 
     /* ================================================================
@@ -287,7 +663,7 @@
         const n = document.querySelectorAll('.row-check:checked').length;
         if (!n) return;
         document.getElementById('confirm-msg').textContent =
-            `You are about to permanently delete ${n} record(s). This cannot be undone.`;
+            `You are about to permanently delete ${n} shipping record(s). This cannot be undone.`;
         document.getElementById('confirm-overlay').classList.add('open');
     }
     function closeConfirm() {
@@ -318,41 +694,48 @@
     }
 
     /* ================================================================
-       FILTER ROW TOGGLE
+       FILTER ROW TOGGLE & RESTORE
     ================================================================ */
     let filterOpen = false;
     function toggleFilter() {
         filterOpen = !filterOpen;
         const row = document.getElementById('filter-row');
         if (row) { row.style.display = filterOpen ? 'table-row' : 'none'; }
-        document.getElementById('btn-filter').classList.toggle('active', filterOpen);
+        document.getElementById('btn-filter').classList.toggle('active-filter', filterOpen);
 
         if (filterOpen) {
-            // Load filters from URL params
-            const urlParams = new URLSearchParams(window.location.search);
-            document.querySelectorAll('#filter-row .filter-input').forEach(inp => {
-                const idx = parseInt(inp.dataset.colIdx);
-                const filterMap = {
-                    2: 'filter_shipping_no', 3: 'filter_customer', 4: 'filter_office',
-                    5: 'filter_shipping_date', 6: 'filter_out_date', 7: 'filter_order_date',
-                    8: 'filter_order_no', 9: 'filter_truck_bl_no', 10: 'filter_warehouse',
-                    11: 'filter_ship_to', 12: 'filter_trucker', 13: 'filter_pallet',
-                    14: 'filter_status'
-                };
-                inp.value = urlParams.get(filterMap[idx]) || '';
-            });
-            document.querySelector('.filter-input')?.focus();
+            restoreFilterRow(new URLSearchParams(window.location.search));
+            document.querySelector('#filter-row .filter-input')?.focus();
         } else {
-            // Clear filters when closing
             document.querySelectorAll('#filter-row .filter-input').forEach(i => { i.value = ''; });
             applyFilters();
         }
     }
 
+    function restoreFilterRow(params) {
+        document.querySelectorAll('#filter-row .filter-input').forEach(inp => {
+            const param = FILTER_MAP[inp.dataset.colIdx];
+            inp.value = param ? (params.get(param) || '') : '';
+        });
+    }
+
+    function autoOpenFilterIfNeeded() {
+        const params = new URLSearchParams(window.location.search);
+        const hasFilter = Object.values(FILTER_MAP).some(k => params.has(k) && params.get(k));
+        if (hasFilter) {
+            filterOpen = true;
+            const row = document.getElementById('filter-row');
+            if (row) row.style.display = 'table-row';
+            document.getElementById('btn-filter').classList.add('active-filter');
+            restoreFilterRow(params);
+        }
+    }
+
     /* ================================================================
-        AJAX GRID UPDATE
+       AJAX GRID UPDATE
     ================================================================ */
-    async function updateGrid(url) {
+    async function updateGrid(url, pushState = true) {
+        showLoading();
         try {
             const response = await fetch(url, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -370,8 +753,7 @@
 
             const stats = doc.querySelector('.portlet-tool.bottom div:last-child');
             if (stats) {
-                const text = stats.textContent;
-                const matches = text.match(/\d+/g);
+                const matches = stats.textContent.match(/\d+/g);
                 if (matches && matches.length >= 3) {
                     document.getElementById('stat-first').textContent = matches[0];
                     document.getElementById('stat-last').textContent = matches[1];
@@ -379,25 +761,38 @@
                 }
             }
 
-            // Update sort icons
+            const urlObj = new URL(url);
+            const newSort = urlObj.searchParams.get('sort') || 'created_at';
+            const newDir = urlObj.searchParams.get('dir') || 'desc';
+
             document.querySelectorAll('[id^="sort-"]').forEach(i => i.className = 'fa fa-sort');
-            const sortIcon = document.getElementById('sort-' + currentSort);
+            const sortIcon = document.getElementById('sort-' + newSort);
             if (sortIcon) {
-                sortIcon.className = 'fa ' + (currentDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc');
+                sortIcon.className = 'fa ' + (newDir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc');
             }
 
-            // Update URL in address bar
-            window.history.pushState({}, '', url);
+            const searchVal = urlObj.searchParams.get('search') || '';
+            const clearBtn = document.getElementById('clear-search-btn');
+            if (clearBtn) clearBtn.style.display = searchVal ? 'inline' : 'none';
+
+            updateExcelLink();
+            if (filterOpen) restoreFilterRow(urlObj.searchParams);
+
+            if (pushState) {
+                window.history.pushState({}, '', url);
+            }
+            try { sessionStorage.setItem(STATE_KEY, url); } catch(e) {}
 
             updateToolbar();
             loadColumnConfig();
         } catch (e) {
             console.error(e);
             showToast('error', 'Failed to update grid');
+        } finally {
+            hideLoading();
         }
     }
 
-    // Wire pagination links to use AJAX instead of full page loads
     document.addEventListener('click', function(e) {
         const link = e.target.closest('.pagination a');
         if (link) {
@@ -406,23 +801,28 @@
         }
     });
 
+    window.addEventListener('popstate', function() {
+        updateGrid(window.location.href, false);
+    });
+
     function getSelectedIds() {
         return [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
     }
 
-    let currentSort = '{{ request('sort', 'created_at') }}';
-    let currentDir = '{{ request('dir', 'desc') }}';
-
     function toggleSort(field) {
-        if (currentSort === field) {
-            currentDir = currentDir === 'asc' ? 'desc' : 'asc';
-        } else {
-            currentSort = field;
-            currentDir = 'asc';
-        }
         const url = new URL(window.location.href);
-        url.searchParams.set('sort', currentSort);
-        url.searchParams.set('dir', currentDir);
+        let curSort = url.searchParams.get('sort') || 'created_at';
+        let curDir = url.searchParams.get('dir') || 'desc';
+
+        if (curSort === field) {
+            curDir = curDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            curSort = field;
+            curDir = 'asc';
+        }
+
+        url.searchParams.set('sort', curSort);
+        url.searchParams.set('dir', curDir);
         url.searchParams.delete('page');
         updateGrid(url.toString());
     }
@@ -438,6 +838,7 @@
             const q = val.trim();
             const url = new URL(window.location.href);
             if (!q) url.searchParams.delete('search'); else url.searchParams.set('search', q);
+            url.searchParams.delete('page');
             updateGrid(url.toString());
         }, 300);
     }
@@ -446,26 +847,20 @@
     function applyFilters() {
         clearTimeout(filterDebounce);
         filterDebounce = setTimeout(() => {
-            const inputs = [...document.querySelectorAll('#filter-row .filter-input')];
             const url = new URL(window.location.href);
-
-            // Preserve search param
             const search = url.searchParams.get('search') || '';
+            const sort = url.searchParams.get('sort') || 'created_at';
+            const dir = url.searchParams.get('dir') || 'desc';
+
             url.search = '';
             if (search) url.searchParams.set('search', search);
+            url.searchParams.set('sort', sort);
+            url.searchParams.set('dir', dir);
 
-            const filterMap = {
-                2: 'filter_shipping_no', 3: 'filter_customer', 4: 'filter_office',
-                5: 'filter_shipping_date', 6: 'filter_out_date', 7: 'filter_order_date',
-                8: 'filter_order_no', 9: 'filter_truck_bl_no', 10: 'filter_warehouse',
-                11: 'filter_ship_to', 12: 'filter_trucker', 13: 'filter_pallet',
-                14: 'filter_status'
-            };
-
-            inputs.forEach(inp => {
+            document.querySelectorAll('#filter-row .filter-input').forEach(inp => {
                 const v = inp.value.trim();
                 if (!v) return;
-                const param = filterMap[inp.dataset.colIdx];
+                const param = FILTER_MAP[inp.dataset.colIdx];
                 if (param) url.searchParams.set(param, v);
             });
 
@@ -476,7 +871,7 @@
     /* ================================================================
        CONFIG PANEL — column visibility
     ================================================================ */
-    const PINNED_COLS = ['check', 'color', 'file_no', 'customer'];
+    const PINNED_COLS = ['check', 'color', 'shipping_no', 'customer'];
     const CONFIG_STORAGE_KEY = 'warehouse_shipping_column_config';
 
     function loadColumnConfig() {
@@ -487,11 +882,9 @@
             document.querySelectorAll('#header-row th[data-col]').forEach(th => {
                 const col = th.dataset.col;
                 if (PINNED_COLS.includes(col)) return;
-                if (hidden.includes(col)) {
-                    th.style.display = 'none';
-                }
+                if (hidden.includes(col)) th.style.display = 'none';
             });
-            document.querySelectorAll('#grid-body tr, #filter-row').forEach(row => {
+            document.querySelectorAll('#grid-body tr').forEach(row => {
                 document.querySelectorAll('#header-row th[data-col]').forEach((th, i) => {
                     const col = th.dataset.col;
                     if (PINNED_COLS.includes(col)) return;
@@ -501,7 +894,12 @@
                     }
                 });
             });
-        } catch (e) { /* ignore */ }
+            document.querySelectorAll('#filter-row td[data-col]').forEach(td => {
+                const col = td.dataset.col;
+                if (PINNED_COLS.includes(col)) return;
+                if (hidden.includes(col)) td.style.display = 'none';
+            });
+        } catch (e) {}
     }
 
     function toggleConfig() {
@@ -541,41 +939,31 @@
     function saveColumnConfig() {
         try {
             localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(getHiddenColumns()));
-        } catch (e) { /* ignore */ }
+        } catch (e) {}
     }
 
     function toggleColumn(colName, show) {
         const th  = document.querySelector(`#header-row th[data-col="${colName}"]`);
+        if (!th) return;
         const idx = [...th.parentElement.children].indexOf(th);
         th.style.display = show ? '' : 'none';
-        document.querySelectorAll('#grid-body tr, #filter-row').forEach(row => {
+        document.querySelectorAll('#grid-body tr').forEach(row => {
             const cell = row.querySelectorAll('td, th')[idx];
             if (cell) cell.style.display = show ? '' : 'none';
         });
+        const filterTd = document.querySelector(`#filter-row td[data-col="${colName}"]`);
+        if (filterTd) filterTd.style.display = show ? '' : 'none';
         saveColumnConfig();
     }
 
-    // Close config on outside click
     document.addEventListener('click', e => {
         const panel = document.getElementById('config-panel');
         const btn   = document.getElementById('btn-config');
-        if (panel.style.display !== 'none' && !panel.contains(e.target) && !btn.contains(e.target)) {
+        if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && !btn.contains(e.target)) {
             panel.style.display = 'none';
             btn.classList.remove('active');
         }
     });
-
-    // Init sort icons + column config on page load
-    (function() {
-        const params = new URLSearchParams(window.location.search);
-        const sort = params.get('sort') || 'created_at';
-        const dir = params.get('dir') || 'desc';
-        currentSort = sort;
-        currentDir = dir;
-        const icon = document.getElementById('sort-' + sort);
-        if (icon) { icon.className = 'fa ' + (dir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc'); }
-        loadColumnConfig();
-    })();
 
     /* ================================================================
        COLOR PICKER
@@ -606,7 +994,11 @@
         const id = _colorShippingId;
         fetch('{{ route("shipping.update-color", "ID") }}'.replace('ID', id), {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
             body: JSON.stringify({ color }),
         }).then(r => r.json()).then(data => {
             if (data.success) {
@@ -627,7 +1019,11 @@
         const id = _colorShippingId;
         fetch('{{ route("shipping.update-color", "ID") }}'.replace('ID', id), {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
             body: JSON.stringify({ color: '' }),
         }).then(r => r.json()).then(data => {
             if (data.success) {
@@ -652,8 +1048,27 @@
     }
 
     /* ================================================================
-       FLASH MESSAGE FROM SERVER
+       INIT & SESSION RECOVERY
     ================================================================ */
+    (function() {
+        const currentUrl = new URL(window.location.href);
+        const hasParams = [...currentUrl.searchParams.keys()].length > 0;
+        let savedState = null;
+        try { savedState = sessionStorage.getItem(STATE_KEY); } catch(e) {}
+
+        if (!hasParams && savedState) {
+            updateGrid(savedState, false);
+        } else {
+            const sort = currentUrl.searchParams.get('sort') || 'created_at';
+            const dir = currentUrl.searchParams.get('dir') || 'desc';
+            const icon = document.getElementById('sort-' + sort);
+            if (icon) { icon.className = 'fa ' + (dir === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc'); }
+            loadColumnConfig();
+            updateExcelLink();
+            autoOpenFilterIfNeeded();
+        }
+    })();
+
     @if(session('success'))
         showToast('success', @json(session('success')));
     @endif

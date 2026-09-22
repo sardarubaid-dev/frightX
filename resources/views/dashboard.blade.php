@@ -1,5 +1,6 @@
 <x-layout>
     @push('styles')
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
         /* ========== DASHBOARD CUSTOM STYLES ========== */
         .page-content {
@@ -194,7 +195,7 @@
             font-size: 12px;
         }
 
-        .btn-gofreight {
+        .btn-freightx {
             background: #4b77be;
             color: #fff;
             border: none;
@@ -208,7 +209,7 @@
             box-shadow: 0 2px 4px rgba(75, 119, 190, 0.1);
         }
 
-        .btn-gofreight:hover {
+        .btn-freightx:hover {
             background: #3a62a4;
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(75, 119, 190, 0.2);
@@ -451,19 +452,36 @@
         
         <div class="charts-row">
             <!-- Balance Overview -->
-            <div class="portlet light chart-container" style="border-top: 3px solid #3b82f6;">
+            <div class="portlet light chart-container relative overflow-visible" style="border-top: 3px solid #3b82f6;">
                 <div class="portlet-title">
                     <div class="caption">
                         <i class="fa fa-line-chart"></i>
                         <span>BALANCE OVERVIEW</span>
                     </div>
                     <div class="actions">
-                        <select id="balance-period" @change="reloadBalanceChart($event.target.value)" class="select-period">
-                            <option value="3">Last 3 Months</option>
-                            <option value="6" selected>Last 6 Months</option>
-                            <option value="12">Last 12 Months</option>
-                            <option value="24">Last 24 Months</option>
-                        </select>
+                        <div class="relative" x-data="{ open: false, selectedPeriod: 6, selectedLabel: 'Last 6 Months' }">
+                            <button @click="open = !open" type="button" class="flex items-center space-x-1.5 px-3 py-1 bg-white border border-gray-300 rounded-md text-[11px] font-bold text-gray-700 hover:border-blue-500 shadow-sm transition-all">
+                                <i class="fa fa-calendar text-blue-500 text-[10px]"></i>
+                                <span x-text="selectedLabel">Last 6 Months</span>
+                                <i class="fa fa-angle-down text-gray-400 text-[11px] transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-xl py-1 z-[999]" x-cloak>
+                                <template x-for="opt in [
+                                    {val: 3, label: 'Last 3 Months'},
+                                    {val: 6, label: 'Last 6 Months'},
+                                    {val: 12, label: 'Last 12 Months'},
+                                    {val: 24, label: 'Last 24 Months'}
+                                ]">
+                                    <button @click="selectedPeriod = opt.val; selectedLabel = opt.label; open = false; reloadBalanceChart(opt.val)"
+                                            type="button"
+                                            class="w-full text-left px-3 py-1.5 text-[11px] font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between transition-colors">
+                                        <span x-text="opt.label"></span>
+                                        <i x-show="selectedPeriod === opt.val" class="fa fa-check text-blue-600 text-[10px]"></i>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="chart-stats-row" id="balance-stats-row">
@@ -486,19 +504,36 @@
             </div>
 
             <!-- Sales Forecast -->
-            <div class="portlet light chart-container" style="border-top: 3px solid #8b5cf6; overflow: hidden;">
+            <div class="portlet light chart-container relative overflow-visible" style="border-top: 3px solid #8b5cf6;">
                 <div class="portlet-title">
                     <div class="caption">
                         <i class="fa fa-bar-chart"></i>
                         <span>SALES FORECAST</span>
                     </div>
                     <div class="actions">
-                        <select id="forecast-period" @change="reloadForecastChart($event.target.value)" class="select-period">
-                            <option value="3">Last 3 Months</option>
-                            <option value="6">Last 6 Months</option>
-                            <option value="12" selected>Last 12 Months</option>
-                            <option value="24">Last 24 Months</option>
-                        </select>
+                        <div class="relative" x-data="{ open: false, selectedPeriod: 12, selectedLabel: 'Last 12 Months' }">
+                            <button @click="open = !open" type="button" class="flex items-center space-x-1.5 px-3 py-1 bg-white border border-gray-300 rounded-md text-[11px] font-bold text-gray-700 hover:border-purple-500 shadow-sm transition-all">
+                                <i class="fa fa-calendar text-purple-500 text-[10px]"></i>
+                                <span x-text="selectedLabel">Last 12 Months</span>
+                                <i class="fa fa-angle-down text-gray-400 text-[11px] transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                            </button>
+
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-xl py-1 z-[999]" x-cloak>
+                                <template x-for="opt in [
+                                    {val: 3, label: 'Last 3 Months'},
+                                    {val: 6, label: 'Last 6 Months'},
+                                    {val: 12, label: 'Last 12 Months'},
+                                    {val: 24, label: 'Last 24 Months'}
+                                ]">
+                                    <button @click="selectedPeriod = opt.val; selectedLabel = opt.label; open = false; reloadForecastChart(opt.val)"
+                                            type="button"
+                                            class="w-full text-left px-3 py-1.5 text-[11px] font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-600 flex items-center justify-between transition-colors">
+                                        <span x-text="opt.label"></span>
+                                        <i x-show="selectedPeriod === opt.val" class="fa fa-check text-purple-600 text-[10px]"></i>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div style="padding: 15px 15px 0 15px; flex: 1; overflow: hidden;">
@@ -573,6 +608,15 @@
 
                 init() {
                     this.initCharts();
+                    window.addEventListener('resize', () => {
+                        if (this.balanceChart) try { this.balanceChart.render(); } catch(e) {}
+                        if (this.forecastChart) try { this.forecastChart.render(); } catch(e) {}
+                    });
+                    window.addEventListener('sidebar-toggled', () => {
+                        setTimeout(() => {
+                            window.dispatchEvent(new Event('resize'));
+                        }, 250);
+                    });
                 },
 
                 handleKpiClick(key) {
@@ -617,11 +661,41 @@
                 },
 
                 initCharts() {
-                    this.initBalanceChart();
-                    this.initForecastChart();
+                    const renderAll = () => {
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.initBalanceChart();
+                                this.initForecastChart();
+                            }, 50);
+                        });
+                    };
+
+                    if (typeof ApexCharts !== 'undefined') {
+                        renderAll();
+                    } else {
+                        let attempts = 0;
+                        const timer = setInterval(() => {
+                            attempts++;
+                            if (typeof ApexCharts !== 'undefined') {
+                                clearInterval(timer);
+                                renderAll();
+                            } else if (attempts > 50) {
+                                clearInterval(timer);
+                                console.error('ApexCharts script failed to load.');
+                            }
+                        }, 100);
+                    }
                 },
 
                 initBalanceChart() {
+                    var chartElement = document.querySelector("#balance-overview-chart");
+                    if (!chartElement || typeof ApexCharts === 'undefined') return;
+
+                    if (this.balanceChart) {
+                        try { this.balanceChart.destroy(); } catch(e) {}
+                    }
+                    chartElement.innerHTML = '';
+
                     var options = {
                         series: [{
                             name: 'Revenue',
@@ -709,7 +783,21 @@
                                 height: 12,
                                 radius: 3
                             }
-                        }
+                        },
+                        responsive: [{
+                            breakpoint: 768,
+                            options: {
+                                chart: { height: 240 },
+                                legend: { position: 'bottom', horizontalAlign: 'center' },
+                                xaxis: { labels: { rotate: -45, style: { fontSize: '9px' } } }
+                            }
+                        }, {
+                            breakpoint: 480,
+                            options: {
+                                chart: { height: 200 },
+                                legend: { fontSize: '10px' }
+                            }
+                        }]
                     };
 
                     this.balanceChart = new ApexCharts(document.querySelector("#balance-overview-chart"), options);
@@ -833,7 +921,20 @@
                             marker: {
                                 show: true
                             }
-                        }
+                        },
+                        responsive: [{
+                            breakpoint: 768,
+                            options: {
+                                chart: { height: 260 },
+                                plotOptions: { bar: { columnWidth: '85%' } }
+                            }
+                        }, {
+                            breakpoint: 480,
+                            options: {
+                                chart: { height: 220 },
+                                legend: { fontSize: '10px' }
+                            }
+                        }]
                     };
 
                     var chartElement = document.querySelector("#sales-forecast-chart");

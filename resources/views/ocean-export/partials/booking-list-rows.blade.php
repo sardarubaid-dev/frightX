@@ -18,7 +18,7 @@
     </td>
     {{-- Booking No. --}}
     <td class="sticky-col" style="left:25px;" onclick="event.stopPropagation()">
-        <a href="{{ route('ocean-bookings.edit', $b->id) }}" class="col-link" target="_blank">{{ $b->booking_no }}</a>
+        <a href="{{ route('ocean-bookings.edit', $b->id) }}" class="col-link">{{ $b->booking_no }}</a>
     </td>
     {{-- Color --}}
     <td class="sticky-col" style="left:155px;text-align:center;">

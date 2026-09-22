@@ -127,11 +127,69 @@ class DropdownOptionsController extends Controller
 
     public function quotations(Request $request)
     {
-        $quotations = Quotation::with(['customer:id,company_name'])
-            ->orderBy('quote_no', 'desc')
-            ->select('id', 'quote_no', 'customer_id', 'status')
-            ->limit(100)
-            ->get();
+        $query = Quotation::with(['customer', 'salesPerson', 'pol', 'pod', 'items.currency']);
+
+        $moduleFilter = $request->input('module') 
+                     ?? $request->input('transport_mode') 
+                     ?? $request->input('shipping_type') 
+                     ?? $request->input('type');
+
+        if ($moduleFilter) {
+            $query->forModule($moduleFilter);
+        }
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+        if ($request->filled('quote_no')) {
+            $query->where('quote_no', 'like', '%' . $request->quote_no . '%');
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('pol_id')) {
+            $query->where('pol_id', $request->pol_id);
+        }
+        if ($request->filled('pod_id')) {
+            $query->where('pod_id', $request->pod_id);
+        }
+        if ($request->filled('sales_person_id')) {
+            $query->where('sales_person_id', $request->sales_person_id);
+        }
+        if ($request->filled('commodity')) {
+            $query->where('commodity', 'like', '%' . $request->commodity . '%');
+        }
+
+        $quotations = $query->orderBy('quote_no', 'desc')->limit(100)->get()->map(function($q) {
+            return [
+                'id' => $q->id,
+                'quote_no' => $q->quote_no,
+                'customer_id' => $q->customer_id,
+                'customer_name' => $q->customer ? ($q->customer->company_name ?? $q->customer->name) : 'N/A',
+                'pol_id' => $q->pol_id,
+                'pol_name' => $q->pol ? $q->pol->name : 'N/A',
+                'pod_id' => $q->pod_id,
+                'pod_name' => $q->pod ? $q->pod->name : 'N/A',
+                'sales_person_id' => $q->sales_person_id,
+                'sales_person_name' => $q->salesPerson ? $q->salesPerson->name : 'N/A',
+                'status' => $q->status,
+                'commodity' => $q->commodity,
+                'expiry_date' => $q->expiry_date ? (is_string($q->expiry_date) ? substr($q->expiry_date, 0, 10) : $q->expiry_date->format('Y-m-d')) : '',
+                'created_at' => $q->created_at ? $q->created_at->format('Y-m-d') : '',
+                'items' => $q->items ? $q->items->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'charge_code' => $item->charge_code ?? $item->code ?? '',
+                        'charge_name' => $item->charge_name ?? $item->description ?? '',
+                        'currency' => $item->currency ? $item->currency->code : 'USD',
+                        'rate' => (float)($item->rate ?? 0),
+                        'qty' => (float)($item->qty ?? $item->quantity ?? 1),
+                        'unit' => $item->unit ?? 'UNIT',
+                        'amount' => (float)($item->amount ?? ($item->rate * $item->qty ?? 0)),
+                        'selected' => true,
+                    ];
+                }) : [],
+            ];
+        });
 
         return response()->json(['data' => $quotations]);
     }

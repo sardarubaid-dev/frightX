@@ -79,7 +79,11 @@ class WarehouseInventoryItemController extends Controller
             $data['product_photo'] = $request->file('product_photo')->store('items/photos', 'public');
         }
 
-        WarehouseInventoryItem::create($data);
+        $item = WarehouseInventoryItem::create($data);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Inventory item created successfully.', 'item' => $item]);
+        }
 
         return redirect()->route('items.index')
             ->with('success', 'Inventory item created successfully.');
@@ -104,14 +108,22 @@ class WarehouseInventoryItemController extends Controller
 
         $item->update($data);
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Inventory item updated successfully.', 'item' => $item]);
+        }
+
         return redirect()->route('items.index')
             ->with('success', 'Inventory item updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $item = WarehouseInventoryItem::findOrFail($id);
         $item->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Inventory item deleted successfully.']);
+        }
 
         return redirect()->route('items.index')
             ->with('success', 'Inventory item deleted successfully.');
@@ -230,7 +242,94 @@ class WarehouseInventoryItemController extends Controller
 
         $items = $query->orderBy($sortField, $sortDir)->paginate(20)->withQueryString();
 
-        return view('warehouse.inventory.summary', compact('items', 'stats'));
+        $warehouses = TradePartner::whereIn('type', ['WH', 'WAREHOUSE'])->orderBy('name')->get();
+        $units = PackageUnit::all();
+        $customers = TradePartner::whereNotIn('type', ['WH', 'WAREHOUSE'])->whereNotNull('name')->orderBy('name')->get();
+
+        return view('warehouse.inventory.summary', compact('items', 'stats', 'warehouses', 'units', 'customers'));
+    }
+
+    public function summaryStore(Request $request)
+    {
+        $validated = $request->validate([
+            'warehouse_id' => 'required|integer|exists:trade_partners,id',
+            'sku' => 'required|string|max:100',
+            'item_name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'customer_id' => 'nullable|integer',
+            'upc_ean' => 'nullable|string|max:100',
+            'unit_id' => 'nullable|integer',
+            'on_hand_qty' => 'required|numeric|min:0',
+            'available_qty' => 'required|numeric|min:0',
+            'weight_kg' => 'nullable|numeric|min:0',
+            'volume_cbm' => 'nullable|numeric|min:0',
+            'status' => 'nullable|string|in:enable,disable',
+        ]);
+
+        $validated['status'] = $validated['status'] ?? 'enable';
+        $item = WarehouseInventoryItem::create($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Inventory summary item created successfully.', 'item' => $item]);
+        }
+
+        return redirect()->route('inventory.summary')->with('success', 'Inventory summary item created successfully.');
+    }
+
+    public function summaryUpdate(Request $request, $id)
+    {
+        $item = WarehouseInventoryItem::findOrFail($id);
+        $validated = $request->validate([
+            'warehouse_id' => 'required|integer|exists:trade_partners,id',
+            'sku' => 'required|string|max:100',
+            'item_name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'customer_id' => 'nullable|integer',
+            'upc_ean' => 'nullable|string|max:100',
+            'unit_id' => 'nullable|integer',
+            'on_hand_qty' => 'required|numeric|min:0',
+            'available_qty' => 'required|numeric|min:0',
+            'weight_kg' => 'nullable|numeric|min:0',
+            'volume_cbm' => 'nullable|numeric|min:0',
+            'status' => 'nullable|string|in:enable,disable',
+        ]);
+
+        $item->update($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Inventory summary item updated successfully.', 'item' => $item]);
+        }
+
+        return redirect()->route('inventory.summary')->with('success', 'Inventory summary item updated successfully.');
+    }
+
+    public function summaryDestroy(Request $request, $id)
+    {
+        $item = WarehouseInventoryItem::findOrFail($id);
+        $item->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Inventory summary item deleted successfully.']);
+        }
+
+        return redirect()->route('inventory.summary')->with('success', 'Inventory summary item deleted successfully.');
+    }
+
+    public function summaryBulkDelete(Request $request)
+    {
+        if ($request->isMethod('GET')) {
+            return redirect()->route('inventory.summary');
+        }
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer|exists:warehouse_inventory_items,id']);
+        $count = WarehouseInventoryItem::whereIn('id', $request->ids)->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $count . ' item(s) deleted successfully.'
+            ]);
+        }
+        return redirect()->route('inventory.summary')->with('success', $count . ' item(s) deleted successfully.');
     }
 
     public function detail(Request $request)
@@ -289,7 +388,127 @@ class WarehouseInventoryItemController extends Controller
 
         $items = $query->orderBy($sortField, $sortDir)->paginate(20)->withQueryString();
 
-        return view('warehouse.inventory.detail', compact('items', 'totals'));
+        $customers = TradePartner::whereNotIn('type', ['WH', 'WAREHOUSE'])->whereNotNull('name')->orderBy('name')->get();
+        $warehouses = TradePartner::whereIn('type', ['WH', 'WAREHOUSE'])->orderBy('name')->get();
+        $offices = \App\Models\Office::where('is_active', true)->get();
+        $packageUnits = PackageUnit::all();
+        $receivings = \App\Models\WarehouseReceiving::latest()->take(50)->get();
+
+        return view('warehouse.inventory.detail', compact('items', 'totals', 'customers', 'warehouses', 'offices', 'packageUnits', 'receivings'));
+    }
+
+    public function detailStore(Request $request)
+    {
+        $validated = $request->validate([
+            'warehouse_receiving_id' => 'nullable|integer',
+            'sku_no' => 'required|string|max:100',
+            'customer_po' => 'nullable|string|max:100',
+            'description' => 'required|string|max:255',
+            'order_po_no' => 'nullable|string|max:100',
+            'order_qty' => 'nullable|numeric|min:0',
+            'qty' => 'required|numeric|min:0',
+            'qty_unit' => 'nullable|string|max:50',
+            'pack' => 'nullable|numeric|min:0',
+            'pack_unit' => 'nullable|string|max:50',
+            'pallet' => 'nullable|string|max:100',
+            'weight_kg' => 'nullable|numeric|min:0',
+            'measure_cbm' => 'nullable|numeric|min:0',
+        ]);
+
+        if (empty($validated['warehouse_receiving_id'])) {
+            $validated['warehouse_receiving_id'] = null;
+        }
+
+        $item = WarehouseReceivingItem::create($validated);
+
+        // Also sync/create WarehouseInventoryItem master record if SKU doesn't exist
+        $master = WarehouseInventoryItem::where('sku', $item->sku_no)->first();
+        if (!$master) {
+            $defaultWh = TradePartner::whereIn('type', ['WH', 'WAREHOUSE'])->first();
+            WarehouseInventoryItem::create([
+                'warehouse_id' => $defaultWh?->id,
+                'sku' => $item->sku_no,
+                'item_name' => $item->description,
+                'description' => $item->description,
+                'on_hand_qty' => $item->qty,
+                'available_qty' => $item->qty,
+                'weight_kg' => $item->weight_kg ?? 0,
+                'volume_cbm' => $item->measure_cbm ?? 0,
+                'status' => 'enable',
+            ]);
+        } else {
+            $master->update([
+                'on_hand_qty' => $master->on_hand_qty + $item->qty,
+                'available_qty' => $master->available_qty + $item->qty,
+            ]);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Inventory detail created successfully.', 'item' => $item]);
+        }
+
+        return redirect()->route('inventory.detail')->with('success', 'Inventory detail record created successfully.');
+    }
+
+    public function detailUpdate(Request $request, $id)
+    {
+        $item = WarehouseReceivingItem::findOrFail($id);
+        $validated = $request->validate([
+            'warehouse_receiving_id' => 'nullable|integer',
+            'sku_no' => 'required|string|max:100',
+            'customer_po' => 'nullable|string|max:100',
+            'description' => 'required|string|max:255',
+            'order_po_no' => 'nullable|string|max:100',
+            'order_qty' => 'nullable|numeric|min:0',
+            'qty' => 'required|numeric|min:0',
+            'qty_unit' => 'nullable|string|max:50',
+            'pack' => 'nullable|numeric|min:0',
+            'pack_unit' => 'nullable|string|max:50',
+            'pallet' => 'nullable|string|max:100',
+            'weight_kg' => 'nullable|numeric|min:0',
+            'measure_cbm' => 'nullable|numeric|min:0',
+        ]);
+
+        if (empty($validated['warehouse_receiving_id'])) {
+            $validated['warehouse_receiving_id'] = null;
+        }
+
+        $item->update($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Inventory detail record updated successfully.', 'item' => $item]);
+        }
+
+        return redirect()->route('inventory.detail')->with('success', 'Inventory detail record updated successfully.');
+    }
+
+    public function detailDestroy(Request $request, $id)
+    {
+        $item = WarehouseReceivingItem::findOrFail($id);
+        $item->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Inventory detail record deleted successfully.']);
+        }
+
+        return redirect()->route('inventory.detail')->with('success', 'Inventory detail record deleted successfully.');
+    }
+
+    public function detailBulkDelete(Request $request)
+    {
+        if ($request->isMethod('GET')) {
+            return redirect()->route('inventory.detail');
+        }
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'integer|exists:warehouse_receiving_items,id']);
+        $count = WarehouseReceivingItem::whereIn('id', $request->ids)->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $count . ' detail record(s) deleted successfully.'
+            ]);
+        }
+        return redirect()->route('inventory.detail')->with('success', $count . ' record(s) deleted successfully.');
     }
 
     public function detailExportCsv(Request $request)

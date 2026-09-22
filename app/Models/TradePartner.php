@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class TradePartner extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected static function boot()
     {
@@ -34,7 +36,7 @@ class TradePartner extends Model
     }
 
     protected $fillable = [
-        'type', 'code', 'alias', 'name', 'print_name', 'local_name', 'local_address',
+        'company_id', 'type', 'code', 'alias', 'name', 'print_name', 'local_name', 'local_address',
         'city', 'state', 'zip_code', 'country_id', 'iata_code', 'corporation_no',
         'sita_profile', 'account_no', 'scac_code', 'firms_code', 'cbsa_carrier_code',
         'phone', 'fax', 'url', 'email', 'status', 'sales_office_id', 'sales_person_id',
@@ -260,4 +262,47 @@ class TradePartner extends Model
             return $log['date'] . ' ' . $log['time'];
         })->values()->toArray();
     }
+
+    /**
+     * Get the formatted address block for printing.
+     */
+    public function getAddressAttribute(): string
+    {
+        $addressParts = [];
+        
+        if (!empty($this->billing_address)) {
+            $addressParts[] = trim($this->billing_address);
+        } elseif (!empty($this->local_address)) {
+            $addressParts[] = trim($this->local_address);
+        }
+        
+        $csz = [];
+        if (!empty($this->city)) {
+            $csz[] = trim($this->city);
+        }
+        if (!empty($this->state)) {
+            $csz[] = trim($this->state);
+        }
+        if (!empty($this->zip_code)) {
+            $csz[] = trim($this->zip_code);
+        }
+        
+        if (!empty($csz)) {
+            $cszString = implode(', ', $csz);
+            $mainAddress = count($addressParts) > 0 ? $addressParts[0] : '';
+            $mainAddressLower = strtolower($mainAddress);
+            $cityLower = !empty($this->city) ? strtolower(trim($this->city)) : null;
+            
+            if (empty($mainAddress) || ($cityLower && strpos($mainAddressLower, $cityLower) === false)) {
+                $addressParts[] = $cszString;
+            }
+        }
+        
+        if ($this->country) {
+            $addressParts[] = trim($this->country->name);
+        }
+        
+        return implode("\n", $addressParts);
+    }
 }
+

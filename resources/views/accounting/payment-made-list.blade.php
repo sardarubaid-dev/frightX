@@ -1,6 +1,37 @@
 <x-layout>
     @push('styles')
     <x-list-styles />
+    <style>
+        @media (max-width: 768px) {
+            .page-content { padding: 2px !important; overflow-x: hidden !important; }
+            .portlet.light { margin: 0 !important; border-radius: 0 !important; overflow: hidden !important; }
+            .portlet-title { flex-direction: column !important; align-items: flex-start !important; padding: 6px !important; gap: 6px; }
+            .portlet-title .caption { width: 100%; flex-wrap: wrap; }
+            .portlet-title .actions { width: 100%; flex-wrap: wrap; gap: 3px !important; }
+            .btn-action-round { font-size: 9px !important; padding: 0 6px !important; height: 18px !important; }
+            .portlet-tool { flex-direction: column !important; align-items: flex-start !important; padding: 6px !important; gap: 6px !important; }
+            .portlet-tool > div, .portlet-tool > form { width: 100%; }
+            .btn-group { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+            .btn-tool { font-size: 8px !important; padding: 0 6px !important; height: 20px !important; flex: 0 1 auto; }
+            .input-inline { width: 100% !important; font-size: 9px !important; }
+            .portlet-body { padding: 0 !important; overflow: hidden !important; }
+            .grid-container { width: 100% !important; overflow: hidden !important; }
+            .grid-wrapper { width: 100% !important; height: calc(100vh - 350px) !important; min-height: 200px !important; overflow-x: auto !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
+            .grid-table { font-size: 8px !important; width: auto !important; min-width: 1000px !important; }
+            .grid-table th, .grid-table td { padding: 2px 4px !important; height: 22px !important; }
+            .sticky-col { font-size: 8px !important; }
+            .grid-table th:nth-child(3), .grid-table td:nth-child(3),
+            .grid-table th:nth-child(4), .grid-table td:nth-child(4),
+            .grid-table th:nth-child(5), .grid-table td:nth-child(5) { position: static !important; left: auto !important; }
+            .filter-input { height: 18px !important; font-size: 8px !important; }
+            .portlet-tool.bottom { flex-direction: column !important; gap: 6px; }
+            .portlet-tool.bottom > div { width: 100% !important; }
+        }
+        @media (max-width: 480px) {
+            .grid-table { font-size: 7px !important; min-width: 800px !important; }
+            .grid-table th:nth-child(2), .grid-table td:nth-child(2) { position: static !important; left: auto !important; }
+        }
+    </style>
     @endpush
 
     {{-- Toast Container --}}
@@ -78,7 +109,7 @@
             <div class="portlet-tool">
                 <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('accounting.payment-make') }}" title="New Payment" target="_blank">
+                        <a class="btn-tool green" href="{{ route('accounting.payment-make') }}" title="New Payment">
                             <i class="fa fa-plus"></i>
                         </a>
                         <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()">
@@ -101,7 +132,7 @@
                             <thead>
                                 {{-- Header Row --}}
                                 <tr id="header-row">
-                                    <th class="sticky-col sticky-col-header" data-col="check" style="width:25px;text-align:center;">
+                                    <th class="sticky-col sticky-col-header" data-col="check" style="width:25px;left:0;text-align:center;">
                                         <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" title="Select All">
                                     </th>
                                     <th class="sticky-col sticky-col-header" data-col="lock" style="width:25px;left:25px;text-align:center;"><i class="fa fa-lock"></i></th>
@@ -151,7 +182,7 @@
                                     data-amount="{{ $payment->amount }}"
                                     onclick="rowClick(event, this)"
                                 >
-                                    <td class="sticky-col" style="width:25px;text-align:center;" onclick="event.stopPropagation()">
+                                    <td class="sticky-col" style="width:25px;left:0;text-align:center;" onclick="event.stopPropagation()">
                                         <input type="checkbox" class="row-check" value="{{ $payment->id }}" onchange="updateToolbar()">
                                     </td>
                                     <td class="sticky-col" style="width:25px;left:25px;text-align:center;" onclick="event.stopPropagation()">
@@ -170,24 +201,24 @@
                                     <td class="sticky-col" style="width:35px;left:270px;text-align:center;">
                                         <span class="color-mark" style="background:{{ $payment->color ?? '#94a3b8' }}" title="Click to change status color" onclick="event.stopPropagation();openColorPicker({{ $payment->id }}, '{{ $payment->color ?? '' }}')"></span>
                                     </td>
-                                    <td>{{ $payment->payment_method }}</td>
-                                    <td>{{ $payment->reference_no }}</td>
-                                    <td>{{ $payment->bank_name ?? '' }}</td>
-                                    <td style="text-align:right;">{{ number_format($payment->amount, 2) }}</td>
-                                    <td style="text-align:right;">
+                                    <td data-col="type">{{ $payment->payment_method }}</td>
+                                    <td data-col="ref_no"><a href="{{ route('accounting.payment.edit', $payment->id) }}" class="col-link" onclick="event.stopPropagation()">{{ $payment->payment_no }}</a></td>
+                                    <td data-col="bank">{{ $payment->bank_name ?? '' }}</td>
+                                    <td data-col="amount" style="text-align:right;font-weight:600;color:#16a34a;">${{ number_format($payment->amount, 2) }}</td>
+                                    <td data-col="bank_cur" style="text-align:right;">
                                         <span style="color:#999;">{{ $payment->bankCurrency?->code ?? $payment->currency?->code ?? 'CAD' }}</span>
-                                        <span style="margin-left:6px;">{{ number_format($payment->amount, 2) }}</span>
+                                        <span style="margin-left:6px;">${{ number_format($payment->amount, 2) }}</span>
                                     </td>
-                                    <td>{{ $payment->clear_date?->format('m-d-Y') ?? '' }}</td>
-                                    <td style="text-align:center;">{!! $payment->void_date ? '<i class="fa fa-check" style="color:#ef4444;"></i>' : '' !!}</td>
-                                    <td>{{ $payment->void_date?->format('m-d-Y') ?? '' }}</td>
-                                    <td>{{ $payment->office?->code ?? '' }}</td>
-                                    <td style="text-align:center;">
+                                    <td data-col="clear_date">{{ $payment->clear_date?->format('m-d-Y') ?? '' }}</td>
+                                    <td data-col="void" style="text-align:center;">{!! $payment->void_date ? '<i class="fa fa-check" style="color:#ef4444;"></i>' : '' !!}</td>
+                                    <td data-col="void_date">{{ $payment->void_date?->format('m-d-Y') ?? '' }}</td>
+                                    <td data-col="office">{{ $payment->office?->code ?? '' }}</td>
+                                    <td data-col="print" style="text-align:center;">
                                         @if($payment->show_party_on_check)
                                             <i class="fa fa-check" style="color:#22c55e;font-weight:bold;"></i>
                                         @endif
                                     </td>
-                                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">{{ $payment->remark ?? '' }}</td>
+                                    <td data-col="remark" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;" title="{{ $payment->remark }}">{{ $payment->remark ?? '' }}</td>
                                 </tr>
                             @empty
                                 <tr id="empty-row">

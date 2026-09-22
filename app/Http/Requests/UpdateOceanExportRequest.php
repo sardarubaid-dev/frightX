@@ -55,6 +55,23 @@ class UpdateOceanExportRequest extends FormRequest
             }
             $this->merge(['containers' => $containers]);
         }
+
+        if ($this->has('hbls') && is_array($this->hbls)) {
+            $hbls = $this->hbls;
+            foreach ($hbls as $index => $hbl) {
+                foreach (['is_rail', 'is_express_bl', 'is_door_move', 'is_customs_clear', 'is_customs_hold', 'is_obl_received', 'is_fr_released', 'is_an_sent', 'is_do_sent', 'is_ecommerce', 'is_customs_doc'] as $boolField) {
+                    if (isset($hbl[$boolField])) {
+                        $hbls[$index][$boolField] = filter_var($hbl[$boolField], FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+                foreach (['date_of_issue', 'obl_received_date', 'fr_released_date', 'an_sent_date', 'do_sent_date'] as $dateField) {
+                    if (isset($hbl[$dateField]) && $hbl[$dateField] === '') {
+                        $hbls[$index][$dateField] = null;
+                    }
+                }
+            }
+            $this->merge(['hbls' => $hbls]);
+        }
     }
 
     public function rules()
@@ -195,6 +212,7 @@ class UpdateOceanExportRequest extends FormRequest
             'hbls' => 'nullable|array',
             'hbls.*.id' => 'nullable|exists:ocean_export_hbls,id',
             'hbls.*.hbl_no' => 'required_with:hbls|string',
+            'hbls.*.quotation_no' => 'nullable|string',
             'hbls.*.customer_id' => 'nullable|exists:trade_partners,id',
             'hbls.*.shipper_id' => 'nullable|exists:trade_partners,id',
             'hbls.*.consignee_id' => 'nullable|exists:trade_partners,id',
@@ -208,10 +226,20 @@ class UpdateOceanExportRequest extends FormRequest
             'hbls.*.del_id' => 'nullable|exists:ports,id',
             'hbls.*.fdest_id' => 'nullable|exists:ports,id',
             'hbls.*.receipt_id' => 'nullable|exists:ports,id',
+            'hbls.*.pol_id' => 'nullable|exists:ports,id',
             'hbls.*.sales_person_id' => 'nullable|exists:users,id',
             'hbls.*.vessel_name' => 'nullable|string',
             'hbls.*.voyage_no' => 'nullable|string',
+            'hbls.*.pre_carriage_by' => 'nullable|string',
+            'hbls.*.service_term' => 'nullable|string',
+            'hbls.*.ship_mode' => 'nullable|string',
+            'hbls.*.ship_type' => 'nullable|string',
+            'hbls.*.cargo_type' => 'nullable|string',
             'hbls.*.incoterms_id' => 'nullable|string',
+            'hbls.*.sc_no' => 'nullable|string',
+            'hbls.*.lc_no' => 'nullable|string',
+            'hbls.*.freight_payable_at' => 'nullable|string',
+            'hbls.*.is_rail' => 'nullable|boolean',
             'hbls.*.is_express_bl' => 'nullable|boolean',
             'hbls.*.is_door_move' => 'nullable|boolean',
             'hbls.*.is_customs_clear' => 'nullable|boolean',
@@ -229,6 +257,9 @@ class UpdateOceanExportRequest extends FormRequest
             'hbls.*.do_sent_date' => 'nullable|date',
             'hbls.*.hbl_remark' => 'nullable|string',
             'hbls.*.po_no' => 'nullable|string',
+            'hbls.*.name_account' => 'nullable|string',
+            'hbls.*.group_comm' => 'nullable|string',
+            'hbls.*.line_code' => 'nullable|string',
             
             'charges' => 'nullable|array',
             'charges.*.id' => 'nullable|integer',

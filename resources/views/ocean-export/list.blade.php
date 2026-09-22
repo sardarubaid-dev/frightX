@@ -2,7 +2,44 @@
     @push('styles')
     <x-list-styles />
     <style>
-        /* Mobile Responsive Enhancements */
+        /* Button Group Styling - Better Alignment */
+        .btn-group {
+            display: inline-flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .btn-group .btn-tool:not(:first-child) {
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-group .btn-tool {
+            border-radius: 0;
+            margin: 0;
+        }
+        
+        .btn-group .btn-tool:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .btn-group .btn-tool:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .portlet-tool {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Mobile Responsive Enhancements - FIXED SCROLLING */
         @media (max-width: 768px) {
             .page-content { 
                 padding: 2px !important; 
@@ -101,13 +138,67 @@
             .filter-input { 
                 height: 18px !important; 
                 font-size: 8px !important;
+                padding: 0 3px !important;
             }
             
+            /* Modals on mobile */
+            .modal-box, .confirm-box { 
+                margin: 10px;
+                width: calc(100% - 20px);
+                max-width: 100%;
+                min-width: 0 !important;
+            }
+            .modal-body { 
+                padding: 8px !important;
+                min-width: 0 !important;
+            }
+            .confirm-box { padding: 16px !important; }
+            
+            /* Config Panel on mobile */
+            .config-panel {
+                right: 0;
+                left: 0;
+                top: 22px;
+                max-width: 100%;
+                max-height: 250px;
+            }
+            
+            /* Pagination on mobile */
             .portlet-tool.bottom { 
                 flex-direction: column !important; 
                 gap: 6px;
             }
             .portlet-tool.bottom > div { width: 100% !important; }
+            .pagination { 
+                justify-content: center;
+                font-size: 9px !important;
+            }
+            .tp-page-btn {
+                min-width: 20px !important;
+                height: 18px !important;
+                padding: 0 4px !important;
+                font-size: 8px !important;
+            }
+            
+            /* Toast on mobile */
+            .toast-container { 
+                top: 10px; 
+                right: 10px;
+                left: 10px;
+            }
+            .toast { 
+                font-size: 10px !important;
+                padding: 6px 10px !important;
+            }
+            
+            /* Breadcrumbs on mobile */
+            .page-bar { 
+                padding: 6px 10px !important;
+                margin-bottom: 8px !important;
+            }
+            .page-breadcrumb li { font-size: 10px !important; }
+            
+            #sel-badge { font-size: 8px !important; }
         }
         
         @media (max-width: 480px) {
@@ -115,25 +206,46 @@
                 font-size: 7px !important; 
                 min-width: 1800px !important;
             }
+            .grid-table th, .grid-table td { 
+                padding: 2px 3px !important;
+                height: 20px !important;
+            }
+            .btn-action-round, .btn-tool { 
+                font-size: 8px !important;
+                padding: 0 4px !important;
+            }
             
-            /* Only checkbox sticky on mobile */
+            /* Keep only checkbox sticky on very small screens */
             .grid-table th:nth-child(2), .grid-table td:nth-child(2) {
                 position: static !important;
                 left: auto !important;
             }
         }
         
+        @media (max-width: 768px) and (orientation: landscape) {
+            .grid-wrapper { 
+                height: calc(100vh - 200px) !important;
+            }
+        }
+        
+        /* Touch-friendly targets */
         @media (hover: none) and (pointer: coarse) {
-            .btn-tool, .btn-action-round {
+            .btn-tool, .btn-action-round, .tp-page-btn {
                 min-height: 28px !important;
                 touch-action: manipulation;
             }
-            .filter-input {
+            .filter-input, .select-tool {
                 min-height: 24px !important;
+                touch-action: manipulation;
             }
             input[type="checkbox"] {
                 width: 18px;
                 height: 18px;
+                touch-action: manipulation;
+            }
+            .grid-wrapper {
+                -webkit-overflow-scrolling: touch !important;
+                scroll-behavior: smooth;
             }
         }
     </style>
@@ -202,7 +314,7 @@
                         </div>
                     </div>
                     <button class="btn-action-round white" onclick="exportExcel()" title="Download as CSV/Excel" id="btn-excel">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
@@ -211,7 +323,7 @@
             <div class="portlet-tool">
                 <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('ocean-export.create') }}" title="New Shipment" target="_blank">
+                        <a class="btn-tool green" href="{{ route('ocean-export.create') }}" title="New Shipment">
                             <i class="fa fa-plus"></i>
                         </a>
                         <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()">

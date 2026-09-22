@@ -67,7 +67,7 @@
                     <i class="fa fa-file-text-o"></i> General and Administrative Invoice (A/R) — New Entry
                 </h1>
                 <div style="display:flex;gap:4px;">
-                    <button type="button" class="btn-gofreight" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> SAVE</button>
+                    <button type="button" class="btn-freightx" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> SAVE</button>
                     <a href="{{ route('accounting.invoices.index') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>

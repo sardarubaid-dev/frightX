@@ -46,7 +46,7 @@
         }
 
         /* Buttons */
-        .btn-gofreight {
+        .btn-freightx, .btn-freightx {
             background: #3b82f6;
             color: #fff !important;
             border: none;
@@ -62,7 +62,7 @@
             transition: all 0.2s ease;
             box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2);
         }
-        .btn-gofreight:hover {
+        .btn-freightx:hover, .btn-freightx:hover {
             background: #2563eb;
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
@@ -96,11 +96,13 @@
         /* Form Inputs */
         .form-control-gf {
             width: 100%;
-            height: 20px;
+            height: 26px;
+            min-height: 26px;
             border: 1px solid #cbd5e1;
-            padding: 0 4px;
-            font-size: 10px;
-            border-radius: 2px;
+            padding: 2px 6px;
+            font-size: 11px;
+            line-height: 20px;
+            border-radius: 3px;
             background: #ffffff;
             color: #1e293b;
             font-family: inherit;
@@ -114,9 +116,16 @@
             -moz-appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
-            background-position: right 4px center;
-            background-size: 8px;
-            padding-right: 14px;
+            background-position: right 6px center;
+            background-size: 9px;
+            padding: 2px 20px 2px 6px;
+            line-height: 20px;
+        }
+        textarea.form-control-gf {
+            height: auto;
+            min-height: 140px !important;
+            line-height: 1.4;
+            padding: 6px 8px;
         }
         .form-control-gf:focus {
             border-color: #3b82f6;
@@ -130,24 +139,25 @@
         }
 
         .form-label-gf {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 600;
             color: #475569;
             display: inline-block;
-            width: 105px;
+            width: 115px;
             text-align: right;
             margin-right: 6px;
             white-space: nowrap;
             flex-shrink: 0;
-            line-height: 20px;
+            line-height: 26px;
+            height: 26px;
         }
 
         .form-group-gf {
             display: flex;
             align-items: center;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
             width: 100%;
-            min-height: 20px;
+            min-height: 26px;
         }
         .form-input-container {
             flex: 1;
@@ -179,6 +189,11 @@
             overflow-x: auto !important;
             white-space: nowrap !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        ul.gf-tabs::-webkit-scrollbar {
+            display: none !important;
         }
         ul.gf-tabs li {
             margin-bottom: -1px !important;
@@ -261,9 +276,33 @@
         .main-grid { display: flex; flex-direction: column; gap: 4px; width: 100%; }
         .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 12px; }
 
+        @media (max-width: 1280px) {
+            .main-grid { grid-template-columns: 1fr !important; }
+            .form-grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 1400px) { .form-grid-4 { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1100px) { .form-grid-4 { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 768px) { .form-grid-4 { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            .form-grid-4 { grid-template-columns: 1fr; }
+            .form-row { display: flex !important; flex-direction: column !important; gap: 6px !important; }
+            .form-row > .form-group { grid-column: span 12 !important; width: 100% !important; }
+        }
+        @media (max-width: 576px) {
+            .form-group-gf { flex-direction: column; align-items: flex-start; height: auto; min-height: unset; margin-bottom: 8px; }
+            .form-label-gf { width: 100% !important; text-align: left !important; margin-bottom: 2px; }
+            .form-input-container { width: 100%; }
+            .container-toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .container-toolbar > div { width: 100%; display: flex; flex-wrap: wrap; gap: 4px; margin-left: 0 !important; }
+            .modal-container { width: 95% !important; margin: 10px; }
+            .radio-group { flex-wrap: wrap; }
+            .gallery-toolbar { flex-direction: column; align-items: stretch; }
+            .page-bar { padding: 8px 10px; }
+            .portlet-title { flex-direction: column; align-items: flex-start; gap: 4px; padding: 6px 10px; }
+            .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .expanded-container { flex-direction: column; }
+            .expanded-col { width: 100% !important; border-right: none; border-bottom: 1px dashed #cbd5e1; }
+            .expanded-col:last-child { border-bottom: none; }
+        }
 
         /* Memos */
         .memo-section {
@@ -403,12 +442,13 @@
             color: #64748b;
         }
 
+        .expanded-row { display: none !important; }
         .expanded-row td { padding: 0 !important; background: #fafafa !important; border-top: none !important; border-bottom: 2px solid #e2e8f0 !important;}
         .expanded-container { display: flex; width: 100%; border-top: 1px dashed #cbd5e1; }
         .expanded-col { border-right: 1px dashed #cbd5e1; padding: 6px 10px; }
         .expanded-col:last-child { border-right: none; }
 
-        textarea.form-control-gf { height: 32px !important; resize: vertical; padding: 4px; }
+        textarea.form-control-gf { min-height: 140px !important; resize: vertical; padding: 6px; }
         .hbl-header { font-weight: 700; color: #3b82f6; font-size: 11px; margin-bottom: 4px; border-bottom: 2px solid #e2e8f0; padding-bottom: 2px; }
 
         .total-row { background: #f8fafc; font-weight: 700; font-size: 11px; color: #0f172a; }

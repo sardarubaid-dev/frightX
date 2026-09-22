@@ -69,9 +69,16 @@ class ReportController extends Controller
         $dateCol = match($periodType) {
             'etd' => 'departure',
             'eta' => 'destination',
+            'post_date' => 'quote_date',
             default => 'created_at',
         };
-        $query->whereBetween($dateCol, [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+
+        if ($dateFrom && $dateTo) {
+            $query->whereRaw("COALESCE({$dateCol}, created_at) BETWEEN ? AND ?", [
+                $dateFrom . ' 00:00:00',
+                $dateTo . ' 23:59:59'
+            ]);
+        }
 
         if (!empty($shippingTypes)) {
             $query->whereIn('shipping_type', $shippingTypes);
@@ -122,8 +129,9 @@ class ReportController extends Controller
 
         while ($current->lte($end)) {
             $monthLabel = $current->format('M Y');
-            $monthQ = $quotations->filter(function ($q) use ($current) {
-                return $q->created_at && $q->created_at->format('Y-m') === $current->format('Y-m');
+            $monthQ = $quotations->filter(function ($q) use ($current, $dateCol) {
+                $rawVal = $q->$dateCol ?? $q->created_at;
+                return $rawVal && Carbon::parse($rawVal)->format('Y-m') === $current->format('Y-m');
             });
 
             $monthAr = 0;
@@ -270,9 +278,16 @@ class ReportController extends Controller
         $dateCol = match($periodType) {
             'etd' => 'departure',
             'eta' => 'destination',
+            'post_date' => 'quote_date',
             default => 'created_at',
         };
-        $query->whereBetween($dateCol, [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+
+        if ($dateFrom && $dateTo) {
+            $query->whereRaw("COALESCE({$dateCol}, created_at) BETWEEN ? AND ?", [
+                $dateFrom . ' 00:00:00',
+                $dateTo . ' 23:59:59'
+            ]);
+        }
 
         if (!empty($shippingTypes)) {
             $query->whereIn('shipping_type', $shippingTypes);
@@ -396,9 +411,16 @@ class ReportController extends Controller
 
         $quotations = Quotation::query()
             ->with(['items', 'customer', 'office', 'salesPerson', 'pol', 'pod', 'carrier'])
-            ->whereNull('deleted_at')
-            ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
-            ->get();
+            ->whereNull('deleted_at');
+
+        if ($dateFrom && $dateTo) {
+            $quotations->whereRaw("COALESCE(quote_date, created_at) BETWEEN ? AND ?", [
+                $dateFrom . ' 00:00:00',
+                $dateTo . ' 23:59:59'
+            ]);
+        }
+
+        $quotations = $quotations->get();
 
         if (!empty($shippingTypes)) {
             $quotations = $quotations->filter(fn($q) => in_array($q->shipping_type, $shippingTypes));
@@ -560,14 +582,21 @@ class ReportController extends Controller
             'etd' => 'departure',
             'eta' => 'destination',
             'create_date' => 'create_date',
+            'post_date' => 'quote_date',
             default => 'created_at',
         };
 
         $query = Quotation::query()
             ->with(['items', 'salesPerson', 'office', 'customer', 'pol', 'pod'])
             ->whereNull('deleted_at')
-            ->whereBetween($dateCol, [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->whereNotNull('sales_person_id');
+
+        if ($dateFrom && $dateTo) {
+            $query->whereRaw("COALESCE({$dateCol}, created_at) BETWEEN ? AND ?", [
+                $dateFrom . ' 00:00:00',
+                $dateTo . ' 23:59:59'
+            ]);
+        }
 
         if (!empty($shippingTypes)) {
             $query->whereIn('shipping_type', $shippingTypes);
@@ -687,7 +716,7 @@ class ReportController extends Controller
 
     public function userLogData(Request $request)
     {
-        $dateFrom = $request->input('date_from', Carbon::now()->subDays(30)->format('Y-m-d'));
+        $dateFrom = $request->input('date_from', '2026-01-01');
         $dateTo = $request->input('date_to', Carbon::now()->format('Y-m-d'));
         $userId = $request->input('user_id');
         $sortBy = $request->input('sort_by', 'login');
@@ -715,8 +744,9 @@ class ReportController extends Controller
         foreach ($targetUsers as $user) {
             $userLogs = $allLogs->get($user->id, collect());
             $parts = explode(' ', $user->name, 2);
-            $firstName = $parts[0] ?? $user->name;
-            $lastName = $parts[1] ?? '';
+            $firstName = !empty($user->first_name) ? $user->first_name : ($parts[0] ?? $user->name);
+            $lastName = !empty($user->last_name) ? $user->last_name : ($parts[1] ?? '');
+            $office = !empty($user->office_name) ? $user->office_name : (!empty($user->office_code) ? $user->office_code : 'Head Office');
 
             $events = $userLogs->map(fn($log) => [
                 'type' => $log->action,
@@ -729,7 +759,7 @@ class ReportController extends Controller
             foreach ($logins as $idx => $loginEvent) {
                 $loginTime = $loginEvent['time'];
                 $nextLogin = $logins->get($idx + 1);
-                $nextLoginTime = is_array($nextLogin) ? $nextLogin['time'] : null;
+                $nextLoginTime = is_array($nextLogin) ? ($nextLogin['time'] ?? null) : ($nextLogin->time ?? null);
 
                 $pairedLogout = null;
                 foreach ($events as $ev) {
@@ -743,20 +773,39 @@ class ReportController extends Controller
                 }
 
                 $logoutTime = $pairedLogout ? $pairedLogout['time'] : null;
-                $durationEnd = $nextLoginTime ?? $logoutTime;
-                $durationMins = $durationEnd ? $loginTime->diff($durationEnd)->totalMinutes : 0;
-                $durationStr = $durationEnd ? $this->formatDuration($loginTime->diff($durationEnd)) : '';
 
                 if ($logoutTime) {
-                    $activeMins = $loginTime->diff($logoutTime)->totalMinutes;
-                    $activeStr = $this->formatDuration($loginTime->diff($logoutTime));
-                    $inactiveMins = $nextLoginTime ? $logoutTime->diff($nextLoginTime)->totalMinutes : 0;
-                    $inactiveStr = $nextLoginTime ? $this->formatDuration($logoutTime->diff($nextLoginTime)) : '';
-                } else {
+                    $durationEnd = $logoutTime;
+                    $durationDiff = $loginTime->diff($durationEnd);
+                    $durationMins = (int) $durationDiff->totalMinutes;
+                    $durationStr = $this->formatDuration($durationDiff);
+                    $activeMins = $durationMins;
+                    $activeStr = $durationStr;
+                    $inactiveDiff = $nextLoginTime ? $logoutTime->diff($nextLoginTime) : null;
+                    $inactiveMins = $inactiveDiff ? (int) $inactiveDiff->totalMinutes : 0;
+                    $inactiveStr = $inactiveDiff ? $this->formatDuration($inactiveDiff) : '--';
+                    $logoutDisplay = $logoutTime->format('m-d-Y H:i');
+                } elseif ($nextLoginTime) {
+                    $durationEnd = $nextLoginTime;
+                    $durationDiff = $loginTime->diff($durationEnd);
+                    $durationMins = (int) $durationDiff->totalMinutes;
+                    $durationStr = $this->formatDuration($durationDiff);
                     $activeMins = $durationMins;
                     $activeStr = $durationStr;
                     $inactiveMins = 0;
-                    $inactiveStr = '';
+                    $inactiveStr = '--';
+                    $logoutDisplay = $nextLoginTime->format('m-d-Y H:i');
+                } else {
+                    // Ongoing active session right now
+                    $durationEnd = Carbon::now();
+                    $durationDiff = $loginTime->diff($durationEnd);
+                    $durationMins = (int) $durationDiff->totalMinutes;
+                    $durationStr = $this->formatDuration($durationDiff);
+                    $activeMins = $durationMins;
+                    $activeStr = $durationStr;
+                    $inactiveMins = 0;
+                    $inactiveStr = '--';
+                    $logoutDisplay = 'Active Now';
                 }
 
                 if (!$loginTime->between($rangeStart, $rangeEnd)) {
@@ -768,9 +817,9 @@ class ReportController extends Controller
                     'user_code' => strtoupper(str_replace(' ', '_', $user->name)),
                     'first_name' => $firstName,
                     'last_name' => $lastName,
-                    'office' => '',
+                    'office' => $office,
                     'login' => $loginTime->format('m-d-Y H:i'),
-                    'logout' => $logoutTime ? $logoutTime->format('m-d-Y H:i') : '',
+                    'logout' => $logoutDisplay,
                     'duration' => $durationStr,
                     'duration_mins' => $durationMins,
                     'active' => $activeStr,

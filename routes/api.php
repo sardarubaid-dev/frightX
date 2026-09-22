@@ -10,7 +10,7 @@ use App\Http\Controllers\BillOfLadingController;
 use App\Http\Controllers\AmsFilingController;
 use App\Http\Controllers\InvoiceController;
 
-// GoFreight Expanded Operations
+// FreightX Expanded Operations
 use App\Http\Controllers\OceanImportController;
 use App\Http\Controllers\OceanExportController;
 use App\Http\Controllers\AirImportController;
@@ -48,7 +48,7 @@ Route::apiResource('bills-of-lading', BillOfLadingController::class);
 Route::apiResource('ams-filings', AmsFilingController::class);
 Route::apiResource('invoices', InvoiceController::class);
 
-// GoFreight Comprehensive Mapping
+// FreightX Comprehensive Mapping
 Route::apiResource('ocean-imports', OceanImportController::class);
 Route::apiResource('ocean-exports', OceanExportController::class);
 Route::apiResource('air-imports', AirImportController::class);

@@ -203,7 +203,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -213,27 +213,27 @@
                         </div>
                     </div>
                     <button class="btn-action-round white" onclick="exportExcel()" title="Download as CSV/Excel">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
+                        <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
             </div>
 
             {{-- ── TOOLBAR ── --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <a class="btn-tool green" href="{{ route('air-bookings.create') }}" title="New Booking" target="_blank">
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div class="btn-group">
+                        <a class="btn-tool green" href="{{ route('air-bookings.create') }}" title="New Booking">
                             <i class="fa fa-plus"></i>
                         </a>
-                        <button class="btn-tool" id="btn-copy"   disabled title="Copy (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                        <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
                     </div>
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-convert" disabled style="padding:0 10px;" onclick="confirmConvert()">
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-convert" disabled style="padding:0 12px;" onclick="confirmConvert()">
                             <i class="fa fa-plane"></i> Convert to Shipment
                         </button>
                     </div>
@@ -256,7 +256,7 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:150px;" placeholder="Quick search…" oninput="quickSearch(this.value)" value="{{ request('search') }}">
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;" placeholder="Quick search…" oninput="quickSearch(this.value)" value="{{ request('search') }}">
                 </div>
             </div>
 
@@ -341,17 +341,9 @@
                                         </td>
                                         {{-- Lock Status --}}
                                         <td class="sticky-col" style="left:25px;text-align:center;" onclick="event.stopPropagation()">
-                                            @if($b->is_blocked)
-                                                <i class="fa fa-ban" 
-                                                   style="cursor:pointer;color:#e74c3c;font-size:10px;" 
-                                                   title="Blocked - Cannot be edited"
-                                                   onclick="showToast('warning', 'This booking is blocked. Unblock it first to make changes.')"></i>
-                                            @else
-                                                <i class="fa {{ $b->is_locked ? 'fa-lock' : 'fa-unlock' }}" 
-                                                   style="cursor:pointer;color:{{ $b->is_locked ? '#94a3b8' : '#22c55e' }};font-size:10px;" 
-                                                   title="{{ $b->is_locked ? 'Locked - Click to unlock' : 'Unlocked - Click to lock' }}"
-                                                   onclick="toggleLock({{ $b->id }}, {{ $b->is_locked ? 'true' : 'false' }}, this)"></i>
-                                            @endif
+                                            <i class="fa {{ $b->is_blocked ? 'fa-lock' : 'fa-unlock' }}" 
+                                               style="color:{{ $b->is_blocked ? '#94a3b8' : '#22c55e' }};cursor:pointer;font-size:10px;" 
+                                               title="{{ $b->is_blocked ? 'Blocked' : 'Unlocked' }}"></i>
                                         </td>
                                         {{-- Booking No. --}}
                                         <td class="sticky-col" style="left:53px;" onclick="event.stopPropagation()">
@@ -418,7 +410,7 @@
             {{-- ── PAGINATION ── --}}
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $bookings->links() }}</div>
+                    <div id="pagination-container">{{ $bookings->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
                         Showing <span id="stat-first">{{ $bookings->firstItem() ?? 0 }}</span> &ndash; <span id="stat-last">{{ $bookings->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $bookings->total() }}</span> records
                     </div>
@@ -551,7 +543,7 @@
                     if (row) {
                         var lockCell = row.querySelector('td:nth-child(2)');
                         if (lockCell) {
-                            lockCell.innerHTML = '<i class="fa fa-ban" style="cursor:pointer;color:#e74c3c;font-size:10px;" title="Blocked - Cannot be edited" onclick="showToast(\'warning\', \'This booking is blocked. Unblock it first to make changes.\')"></i>';
+                            lockCell.innerHTML = '<i class="fa fa-lock" style="color:#94a3b8;cursor:pointer;font-size:10px;" title="Blocked"></i>';
                         }
                         // Uncheck the checkbox
                         var checkbox = row.querySelector('.row-check');
@@ -581,13 +573,13 @@
         })
         .then(function(d) {
             if (d.success) {
-                // Update lock icons for unblocked bookings (restore to unlocked state)
+                // Update lock icons for unblocked bookings
                 ids.forEach(function(id) {
                     var row = document.getElementById('booking-row-' + id);
                     if (row) {
                         var lockCell = row.querySelector('td:nth-child(2)');
                         if (lockCell) {
-                            lockCell.innerHTML = '<i class="fa fa-unlock" style="cursor:pointer;color:#22c55e;font-size:10px;" title="Unlocked - Click to lock" onclick="toggleLock(' + id + ', false, this)"></i>';
+                            lockCell.innerHTML = '<i class="fa fa-unlock" style="color:#22c55e;cursor:pointer;font-size:10px;" title="Unlocked"></i>';
                         }
                         // Uncheck the checkbox
                         var checkbox = row.querySelector('.row-check');

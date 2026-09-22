@@ -1,124 +1,209 @@
 <x-layout>
     @push('styles')
+    <x-form-styles />
     <style>
         [x-cloak] { display: none !important; }
-        .page-content { padding: 8px; background: #eef1f5; min-height: calc(100vh - 50px); font-family: 'Open Sans', sans-serif !important; }
-        
-        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .page-title { font-size: 16px; font-weight: 600; color: #4b77be; text-transform: uppercase; }
-        
-        .page-bar { background-color: #fff; padding: 8px 20px; margin-bottom: 15px; border: 1px solid #e9ebec; border-radius: 4px; }
-        .page-breadcrumb { list-style: none; padding: 0; margin: 0; display: flex; align-items: center; }
-        .page-breadcrumb li { font-size: 12px; color: #888; display: flex; align-items: center; }
-        .page-breadcrumb li a { color: #337ab7; text-decoration: none; }
-        .page-breadcrumb li i { margin: 0 8px; font-size: 10px; opacity: 0.5; }
-        
-        .gf-tabs { display: flex; border-bottom: 1px solid #ddd; list-style: none; padding: 0; margin: 0 0 15px 0; background: #fff; border-radius: 4px 4px 0 0; overflow-x: auto; white-space: nowrap; }
-        .gf-tabs li { margin-bottom: -1px; }
-        .gf-tabs li a { padding: 10px 20px; display: block; color: #555; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-size: 12px; font-weight: 600; }
-        .gf-tabs li.active a { background: #fff; border: 1px solid #ddd; border-bottom-color: #fff; border-top: 3px solid #32c5d2; color: #333; }
-        .gf-tabs li.disabled-tab a { color: #bbb !important; cursor: not-allowed !important; background: #f5f5f5 !important; opacity: 0.6; pointer-events: none; border-color: transparent !important; }
-        
-        .portlet { background-color: #fff; border: 1px solid #e7ecf1; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .portlet-title { padding: 8px 10px; border-bottom: 1px solid #eef1f5; display: flex; align-items: center; justify-content: space-between; background: #f9fafb; min-height: 35px; }
-        .portlet-title .caption { font-size: 13px; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 5px; color: #333; }
-        .portlet-body { padding: 15px; background: #fdfdfd; }
-        
-        .btn-gofreight { background: #32c5d2; color: #fff; border: none; padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 2px; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-gofreight:hover { background: #26a1ab; }
-        .btn-gf-inline { background: #32c5d2; color: #fff !important; border: none; padding: 2px 8px; border-radius: 2px; font-size: 10px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-gf-inline:hover { background: #26a1ab; }
-        .btn-default-gf { background: #fff; border: 1px solid #ccc; color: #666; padding: 4px 12px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; border-radius: 2px; }
-        .btn-default-gf:hover { background: #f5f5f5; }
-        .btn-gf-tool { padding: 0 5px; height: 19px; font-size: 10px; background: #fff; border: 1px solid #ccc; color: #666; cursor: pointer; border-radius: 2px; }
-        
-        .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 15px; margin-bottom: 10px; }
-        
-        .form-group-gf { display: flex; align-items: center; min-height: 22px; }
-        .form-label-gf { font-size: 11px; font-weight: 500; color: #666; width: 110px; text-align: right; margin-right: 8px; flex-shrink: 0; }
-        .form-label-gf.required { color: #d05454; }
+        .nav-tabs-custom { margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; gap: 4px; background: #fff; padding: 4px 8px 0 8px; border-radius: 4px 4px 0 0; }
+        .nav-tabs-custom .tab-item { padding: 6px 14px; font-size: 11px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+        .nav-tabs-custom .tab-item:hover { color: #2563eb; background: #f8fafc; }
+        .nav-tabs-custom .tab-item.active { color: #2563eb; font-weight: 700; border-bottom-color: #2563eb; background: #eff6ff; }
         .color-remark-tag { display: inline-block; width: 14px; height: 18px; border: 1px solid #ddd; margin-right: 5px; vertical-align: middle; background: #fff; }
-        .form-input-container { flex: 1; display: flex; align-items: center; gap: 4px; }
-        .form-control-gf { width: 100%; height: 22px; border: 1px solid #ccc; padding: 0 4px; font-size: 10px; border-radius: 2px; background: #fff; box-sizing: border-box; }
-        .form-control-gf[disabled] { background: #eee; }
-        .form-control-gf.date-picker { background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>') no-repeat right 4px center; padding-right: 20px; }
-        .form-control-gf.error { border-color: #d05454; }
-        .form-error { font-size: 9px; color: #d05454; margin-top: 2px; display: block; }
         
-        input[type="checkbox"], input[type="radio"] { width: 12px; height: 12px; margin: 0; }
-        
-        hr { border: 0; border-top: 1px solid #e0e0e0; margin: 10px 0; }
-        
-        .memo-table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; }
-        .memo-table th { background: #eef1f5; color: #333; padding: 6px; text-align: left; font-weight: 600; border: 1px solid #ddd; }
-        .memo-table td { padding: 6px; border: 1px solid #ddd; }
-        .memo-header-container { display: flex; justify-content: space-between; align-items: center; background: #eef1f5; padding: 5px 10px; border: 1px solid #ccc; border-bottom: none; }
-        
-        .btn-add-memo { background: #32c5d2; border: none; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; cursor: pointer; }
-        .btn-add-memo:hover { background: #26a1ab; }
-        
-        .memo-table-dark th { background: #888; color: #fff; border: 1px solid #ccc; }
-        
-        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; display: flex; justify-content: center; align-items: flex-start; padding-top: 30px; overflow-y: auto; }
-        .modal-dialog { width: 900px; max-width: 95%; background: #fff; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,.5); }
-        .modal-header { padding: 15px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
-        .modal-title { margin: 0; font-size: 18px; font-weight: 400; color: #333; }
-        .close-btn { background: none; border: none; font-size: 21px; font-weight: 700; color: #000; text-shadow: 0 1px 0 #fff; opacity: .2; cursor: pointer; }
-        .close-btn:hover { opacity: .5; }
-        .modal-body { padding: 15px; }
-        .modal-footer { padding: 15px; text-align: right; border-top: 1px solid #e5e5e5; }
-        
-        .step-container { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-        .step { display: flex; align-items: center; gap: 8px; flex-direction: column; }
-        .step-id { width: 24px; height: 24px; border-radius: 50%; background: #ccc; color: #fff; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; }
-        .step-id.active { background: #36c6d3; }
-        .step-title { font-size: 12px; color: #666; }
-        .step-divider { flex: 1; height: 1px; background: #e5e5e5; margin: 0 15px; align-self: flex-start; margin-top: 12px; max-width: 150px; }
+        /* Ocean Import Consistent Buttons & Forms */
+        .btn-gf-inline {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #2563eb !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            transition: all 0.15s ease-in-out !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+            text-decoration: none !important;
+        }
+        .btn-gf-inline:hover {
+            background: #1d4ed8 !important;
+            border-color: #1d4ed8 !important;
+            color: #ffffff !important;
+        }
+        .btn-default-gf, .btn-default-gf.dark {
+            background: #ffffff !important;
+            color: #334155 !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            transition: all 0.15s ease-in-out !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+            text-decoration: none !important;
+        }
+        .btn-default-gf:hover, .btn-default-gf.dark:hover {
+            background: #f8fafc !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        .btn-danger-gf {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border: 1px solid #ef4444 !important;
+            padding: 4px 10px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+        }
+        .btn-danger-gf:hover {
+            background: #dc2626 !important;
+        }
 
-        .alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px 15px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; }
-        .alert-danger { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 10px 15px; border-radius: 4px; margin-bottom: 15px; font-size: 12px; }
-
-        .file-upload-zone { border: 2px dashed #ccc; border-radius: 4px; padding: 20px; text-align: center; cursor: pointer; background: #fff; transition: all 0.2s; }
-        .file-upload-zone:hover { border-color: #32c5d2; background: #f0fafb; }
-
-        .table-gf { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .table-gf th { background: #f8f9fa; border: 1px solid #ddd; padding: 5px; font-weight: 600; color: #555; text-align: left; }
-        .table-gf td { border: 1px solid #ddd; padding: 4px; vertical-align: middle; }
-        .well { background: #f9fafb; border: 1px solid #ebedf2; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
-        .caption-subject { font-size: 13px; font-weight: 700; color: #333; text-transform: uppercase; }
-        /* Quote Modal Styles (Ocean Import compat) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; padding-top: 30px; }
-        .modal-container { background: #fff; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); width: 950px; max-width: 95%; max-height: 90vh; display: flex; flex-direction: column; animation: modalFadeIn 0.2s ease; }
+        /* Table Headers & Typography Overrides */
+        .memo-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: 1px solid #e2e8f0 !important;
+            font-size: 11px !important;
+        }
+        .memo-table th {
+            background: #f8fafc !important;
+            color: #475569 !important;
+            font-weight: 600 !important;
+            padding: 8px 10px !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            border-right: 1px solid #f1f5f9 !important;
+        }
+        .memo-table td {
+            padding: 6px 8px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            border-right: 1px solid #f1f5f9 !important;
+            color: #334155 !important;
+        }
+        .memo-table tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+        h4, .portlet-title .caption-subject {
+            color: #2563eb !important;
+        }
+        
+        /* Form inputs & Select alignment fix */
+        .form-control-gf {
+            height: 26px !important;
+            min-height: 26px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 3px !important;
+            padding: 2px 6px !important;
+            font-size: 11px !important;
+            line-height: 20px !important;
+            color: #1e293b !important;
+            background: #ffffff !important;
+            box-sizing: border-box !important;
+            transition: border-color 0.15s ease !important;
+        }
+        select.form-control-gf {
+            height: 26px !important;
+            min-height: 26px !important;
+            padding: 2px 20px 2px 6px !important;
+            line-height: 20px !important;
+            background-position: right 6px center !important;
+            background-size: 9px !important;
+        }
+        textarea.form-control-gf {
+            height: auto !important;
+            min-height: 40px !important;
+            line-height: 1.4 !important;
+            padding: 4px 6px !important;
+        }
+        .form-group-gf {
+            min-height: 26px !important;
+            margin-bottom: 4px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .form-label-gf {
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            display: inline-block !important;
+            width: 115px !important;
+            text-align: right !important;
+            margin-right: 6px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            line-height: 26px !important;
+            height: 26px !important;
+        }
+        .form-control-gf:focus {
+            border-color: #2563eb !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+        }
+        
+        /* Stepper Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; display: flex; justify-content: center; align-items: flex-start; padding-top: 30px; overflow-y: auto; }
+        .modal-card { background: #fff; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); width: 950px; max-width: 95%; animation: modalFadeIn 0.2s ease; display: flex; flex-direction: column; margin-bottom: 30px; }
         @keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-container .modal-header { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-radius: 8px 8px 0 0; font-size: 14px; font-weight: 600; color: #1e293b; }
-        .modal-container .modal-header span { display: flex; align-items: center; gap: 8px; }
-        .modal-container .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
-        .modal-container .modal-footer { padding: 12px 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; border-radius: 0 0 8px 8px; }
-        .wizard-circle { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; transition: all 0.3s; }
-        .hbl-header { font-size: 11px; font-weight: 700; color: #334155; text-transform: uppercase; background: #f1f5f9; padding: 6px 10px; border: 1px solid #e2e8f0; border-bottom: none; border-radius: 4px 4px 0 0; margin-top: 8px; }
-        .table-custom { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .table-custom th { background: #f1f5f9; color: #475569; padding: 6px 8px; text-align: left; font-weight: 600; border: 1px solid #e2e8f0; font-size: 10px; }
-        .table-custom td { padding: 6px 8px; border: 1px solid #e2e8f0; color: #334155; }
-        .table-custom tbody tr:hover { background: #f8fafc; }
-        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .text-blue-500 { color: #3b82f6; }
-        .text-gray-500 { color: #64748b; }
-        .hover\:text-gray-700:hover { color: #334155; }
-        .cursor-pointer { cursor: pointer; }
-        .opacity-50 { opacity: 0.5; }
-        .cursor-not-allowed { cursor: not-allowed; }
-        .main-grid { display: flex; flex-direction: column; gap: 4px; }
-        .btn-gofreight.opacity-50 { pointer-events: none; }
+        .modal-header-premium { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: 6px 6px 0 0; }
+        .modal-title-premium { font-size: 15px; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 8px; }
+        .modal-title-premium::before { content: "\f0f6"; font-family: "FontAwesome"; color: #2563eb; }
+        
+        .stepper-container { display: flex; align-items: center; justify-content: center; gap: 15px; padding: 20px 0; background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .step-item { display: flex; align-items: center; gap: 8px; }
+        .step-circle { width: 28px; height: 28px; border-radius: 50%; background: #e9ecef; color: #6c757d; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; transition: all 0.3s; }
+        .step-item.active .step-circle { background: #2563eb; color: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2); }
+        .step-label { font-size: 13px; font-weight: 600; color: #6c757d; }
+        .step-item.active .step-label { color: #333; }
+        .step-line { flex: 0.5; height: 2px; background: #e2e8f0; margin-bottom: 0; max-width: 100px; }
+
+        .modal-content-area { padding: 15px; overflow-y: auto; flex: 1; background: #fdfdfd; }
+        .modal-footer-premium { padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; border-radius: 0 0 6px 6px; }
+        
+        .search-grid-lite { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .form-group-custom { display: flex; flex-direction: column; gap: 4px; }
+        .label-custom { font-size: 11px; font-weight: 600; color: #555; }
+        .input-custom { padding: 6px 10px; border: 1px solid #ccc; border-radius: 2px; font-size: 11px; height: 28px; box-sizing: border-box; }
+        .input-custom:focus { border-color: #2563eb; outline: none; }
+        
+        .btn-premium { background: #2563eb; color: #fff; border: none; padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px; transition: background 0.2s; }
+        .btn-premium:hover { background: #1d4ed8; }
+        .btn-premium:disabled { background: #93c5fd; cursor: not-allowed; }
+        .btn-premium-outline { background: #fff; border: 1px solid #ccc; color: #555; padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px; transition: background 0.2s; }
+        .btn-premium-outline:hover { background: #f1f5f9; }
+
+        .table-modern { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e2e8f0; }
+        .table-modern th { background: #f8fafc; color: #475569; padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+        .table-modern td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+        .table-modern tbody tr:hover { background: #f1f5f9; }
         
         /* Dropdown Item Styles */
         .dropdown-item { display: flex; align-items: center; padding: 8px 14px; font-size: 10px; font-weight: 600; color: #334155; text-decoration: none; cursor: pointer; transition: all 0.2s; }
-        .dropdown-item:hover { background: #f8fafc; color: #3b82f6; }
+        .dropdown-item:hover { background: #f8fafc; color: #2563eb; }
         .dropdown-item i { color: inherit; }
     </style>
     @endpush
 
     <div class="page-content" x-data="truckCreateApp()" x-cloak>
+        {{-- TOP TABS --}}
+        <div class="nav-tabs-custom">
+            <a href="{{ route('truck.create') }}" class="tab-item {{ request()->routeIs('truck.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Shipment
+            </a>
+            <a href="{{ route('truck.index') }}" class="tab-item {{ request()->routeIs('truck.index') ? 'active' : '' }}">
+                <i class="fa fa-list"></i> Shipment List
+            </a>
+            <a href="{{ route('truck.my-shipment-list') }}" class="tab-item {{ request()->routeIs('truck.my-shipment-list') ? 'active' : '' }}">
+                <i class="fa fa-user"></i> My Shipment List
+            </a>
+        </div>
+
         <form id="truckShipmentForm" action="{{ isset($truckShipment) ? route('truck.update', $truckShipment->id) : route('truck.store') }}" method="POST" enctype="multipart/form-data" @submit.prevent="validateAndSubmit">
             @csrf
             @if(isset($truckShipment)) @method('PUT') @endif
@@ -147,116 +232,114 @@
         </div>
 
         <!-- Load Quotation Data Modal -->
-        <div x-show="showQuoteModal" class="modal-overlay" style="display:none;" x-cloak>
-            <div class="modal-container" style="max-width: 950px; display: flex; flex-direction: column;">
-                <div class="modal-header">
-                    <span><i class="fa fa-file-text-o text-blue-500"></i> Load Quotation Data</span>
-                    <i class="fa fa-times cursor-pointer text-gray-500 hover:text-gray-700" @click="closeQuoteModal()"></i>
-                </div>
+        <template x-if="showQuoteModal">
+            <div class="modal-overlay">
+                <div class="modal-card" @click.away="closeQuoteModal()">
+                    <div class="modal-header-premium">
+                        <span class="modal-title-premium">Load Quotation Data</span>
+                        <button @click="closeQuoteModal()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;"><i class="fa fa-times"></i></button>
+                    </div>
 
-                <div class="modal-body hide-scrollbar">
-                    <style>
-                        .hide-scrollbar::-webkit-scrollbar { display: none; }
-                        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-                    </style>
-
-                    <!-- Steps -->
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div class="wizard-circle" :style="quoteStep >= 1 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
-                                <template x-if="quoteStep > 1"><i class="fa fa-check"></i></template>
-                                <template x-if="quoteStep === 1"><span>1</span></template>
-                            </div>
-                            <span :style="quoteStep >= 1 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select Quotation</span>
+                    <!-- Stepper -->
+                    <div class="stepper-container">
+                        <div class="step-item" :class="quoteStep >= 1 ? 'active' : ''">
+                            <div class="step-circle" x-text="quoteStep > 1 ? '✓' : '1'"></div>
+                            <span class="step-label">Select Quotation</span>
                         </div>
-                        <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div class="wizard-circle" :style="quoteStep >= 2 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
-                                <template x-if="quoteStep > 2"><i class="fa fa-check"></i></template>
-                                <template x-if="quoteStep === 2"><span>2</span></template>
-                            </div>
-                            <span :style="quoteStep >= 2 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Fill in shipment data</span>
+                        <div class="step-line"></div>
+                        <div class="step-item" :class="quoteStep >= 2 ? 'active' : ''">
+                            <div class="step-circle" x-text="quoteStep > 2 ? '✓' : '2'"></div>
+                            <span class="step-label">Fill Shipment Data</span>
                         </div>
-                        <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div class="wizard-circle" :style="quoteStep >= 3 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
-                                <template x-if="quoteStep > 3"><i class="fa fa-check"></i></template>
-                                <template x-if="quoteStep === 3"><span>3</span></template>
-                            </div>
-                            <span :style="quoteStep >= 3 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select invoice items</span>
+                        <div class="step-line"></div>
+                        <div class="step-item" :class="quoteStep >= 3 ? 'active' : ''">
+                            <div class="step-circle" x-text="quoteStep > 3 ? '✓' : '3'"></div>
+                            <span class="step-label">Select Invoice Items</span>
                         </div>
                     </div>
 
-                    <!-- ===== STEP 1: Select Quotation ===== -->
+                    <div class="modal-content-area">
+                        <!-- ===== STEP 1: Select Quotation ===== -->
                     <div x-show="quoteStep === 1">
-                        <div class="form-grid-4" style="grid-template-columns: repeat(3, 1fr);">
-                            <div class="main-grid">
-                                <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container">
-                                    <select name="customer" x-model="filters.customer" class="form-control-gf">
-                                        <option value="">Select...</option>
-                                        <template x-for="agent in agents" :key="agent.id">
-                                            <option :value="agent.id" x-text="agent.company_name || agent.name"></option>
-                                        </template>
-                                    </select>
-                                </div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Port of Loading</label><div class="form-input-container">
-                                    <select name="pol" x-model="filters.pol" class="form-control-gf">
-                                        <option value="">Select...</option>
-                                        <template x-for="port in ports" :key="port.id">
-                                            <option :value="port.id" x-text="port.name"></option>
-                                        </template>
-                                    </select>
-                                </div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Quote No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="filters.quote_no"></div></div>
+                        <div class="search-grid-lite">
+                            <div class="form-group-custom">
+                                <label class="label-custom">Customer</label>
+                                <select class="input-custom" x-model="filters.customer">
+                                    <option value="">Select...</option>
+                                    <template x-for="agent in agents" :key="agent.id">
+                                        <option :value="agent.id" x-text="agent.company_name || agent.name"></option>
+                                    </template>
+                                </select>
                             </div>
-                            <div class="main-grid">
-                                <div class="form-group-gf"><label class="form-label-gf">Valid Date</label><div class="form-input-container"><input type="text" class="form-control-gf datepicker" x-model="filters.valid_date" placeholder="Start Date - End Date"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Port of Discharge</label><div class="form-input-container">
-                                    <select name="pod" x-model="filters.pod" class="form-control-gf">
-                                        <option value="">Select...</option>
-                                        <template x-for="port in ports" :key="port.id">
-                                            <option :value="port.id" x-text="port.name"></option>
-                                        </template>
-                                    </select>
-                                </div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Status</label><div class="form-input-container">
-                                    <select class="form-control-gf" x-model="filters.status">
-                                        <option value="">Select...</option>
-                                        <option value="ACTIVE">Active</option>
-                                        <option value="EXPIRED">Expired</option>
-                                        <option value="CANCELLED">Cancelled</option>
-                                        <option value="CONFIRMED">Confirmed</option>
-                                    </select>
-                                </div></div>
+                            <div class="form-group-custom">
+                                <label class="label-custom">Port of Loading</label>
+                                <select class="input-custom" x-model="filters.pol">
+                                    <option value="">Select...</option>
+                                    <template x-for="port in ports" :key="port.id">
+                                        <option :value="port.id" x-text="port.name"></option>
+                                    </template>
+                                </select>
                             </div>
-                            <div class="main-grid">
-                                <div class="form-group-gf"><label class="form-label-gf">Commodity</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="filters.commodity"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container">
-                                    <select class="form-control-gf" x-model="filters.sales">
-                                        <option value="">Select...</option>
-                                        <template x-for="user in users" :key="user.id">
-                                            <option :value="user.id" x-text="user.name"></option>
-                                        </template>
-                                    </select>
-                                </div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container">
-                                    <select class="form-control-gf" x-model="filters.op">
-                                        <option value="">Select...</option>
-                                        <template x-for="user in users" :key="user.id">
-                                            <option :value="user.id" x-text="user.name"></option>
-                                        </template>
-                                    </select>
-                                </div></div>
+                            <div class="form-group-custom">
+                                <label class="label-custom">Quote No.</label>
+                                <input type="text" class="input-custom" x-model="filters.quote_no">
+                            </div>
+
+                            <div class="form-group-custom">
+                                <label class="label-custom">Valid Date</label>
+                                <input type="text" class="input-custom" x-model="filters.valid_date" placeholder="Start Date - End Date">
+                            </div>
+                            <div class="form-group-custom">
+                                <label class="label-custom">Port of Discharge</label>
+                                <select class="input-custom" x-model="filters.pod">
+                                    <option value="">Select...</option>
+                                    <template x-for="port in ports" :key="port.id">
+                                        <option :value="port.id" x-text="port.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="form-group-custom">
+                                <label class="label-custom">Status</label>
+                                <select class="input-custom" x-model="filters.status">
+                                    <option value="">Select...</option>
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="EXPIRED">Expired</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                    <option value="CONFIRMED">Confirmed</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group-custom">
+                                <label class="label-custom">Commodity</label>
+                                <input type="text" class="input-custom" x-model="filters.commodity">
+                            </div>
+                            <div class="form-group-custom">
+                                <label class="label-custom">Sales</label>
+                                <select class="input-custom" x-model="filters.sales">
+                                    <option value="">Select...</option>
+                                    <template x-for="user in users" :key="user.id">
+                                        <option :value="user.id" x-text="user.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="form-group-custom">
+                                <label class="label-custom">OP</label>
+                                <select class="input-custom" x-model="filters.op">
+                                    <option value="">Select...</option>
+                                    <template x-for="user in users" :key="user.id">
+                                        <option :value="user.id" x-text="user.name"></option>
+                                    </template>
+                                </select>
                             </div>
                         </div>
 
-                        <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 0;">
-                            <button type="button" class="btn-default-gf" @click="clearSearch()">Clear</button>
-                            <button type="button" class="btn-gofreight" @click="searchQuotes()"><i class="fa fa-search"></i> Search</button>
+                        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+                            <button type="button" class="btn-premium-outline" @click="clearSearch()">Clear</button>
+                            <button type="button" class="btn-premium" @click="searchQuotes()"><i class="fa fa-search"></i> Search</button>
                         </div>
 
-                        <div style="text-align: right; margin-bottom: 4px;">
-                            <button type="button" class="btn-default-gf" @click="showQuoteConfig = !showQuoteConfig"><i class="fa fa-cogs"></i> Config</button>
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button type="button" class="btn-premium-outline" @click="showQuoteConfig = !showQuoteConfig"><i class="fa fa-cogs"></i> Config</button>
                         </div>
 
                         <div x-show="showQuoteConfig" style="margin-bottom: 8px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px;">
@@ -272,8 +355,8 @@
                             </div>
                         </div>
 
-                        <div class="table-responsive" style="margin-bottom: 10px;">
-                        <table class="table-custom">
+                        <div class="table-responsive" style="margin-bottom: 10px; max-height: 250px; overflow-y: auto;">
+                        <table class="table-modern">
                             <thead>
                                 <tr>
                                     <th style="text-align: center;">Select</th>
@@ -305,7 +388,7 @@
                                 </template>
                                 <template x-if="filteredQuotes.length === 0">
                                     <tr>
-                                        <td colspan="10" style="text-align: center; color: #94a3b8; font-size: 11px; padding: 20px;">No quotations found. Use the search filters above.</td>
+                                        <td colspan="10" style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px;">No quotations found. Use the search filters above.</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -316,8 +399,8 @@
                     <!-- ===== STEP 2: Fill in shipment data ===== -->
                     <div x-show="quoteStep === 2">
                         <div class="hbl-header">Select a Route</div>
-                        <div class="table-responsive" style="margin-bottom: 10px;">
-                        <table class="table-custom">
+                        <div class="table-responsive" style="margin-bottom: 15px;">
+                        <table class="table-modern">
                             <thead>
                                 <tr>
                                     <th style="text-align: center;">Select</th>
@@ -330,40 +413,75 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <template x-if="selectedQuote">
                                 <tr>
-                                    <td style="text-align: center;"><input type="radio" checked></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pol_name : '-'"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pol_name : '-'"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pod_name : '-'"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pod_name : '-'"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pod_name : '-'"></td>
-                                    <td><span x-text="selectedQuote && selectedQuote.carrier_name ? selectedQuote.carrier_name : '-'"></span></td>
+                                    <td style="text-align: center;"><input type="radio" :checked="true" name="route_select"></td>
+                                    <td x-text="selectedQuote.pol_name || '-'"></td>
+                                    <td x-text="selectedQuote.pol_name || '-'"></td>
+                                    <td x-text="selectedQuote.pod_name || '-'"></td>
+                                    <td x-text="selectedQuote.pod_name || '-'"></td>
+                                    <td x-text="selectedQuote.pod_name || '-'"></td>
+                                    <td><span x-text="selectedQuote.carrier_name || '-'"></span></td>
                                 </tr>
+                                </template>
+                                <template x-if="!selectedQuote">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: #94a3b8; font-size: 11px; padding: 10px;">Please select a quotation first.</td>
+                                </tr>
+                                </template>
                             </tbody>
                         </table>
                         </div>
 
                         <div class="hbl-header">Fill in the Shipment Information</div>
-                        <div class="form-grid-4" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="main-grid">
-                                <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*MB/L No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.mbl_no"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">HB/L No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.hbl_no"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ETD</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="quoteForm.etd"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*Customer</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.customer"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container"><span x-text="quoteForm.sales" style="font-size: 10px; color: #334155;"></span></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><span x-text="quoteForm.op" style="font-size: 10px; color: #334155;"></span></div></div>
+                        <div class="search-grid-lite" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-column">
+                                <div class="form-group-custom"><label class="label-custom" style="color: #ef4444;">*MB/L No.</label><input type="text" class="input-custom" x-model="quoteForm.mbl_no"></div>
+                                <div class="form-group-custom"><label class="label-custom">HB/L No.</label><input type="text" class="input-custom" x-model="quoteForm.hbl_no"></div>
+                                <div class="form-group-custom"><label class="label-custom">ETD</label><input type="date" class="input-custom" x-model="quoteForm.etd"></div>
+                                <div class="form-group-custom"><label class="label-custom" style="color: #ef4444;">*Customer</label>
+                                    <select class="input-custom" x-model="quoteForm.customer_id">
+                                        <option value="">Select...</option>
+                                        <template x-for="agent in agents" :key="agent.id">
+                                            <option :value="agent.id" x-text="agent.company_name || agent.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div class="form-group-custom"><label class="label-custom">Sales</label><div class="input-custom" style="background:#f9f9f9; display:flex; align-items:center; border: 1px solid #ccc;"><span x-text="quoteForm.sales" style="font-size: 11px; color: #555;"></span></div></div>
+                                <div class="form-group-custom"><label class="label-custom">OP</label><div class="input-custom" style="background:#f9f9f9; display:flex; align-items:center; border: 1px solid #ccc;"><span x-text="quoteForm.op" style="font-size: 11px; color: #555;"></span></div></div>
                             </div>
-                            <div class="main-grid">
-                                <div class="form-group-gf"><label class="form-label-gf">Vessel/Flight No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.vessel_flight_no"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*ETA</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="quoteForm.eta"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Carrier Bkg. No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.carrier_bkg_no"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.shipper"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.consignee"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Trucker</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.trucker"></div></div>
+                            <div class="form-column">
+                                <div class="form-group-custom"><label class="label-custom">Vessel/Flight No.</label><input type="text" class="input-custom" x-model="quoteForm.vessel_flight_no"></div>
+                                <div class="form-group-custom"><label class="label-custom" style="color: #ef4444;">*ETA</label><input type="date" class="input-custom" x-model="quoteForm.eta"></div>
+                                <div class="form-group-custom"><label class="label-custom">Carrier Bkg. No.</label><input type="text" class="input-custom" x-model="quoteForm.carrier_bkg_no"></div>
+                                <div class="form-group-custom"><label class="label-custom">Shipper</label>
+                                    <select class="input-custom" x-model="quoteForm.shipper_id">
+                                        <option value="">Select...</option>
+                                        <template x-for="agent in agents" :key="agent.id">
+                                            <option :value="agent.id" x-text="agent.company_name || agent.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div class="form-group-custom"><label class="label-custom">Consignee</label>
+                                    <select class="input-custom" x-model="quoteForm.consignee_id">
+                                        <option value="">Select...</option>
+                                        <template x-for="agent in agents" :key="agent.id">
+                                            <option :value="agent.id" x-text="agent.company_name || agent.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div class="form-group-custom"><label class="label-custom">Trucker</label>
+                                    <select class="input-custom" x-model="quoteForm.trucker_id">
+                                        <option value="">Select...</option>
+                                        <template x-for="tp in truckers" :key="tp.id">
+                                            <option :value="tp.id" x-text="tp.company_name || tp.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                        <div class="main-grid" style="margin-top: 4px;">
-                            <div class="form-group-gf"><label class="form-label-gf">Detail</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.detail"></div></div>
+                        <div class="form-column" style="margin-top: 10px;">
+                            <div class="form-group-custom"><label class="label-custom">Detail</label><input type="text" class="input-custom" x-model="quoteForm.detail"></div>
                         </div>
                     </div>
 
@@ -375,8 +493,8 @@
                             <span style="font-size: 10px; color: #475569; font-weight: 600;">Save as a draft invoice</span>
                         </div>
 
-                        <div class="table-responsive" style="margin-bottom: 10px;">
-                        <table class="table-custom">
+                        <div class="table-responsive" style="margin-bottom: 15px; max-height: 250px; overflow-y: auto;">
+                        <table class="table-modern">
                             <thead>
                                 <tr>
                                     <th style="text-align: center;">Select</th>
@@ -412,54 +530,89 @@
 
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn-default-gf" @click="closeQuoteModal()">Cancel</button>
-                    <button type="button" x-show="quoteStep > 1" class="btn-default-gf" @click="quoteStep--">Back</button>
+                <div class="modal-footer-premium">
+                    <button type="button" class="btn-premium-outline" @click="closeQuoteModal()">Cancel</button>
+                    <button type="button" x-show="quoteStep > 1" class="btn-premium-outline" @click="quoteStep--">Back</button>
 
                     <button type="button" x-show="quoteStep < 3"
-                            :class="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.eta || !quoteForm.customer))) ? 'btn-gofreight opacity-50 cursor-not-allowed' : 'btn-gofreight'"
-                            :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.eta || !quoteForm.customer))"
+                            :class="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.eta || !quoteForm.customer_id))) ? 'btn-premium opacity-50 cursor-not-allowed' : 'btn-premium'"
+                            :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mbl_no || !quoteForm.eta || !quoteForm.customer_id))"
                             @click="quoteStep === 1 ? selectQuote(selectedQuote) : quoteStep < 3 ? quoteStep++ : null">
                         Next
                     </button>
 
-                    <button type="button" x-show="quoteStep === 3" class="btn-gofreight" @click="confirmQuoteSelection()">
-                        Confirm
+                    <button type="button" x-show="quoteStep === 3" class="btn-premium" @click="confirmQuoteSelection()">
+                        <i class="fa fa-check"></i> Confirm & Load
                     </button>
                 </div>
             </div>
         </div>
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h1 style="font-size: 18px; margin: 0; font-weight: 400; color: #444;">{{ isset($truckShipment) ? 'Edit Truck Shipment' : 'New Truck Shipment' }}</h1>
+        </template>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h1 class="caption-subject" style="font-size: 18px; margin: 0;">{{ isset($truckShipment) ? 'Edit Truck Shipment' : 'New Truck Shipment' }}</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" form="truckShipmentForm" class="btn-gofreight" style="padding:6px 24px;"><i class="fa fa-save"></i> {{ isset($truckShipment) ? 'UPDATE' : 'SAVE' }}</button>
+                <button type="submit" form="truckShipmentForm" class="btn-freightx" style="padding:6px 24px;"><i class="fa fa-save"></i> {{ isset($truckShipment) ? 'UPDATE' : 'SAVE' }}</button>
+                
+                <!-- Tools Dropdown Header -->
+                <div style="position: relative; display: inline-block;">
+                    <button type="button" class="btn-default-gf" style="padding:6px 14px;" @click.stop="toolsOpen = !toolsOpen">
+                        <i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i>
+                    </button>
+                    <div x-show="toolsOpen" @click.away="toolsOpen = false" x-cloak
+                         style="position: absolute; right: 0; top: 100%; margin-top: 4px; z-index: 1050; min-width: 160px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); padding: 4px 0;">
+                        <button type="button" @click="copyShipmentForm()" 
+                                style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #334155; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease;"
+                                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                            <i class="fa fa-copy" style="color: #475569; font-size: 13px; width: 14px;"></i> Copy
+                        </button>
+                        <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+                        <button type="button" @click="deleteShipment()" 
+                                :disabled="!saved"
+                                :style="saved ? 'display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #ef4444; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease;' : 'display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #cbd5e1; background: transparent; border: none; cursor: not-allowed; opacity: 0.6;'"
+                                onmouseover="if(saved) this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                            <i class="fa fa-trash-o" :style="saved ? 'color: #ef4444; font-size: 13px; width: 14px;' : 'color: #cbd5e1; font-size: 13px; width: 14px;'"></i> Delete
+                        </button>
+                    </div>
+                </div>
+
                 <a href="/truck/list" class="btn-default-gf" style="padding:6px 20px;text-decoration:none;" target="_blank"><i class="fa fa-arrow-left"></i> BACK TO LIST</a>
             </div>
         </div>
         <ul class="gf-tabs">
-            <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Basic</a></li>
-            <li :class="(activeTab === 'container' ? 'active' : '') + (saved ? '' : ' disabled-tab')" @click="saved ? activeTab = 'container' : null"><a>Container & Item</a></li>
-            <li :class="(activeTab === 'accounting' ? 'active' : '') + (saved ? '' : ' disabled-tab')" @click="saved ? activeTab = 'accounting' : null"><a>Accounting <i class="fa fa-sliders" style="margin-left: 4px; color: #888;"></i></a></li>
-            <li :class="(activeTab === 'doc' ? 'active' : '') + (saved ? '' : ' disabled-tab')" @click="saved ? activeTab = 'doc' : null"><a>Doc Center</a></li>
-            <li :class="(activeTab === 'workorder' ? 'active' : '') + (saved ? '' : ' disabled-tab')" @click="saved ? activeTab = 'workorder' : null"><a>Work Order</a></li>
-            <li :class="(activeTab === 'status' ? 'active' : '') + (saved ? '' : ' disabled-tab')" @click="saved ? activeTab = 'status' : null"><a>Status</a></li>
+            <li :class="activeTab === 'basic' ? 'active' : ''" @click="switchTab('basic')"><a>Basic</a></li>
+            <li :class="activeTab === 'container' ? 'active' : ''" @click="switchTab('container')"><a>Container & Item</a></li>
+            <li :class="activeTab === 'accounting' ? 'active' : ''" @click="switchTab('accounting')"><a>Accounting <i class="fa fa-sliders" style="margin-left: 4px; color: #888;"></i></a></li>
+            <li :class="activeTab === 'status' ? 'active' : ''" @click="switchTab('status')"><a>Status</a></li>
         </ul>
 
         <!-- ==================== BASIC TAB ==================== -->
         <div x-show="activeTab === 'basic'" x-cloak>
-            <div class="portlet">
+            <div class="portlet light">
                 <div class="portlet-title">
                     <div class="caption caption-subject">
-                        <svg width="12" height="16" viewBox="0 0 12 16" fill="none" style="margin-right: 4px;">
-                            <path d="M0 0H12V11L6 16L0 11V0Z" fill="#fff"/>
-                        </svg>
-                        MB/L Information
+                        <i class="fa fa-shield" style="color: #3b82f6; margin-right: 6px;"></i> MB/L INFORMATION
                     </div>
-                    <button type="button" class="btn-default-gf" @click="loadFromQuotation = !loadFromQuotation"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
+                    <div style="position: relative; display: inline-block;">
+                        <button type="button" class="btn-default-gf" @click.stop="toolsOpen = !toolsOpen"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
+                        <div x-show="toolsOpen" @click.away="toolsOpen = false" x-cloak
+                             style="position: absolute; right: 0; top: 100%; margin-top: 4px; z-index: 1050; min-width: 160px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); padding: 4px 0;">
+                            <button type="button" @click="copyShipmentForm()" 
+                                    style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #334155; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease;"
+                                    onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                <i class="fa fa-copy" style="color: #475569; font-size: 13px; width: 14px;"></i> Copy
+                            </button>
+                            <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+                            <button type="button" @click="deleteShipment()" 
+                                    :disabled="!saved"
+                                    :style="saved ? 'display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #ef4444; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease;' : 'display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #cbd5e1; background: transparent; border: none; cursor: not-allowed; opacity: 0.6;'"
+                                    onmouseover="if(saved) this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                                <i class="fa fa-trash-o" :style="saved ? 'color: #ef4444; font-size: 13px; width: 14px;' : 'color: #cbd5e1; font-size: 13px; width: 14px;'"></i> Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="portlet-body">
-                    <div class="well">
                     <div class="form-grid-4">
                         <div class="form-group-gf">
                             <span class="form-label-gf required">File No.</span>
@@ -469,14 +622,14 @@
                             </div>
                         </div>
                         <div class="form-group-gf">
-                            <span class="form-label-gf required">*Post Date</span>
+                            <span class="form-label-gf required">Post Date</span>
                             <div class="form-input-container">
                                 <input type="date" name="post_date" class="form-control-gf" x-model="form.post_date" required>
                                 <span class="form-error" x-show="errors.post_date" x-text="errors.post_date"></span>
                             </div>
                         </div>
                         <div class="form-group-gf">
-                            <span class="form-label-gf required">*Office</span>
+                            <span class="form-label-gf required">Office</span>
                             <div class="form-input-container">
                                 <select name="office_id" class="form-control-gf" x-model="form.office_id" required>
                                     <option value="">Select Office...</option>
@@ -532,7 +685,7 @@
                                         <option value="{{ $quote->id }}">{{ $quote->quote_no }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" @click="showQuoteModal = true"><i class="fa fa-search"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" @click="showQuoteModal = true"><i class="fa fa-search"></i></button>
                             </div>
                         </div>
                         <div class="form-group-gf">
@@ -569,7 +722,7 @@
                                         <option value="{{ $tp->id }}">{{ $tp->name }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-external-link"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-external-link"></i></button>
                             </div>
                         </div>
                         <div class="form-group-gf">
@@ -581,8 +734,8 @@
                                         <option value="{{ $agent->id }}">{{ $agent->name }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-external-link"></i></button>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;background:#3b73af;border-color:#3b73af;color:#fff;"><i class="fa fa-share"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-external-link"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;background:#3b73af;border-color:#3b73af;color:#fff;"><i class="fa fa-share"></i></button>
                             </div>
                         </div>
                         <div class="form-group-gf">
@@ -671,7 +824,7 @@
                                         <option value="{{ $loc->id }}">{{ $loc->name }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
                             </div>
                         </div>
                         <div class="form-group-gf">
@@ -683,7 +836,7 @@
                                         <option value="{{ $loc->id }}">{{ $loc->name }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
                             </div>
                         </div>
                         <div class="form-group-gf">
@@ -695,7 +848,7 @@
                                         <option value="{{ $loc->id }}">{{ $loc->name }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
                             </div>
                         </div>
                         <div class="form-group-gf">
@@ -707,7 +860,7 @@
                                         <option value="{{ $loc->id }}">{{ $loc->name }}</option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:22px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
+                                <button type="button" class="btn-default-gf dark" style="padding:0 6px;height:26px;" onclick="window.open('/trade-partner/create','_blank')"><i class="fa fa-edit"></i></button>
                             </div>
                         </div>
 
@@ -755,7 +908,7 @@
                             </div>
                         </div>
                         <div class="form-group-gf">
-                            <span class="form-label-gf" style="color: #32c5d2; text-align: left; margin-left: 10px; cursor: pointer;" @click="showMore = !showMore">
+                            <span class="form-label-gf" style="color: #3b82f6; text-align: left; margin-left: 10px; cursor: pointer;" @click="showMore = !showMore">
                                 More <i class="fa" :class="showMore ? 'fa-minus-square-o' : 'fa-plus-square-o'"></i>
                             </span>
                         </div>
@@ -790,7 +943,6 @@
                             </div>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
 
@@ -800,7 +952,6 @@
                     <span style="font-size: 12px; font-weight: 600; color: #555;">Memo</span>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <button type="button" class="btn-default-gf dark" @click="openMemoModal()"><i class="fa fa-plus"></i> Add Memo</button>
-                        <button type="button" class="btn-default-gf dark"><i class="fa fa-external-link-square"></i> Documents (<span x-text="documents.length"></span>)</button>
                     </div>
                 </div>
                 <div style="display: flex;">
@@ -823,15 +974,15 @@
                                     </tr>
                                 </template>
                                 <template x-for="(memo, idx) in memos" :key="memo.id || idx">
-                                    <tr>
+                                    <tr :style="selectedMemo === memo ? 'background: #eef7ff; cursor: pointer;' : 'cursor: pointer;'" @click="viewMemo(memo)">
                                         <td style="text-align:center;" x-text="idx + 1"></td>
-                                        <td style="text-align:center;"><input type="checkbox" x-model="memo.has_alert"></td>
-                                        <td><a href="#" @click.prevent="viewMemo(memo)" style="color:#337ab7;text-decoration:none;" x-text="memo.subject"></a></td>
+                                        <td style="text-align:center;" @click.stop><input type="checkbox" x-model="memo.has_alert" @change="toggleMemoAlert(memo)"></td>
+                                        <td><a href="#" @click.prevent.stop="viewMemo(memo)" style="color:#337ab7;font-weight:600;text-decoration:none;" x-text="memo.subject"></a></td>
                                         <td x-text="memo.updated_at || memo.created_at"></td>
                                         <td x-text="memo.created_at"></td>
-                                        <td style="text-align:center;">
-                                            <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;" @click="editMemo(memo)"><i class="fa fa-pencil"></i></button>
-                                            <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;color:#d05454;" @click="deleteMemo(idx)"><i class="fa fa-trash"></i></button>
+                                        <td style="text-align:center;" @click.stop>
+                                            <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;" @click="editMemo(memo)" title="Edit Memo"><i class="fa fa-pencil"></i></button>
+                                            <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;color:#d05454;" @click="deleteMemo(idx)" title="Delete Memo"><i class="fa fa-trash"></i></button>
                                         </td>
                                     </tr>
                                 </template>
@@ -839,7 +990,7 @@
                         </table>
                     </div>
                     <div style="flex: 3; background: #eef1f5; padding: 10px; border: 1px solid #ddd; border-left: none;">
-                        <textarea class="form-control-gf" style="height: 100px; width: 100%; border: 1px solid #ccc; resize: none; background: #fff;" x-model="selectedMemoContent" :placeholder="selectedMemoContent ? '' : 'Select a memo to view content...'" :disabled="!selectedMemoContent"></textarea>
+                        <textarea class="form-control-gf" style="height: 100px; width: 100%; border: 1px solid #ccc; resize: none; background: #fff;" x-model="selectedMemoContent" @input="onMemoContentInput()" :placeholder="selectedMemo ? 'Enter memo content...' : 'Select a memo to view content...'" :disabled="!selectedMemo"></textarea>
                     </div>
                 </div>
             </div>
@@ -869,11 +1020,11 @@
                     <div class="well">
                     <!-- PO No -->
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #32c5d2;">P.O. No. <span style="color: #888; font-weight: normal; font-size: 10px; margin-left: 5px;">Please list down P.O. No. for this MB/L</span></h4>
+                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #2563eb;">P.O. No. <span style="color: #64748b; font-weight: normal; font-size: 10px; margin-left: 5px;">Please list down P.O. No. for this MB/L</span></h4>
                         <div style="display: flex; align-items: center; gap: 10px; font-size: 10px;">
-                            <span style="font-weight: 600;">P.O. Mapping</span>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="radio" x-model="po_mapping" value="C"> Container based</label>
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="radio" x-model="po_mapping" value="I"> Item based</label>
+                            <span style="font-weight: 600; color: #475569;">P.O. Mapping</span>
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="radio" x-model="po_mapping" value="C"> Container based</label>
+                            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="radio" x-model="po_mapping" value="I"> Item based</label>
                         </div>
                     </div>
                     <div style="display:flex;gap:4px;margin-bottom:15px;">
@@ -883,24 +1034,24 @@
                     <template x-if="poNos.length > 0">
                         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
                             <template x-for="(po, idx) in poNos" :key="idx">
-                                <span style="display:inline-flex;align-items:center;gap:3px;background:#e8f0fe;border:1px solid #c4d7f5;border-radius:3px;padding:1px 6px;font-size:10px;color:#333;">
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:2px 8px;font-size:11px;color:#1e40af;font-weight:600;">
                                     <span x-text="po"></span>
-                                    <button type="button" @click="poNos.splice(idx,1)" style="border:none;background:none;cursor:pointer;padding:0;color:#999;font-size:12px;line-height:1;">&times;</button>
+                                    <button type="button" @click="poNos.splice(idx,1)" style="border:none;background:none;cursor:pointer;padding:0;color:#3b82f6;font-size:12px;line-height:1;">&times;</button>
                                 </span>
                             </template>
                         </div>
                     </template>
                     
-                    <hr>
+                    <hr style="border-top:1px solid #e2e8f0;margin:12px 0;">
                     
                     <!-- Container List -->
-                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;flex-wrap:wrap;">
-                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #32c5d2; margin-right: 5px;">Container List</h4>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #2563eb; margin-right: 4px;">Container List</h4>
                         <button type="button" class="btn-gf-inline" @click="addContainer()"><i class="fa fa-plus"></i> Add</button>
-                        <button type="button" class="btn-gf-inline" @click="addContainers(5)" style="background:#67809f;">+5</button>
-                        <button type="button" class="btn-default-gf dark" @click="duplicateContainer()"><i class="fa fa-clone"></i></button>
-                        <button type="button" class="btn-default-gf dark" @click="deleteSelectedContainers()" :disabled="selectedContainers.length === 0"><i class="fa fa-trash"></i></button>
-                        <button type="button" class="btn-gf-inline" style="background:#3b73af;">Create Pier Pass A/P</button>
+                        <button type="button" class="btn-default-gf" @click="addContainers(5)"><i class="fa fa-plus-circle"></i> +5</button>
+                        <button type="button" class="btn-default-gf" @click="duplicateContainer()" title="Duplicate Container"><i class="fa fa-clone"></i> Duplicate</button>
+                        <button type="button" class="btn-default-gf" style="color:#ef4444;border-color:#fca5a5;" @click="deleteSelectedContainers()" :disabled="selectedContainers.length === 0" title="Delete Selected"><i class="fa fa-trash"></i> Delete Selected</button>
+                        <button type="button" class="btn-gf-inline" @click="createPierPassAP()"><i class="fa fa-credit-card"></i> Create Pier Pass A/P</button>
                     </div>
                     
                     <table class="memo-table" style="margin-bottom: 15px; text-align: center;">
@@ -927,8 +1078,8 @@
                         <tbody>
                             <template x-if="containers.length === 0">
                                 <tr>
-                                    <td :colspan="po_mapping === 'C' ? 16 : 15" style="text-align: center; color: #888; height: 35px;">
-                                        No Data Available. Please click <span style="color: #32c5d2; cursor:pointer;" @click="addContainer()">here</span> to add a new row.
+                                    <td :colspan="po_mapping === 'C' ? 16 : 15" style="text-align: center; color: #94a3b8; height: 40px;">
+                                        No Data Available. Please click <span style="color: #2563eb; font-weight: 600; cursor:pointer;" @click="addContainer()">here</span> to add a new row.
                                     </td>
                                 </tr>
                             </template>
@@ -955,56 +1106,58 @@
                                     <td><input type="date" class="form-control-gf" x-model="cont.empty_return_date" style="width:90px;" @change="cont._unsaved = true"></td>
                                     <td x-show="po_mapping === 'C'"><input type="text" class="form-control-gf" x-model="cont.po_no" style="width:100px;" @input="cont._unsaved = true"></td>
                                     <td style="text-align: center;">
-                                        <button type="button" class="btn-default-gf dark" style="padding:2px 6px;font-size:9px;" @click="saveContainer(idx)" :disabled="!cont._unsaved" title="Save">
+                                        <button type="button" class="btn-default-gf" style="padding:2px 6px;font-size:10px;color:#2563eb;" @click="saveContainer(idx)" :disabled="!cont._unsaved" title="Save">
                                             <i class="fa fa-save"></i>
                                         </button>
-                                        <button type="button" class="btn-default-gf dark" style="padding:2px 6px;font-size:9px;color:#d05454;" @click="deleteContainer(idx)" title="Delete">
+                                        <button type="button" class="btn-default-gf" style="padding:2px 6px;font-size:10px;color:#ef4444;" @click="deleteContainer(idx)" title="Delete">
                                             <i class="fa fa-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
                             </template>
-                            <tr style="background: #f9f9f9;">
+                            <tr style="background: #f8fafc;">
                                 <td colspan="4"></td>
                                 <td style="text-align: center;"><input type="radio" name="total_source" value="container" x-model="totalSource"></td>
-                                <td colspan="2" style="text-align: left;">Container Total</td>
-                                <td style="text-align: right; color: #32c5d2;" x-text="containerTotals.pkg"></td>
-                                <td style="text-align: right; color: #32c5d2;" x-text="containerTotals.weight"></td>
-                                <td style="text-align: right; color: #32c5d2;" x-text="containerTotals.measurement"></td>
+                                <td colspan="2" style="text-align: left; font-weight: 600; color: #475569;">Container Total</td>
+                                <td style="text-align: right; color: #2563eb; font-weight: 700;" x-text="containerTotals.pkg"></td>
+                                <td style="text-align: right; color: #2563eb; font-weight: 700;" x-text="containerTotals.weight"></td>
+                                <td style="text-align: right; color: #2563eb; font-weight: 700;" x-text="containerTotals.measurement"></td>
                                 <td :colspan="po_mapping === 'C' ? 5 : 4"></td>
                             </tr>
-                            <tr style="background: #f9f9f9;">
+                            <tr style="background: #f8fafc;">
                                 <td colspan="4"></td>
                                 <td style="text-align: center;"><input type="radio" name="total_source" value="manual" x-model="totalSource"></td>
-                                <td colspan="2" style="text-align: left;">Manual Input Total</td>
-                                <td><input type="text" class="form-control-gf" style="text-align: right; background: #eef1f5;" x-model="manualTotal.pkg" :disabled="totalSource !== 'manual'"></td>
+                                <td colspan="2" style="text-align: left; font-weight: 600; color: #475569;">Manual Input Total</td>
+                                <td><input type="text" class="form-control-gf" style="text-align: right; background: #ffffff;" x-model="manualTotal.pkg" :disabled="totalSource !== 'manual'"></td>
                                 <td style="text-align: right;">
-                                    <input type="text" class="form-control-gf" style="width: 60px; display: inline-block; text-align: right; background: #eef1f5;" x-model="manualTotal.weight" :disabled="totalSource !== 'manual'"> KG
+                                    <input type="text" class="form-control-gf" style="width: 60px; display: inline-block; text-align: right; background: #ffffff;" x-model="manualTotal.weight" :disabled="totalSource !== 'manual'"> KG
                                 </td>
                                 <td style="text-align: right;">
-                                    <input type="text" class="form-control-gf" style="width: 60px; display: inline-block; text-align: right; background: #eef1f5;" x-model="manualTotal.measurement" :disabled="totalSource !== 'manual'"> CBM
+                                    <input type="text" class="form-control-gf" style="width: 60px; display: inline-block; text-align: right; background: #ffffff;" x-model="manualTotal.measurement" :disabled="totalSource !== 'manual'"> CBM
                                 </td>
                                 <td :colspan="po_mapping === 'C' ? 5 : 4"></td>
                             </tr>
-                            <tr style="background: #f9f9f9;">
+                            <tr style="background: #f8fafc;">
                                 <td colspan="4"></td>
                                 <td style="text-align: center;"><input type="radio" name="total_source" value="receiving" x-model="totalSource" disabled></td>
-                                <td colspan="2" style="text-align: left;">Receiving Total</td>
+                                <td colspan="2" style="text-align: left; font-weight: 600; color: #475569;">Receiving Total</td>
                                 <td :colspan="po_mapping === 'C' ? 8 : 7" style="text-align: left;">
-                                    <button type="button" class="btn-gf-inline" style="background: #3b73af;" @click="openWarehouseLoadModal()"><i class="fa fa-external-link-square"></i> Load from Warehouse</button>
-                                    <button type="button" class="btn-gf-inline" style="background: #3b73af;" @click="openCreateReceiptModal()"><i class="fa fa-external-link-square"></i> Create Receipt and Link</button>
+                                    <div style="display:flex;gap:6px;align-items:center;">
+                                        <button type="button" class="btn-gf-inline" @click="openWarehouseLoadModal()"><i class="fa fa-database"></i> Load from Warehouse</button>
+                                        <button type="button" class="btn-gf-inline" @click="openCreateReceiptModal()"><i class="fa fa-link"></i> Create Receipt and Link</button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                     
-                    <hr>
+                    <hr style="border-top:1px solid #e2e8f0;margin:12px 0;">
                     
                     <!-- Commodity -->
-                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
-                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #32c5d2; margin-right: 5px;">Commodity</h4>
-                        <button type="button" class="btn-gf-inline" @click="addCommodity()"><i class="fa fa-plus"></i></button>
-                        <button type="button" class="btn-default-gf dark" @click="deleteSelectedCommodities()" :disabled="selectedCommodities.length === 0"><i class="fa fa-trash"></i></button>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #2563eb; margin-right: 4px;">Commodity</h4>
+                        <button type="button" class="btn-gf-inline" @click="addCommodity()"><i class="fa fa-plus"></i> Add Commodity</button>
+                        <button type="button" class="btn-default-gf" style="color:#ef4444;border-color:#fca5a5;" @click="deleteSelectedCommodities()" :disabled="selectedCommodities.length === 0" title="Delete Selected"><i class="fa fa-trash"></i> Delete Selected</button>
                     </div>
                     
                     <table class="memo-table" style="margin-bottom: 15px;">
@@ -1041,10 +1194,10 @@
                                     </td>
                                     <td x-show="po_mapping === 'I'"><input type="text" class="form-control-gf" x-model="comm.po_no" style="width:100px;" @input="comm._unsaved = true"></td>
                                     <td style="text-align: center;">
-                                        <button type="button" class="btn-default-gf dark" style="padding:2px 6px;font-size:9px;" @click="saveCommodity(idx)" :disabled="!comm._unsaved" title="Save">
+                                        <button type="button" class="btn-default-gf" style="padding:2px 6px;font-size:10px;color:#2563eb;" @click="saveCommodity(idx)" :disabled="!comm._unsaved" title="Save">
                                             <i class="fa fa-save"></i>
                                         </button>
-                                        <button type="button" class="btn-default-gf dark" style="padding:2px 6px;font-size:9px;color:#d05454;" @click="deleteCommodity(idx)" title="Delete">
+                                        <button type="button" class="btn-default-gf" style="padding:2px 6px;font-size:10px;color:#ef4444;" @click="deleteCommodity(idx)" title="Delete">
                                             <i class="fa fa-trash"></i>
                                         </button>
                                     </td>
@@ -1053,36 +1206,36 @@
                         </tbody>
                     </table>
                     
-                    <hr>
+                    <hr style="border-top:1px solid #e2e8f0;margin:12px 0;">
                     
                     <!-- Warehouse Receipt List -->
-                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 15px;">
-                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #32c5d2; margin-right: 5px;">Warehouse Receipt List</h4>
-                        <button type="button" class="btn-default-gf dark" disabled><i class="fa fa-trash"></i></button>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+                        <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #2563eb; margin-right: 4px;">Warehouse Receipt List</h4>
+                        <button type="button" class="btn-default-gf" disabled><i class="fa fa-trash"></i></button>
                     </div>
                     
                     <table class="memo-table" style="margin-bottom:15px;">
                         <thead>
-                            <tr><th style="text-align:center;color:#888;padding:10px;">No warehouse receipts linked.</th></tr>
+                            <tr><th style="text-align:center;color:#64748b;padding:10px;">No warehouse receipts linked.</th></tr>
                         </thead>
                     </table>
                     
-                    <hr>
+                    <hr style="border-top:1px solid #e2e8f0;margin:12px 0;">
                     
                     <!-- Instruction & Description -->
                     <div style="display: flex; gap: 20px;">
                         <div style="flex: 1;">
-                            <h4 style="font-size: 12px; font-weight: 600; margin: 0 0 5px 0; color: #333;">Instruction</h4>
+                            <h4 style="font-size: 12px; font-weight: 700; margin: 0 0 6px 0; color: #2563eb;">Instruction</h4>
                             <textarea name="instruction_text" class="form-control-gf" style="height: 75px; resize: none;" x-model="instructionText"></textarea>
                         </div>
                         <div style="flex: 1;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
-                                <h4 style="font-size: 13px; font-weight: 700; margin: 0; color: #32c5d2;">Description</h4>
-                                <div style="font-size: 10px;">
-                                    <span style="color: #888; margin-right: 5px;">Copy:</span>
-                                    <button type="button" class="btn-default-gf dark" style="padding: 2px 6px;" disabled>P.O.</button>
-                                    <button type="button" class="btn-default-gf dark" style="padding: 2px 6px;" @click="copyCommoditiesToDescription()">Commodity</button>
-                                    <button type="button" class="btn-default-gf dark" style="padding: 2px 6px;" disabled>Commodity & HTS</button>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+                                <h4 style="font-size: 12px; font-weight: 700; margin: 0; color: #2563eb;">Description</h4>
+                                <div style="font-size: 10px; display: flex; align-items: center; gap: 4px;">
+                                    <span style="color: #64748b; margin-right: 2px;">Copy:</span>
+                                    <button type="button" class="btn-default-gf" style="padding: 2px 8px; font-size: 10px;" @click="copyPoToDescription()"><i class="fa fa-copy"></i> P.O.</button>
+                                    <button type="button" class="btn-default-gf" style="padding: 2px 8px; font-size: 10px;" @click="copyCommoditiesToDescription()"><i class="fa fa-copy"></i> Commodity</button>
+                                    <button type="button" class="btn-default-gf" style="padding: 2px 8px; font-size: 10px;" @click="copyCommodityAndHtsToDescription()"><i class="fa fa-copy"></i> Commodity & HTS</button>
                                 </div>
                             </div>
                             <textarea name="description" class="form-control-gf" style="height: 75px; resize: none;" x-model="form.description"></textarea>
@@ -1149,7 +1302,7 @@
 
                     <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px;">
                         <button type="button" class="btn-default-gf" @click="clearWarehouseFilters()">Clear</button>
-                        <button type="button" class="btn-gofreight" @click="searchWarehouseReceipts()"><i class="fa fa-search"></i> Search</button>
+                        <button type="button" class="btn-freightx" @click="searchWarehouseReceipts()"><i class="fa fa-search"></i> Search</button>
                     </div>
 
                     <!-- Warehouse Receipts Table -->
@@ -1206,7 +1359,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn-default-gf" @click="closeWarehouseLoadModal()">Cancel</button>
-                    <button type="button" class="btn-gofreight" @click="loadSelectedWarehouseReceipts()" :disabled="selectedWarehouseReceipts.length === 0">
+                    <button type="button" class="btn-freightx" @click="loadSelectedWarehouseReceipts()" :disabled="selectedWarehouseReceipts.length === 0">
                         <i class="fa fa-check"></i> Load Selected (<span x-text="selectedWarehouseReceipts.length"></span>)
                     </button>
                 </div>
@@ -1310,7 +1463,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn-default-gf" @click="closeCreateReceiptModal()">Cancel</button>
-                    <button type="button" class="btn-gofreight" @click="createAndLinkReceipt()">
+                    <button type="button" class="btn-freightx" @click="createAndLinkReceipt()">
                         <i class="fa fa-save"></i> Create and Link
                     </button>
                 </div>
@@ -1361,13 +1514,13 @@
                 <div class="portlet-body">
                     <!-- Accounting Navigation Buttons -->
                     <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <button type="button" @click.prevent="createInvoice('AR')" class="btn-gofreight" style="background: #32c5d2; border: none; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all 0.2s;">
+                        <button type="button" @click.prevent="createInvoice('AR')" class="btn-freightx" style="background: #32c5d2; border: none; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all 0.2s;">
                             <i class="fa fa-plus"></i> ORIGIN REVENUE (INVOICE/AR)
                         </button>
-                        <button type="button" @click.prevent="createInvoice('DC')" class="btn-gofreight" style="background: #32c5d2; border: none; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all 0.2s;">
+                        <button type="button" @click.prevent="createInvoice('DC')" class="btn-freightx" style="background: #32c5d2; border: none; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all 0.2s;">
                             <i class="fa fa-plus"></i> DESTINATION REVENUE/COST (D/C NOTE)
                         </button>
-                        <button type="button" @click.prevent="createInvoice('AP')" class="btn-gofreight" style="background: #32c5d2; border: none; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all 0.2s;">
+                        <button type="button" @click.prevent="createInvoice('AP')" class="btn-freightx" style="background: #32c5d2; border: none; color: white; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: all 0.2s;">
                             <i class="fa fa-plus"></i> ORIGIN COST (AP)
                         </button>
                     </div>
@@ -1460,151 +1613,7 @@
             </div>
         </div>
 
-        <!-- ==================== DOC CENTER TAB ==================== -->
-        <div x-show="activeTab === 'doc'" x-cloak>
-            <div class="portlet">
-                <div class="portlet-title">
-                    <div class="caption caption-subject">
-                        <span style="display: inline-block; width: 14px; height: 18px; background: #fff; clip-path: polygon(100% 0, 100% 66%, 50% 100%, 0 66%, 0 0); margin-right: 5px;"></span>
-                        Documents
-                    </div>
-                    <div>
-                        <button type="button" class="btn-default-gf"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
-                    </div>
-                </div>
-                
-                <div class="portlet-body">
-                    <div style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
-                        <label class="btn-gf-inline" style="background:#4b77be;margin:0;cursor:pointer;">
-                            <i class="fa fa-upload"></i> Upload Document
-                            <input type="file" name="document" x-ref="documentInput" style="display:none;" @change="uploadDocument($event)">
-                        </label>
-                        <button type="button" class="btn-default-gf dark"><i class="fa fa-download"></i> Batch Download</button>
-                        <button type="button" class="btn-default-gf dark"><i class="fa fa-envelope-o"></i> Email</button>
-                    </div>
 
-                    <table class="memo-table" style="margin-bottom: 15px;">
-                        <thead>
-                            <tr>
-                                <th style="width: 25px; text-align: center;"><input type="checkbox" @change="toggleAllDocuments($event.target.checked)"></th>
-                                <th style="width: 30px;"></th>
-                                <th>Document Name</th>
-                                <th>Category</th>
-                                <th>Remark</th>
-                                <th>File Name</th>
-                                <th style="text-align: right;">Size</th>
-                                <th style="text-align: right;">Upload Date</th>
-                                <th>Uploader</th>
-                                <th style="text-align: center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-if="documents.length === 0">
-                                <tr>
-                                    <td colspan="10" style="text-align: center; padding: 50px; color: #999; font-style: italic;">
-                                        <i class="fa fa-folder-open-o" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
-                                        No documents uploaded yet. Click "Upload Document" to add files.
-                                    </td>
-                                </tr>
-                            </template>
-                            <template x-for="(doc, idx) in documents" :key="doc.id || idx">
-                                <tr>
-                                    <td style="text-align:center;"><input type="checkbox" :value="idx" x-model="selectedDocuments"></td>
-                                    <td style="text-align:center;"><i class="fa fa-file-pdf-o" style="color:#d05454;" x-show="doc.file_extension === 'pdf'"></i><i class="fa fa-file-image-o" style="color:#4b77be;" x-show="['jpg','jpeg','png','gif'].includes(doc.file_extension)"></i><i class="fa fa-file-text-o" style="color:#888;" x-show="!['pdf','jpg','jpeg','png','gif'].includes(doc.file_extension)"></i></td>
-                                    <td x-text="doc.file_name || doc.original_name"></td>
-                                    <td x-text="doc.document_type || 'General'"></td>
-                                    <td x-text="doc.description || '-'"></td>
-                                    <td x-text="doc.file_name"></td>
-                                    <td style="text-align:right;" x-text="doc.file_size ? (doc.file_size / 1024).toFixed(1) + ' KB' : '-'"></td>
-                                    <td style="text-align:right;" x-text="doc.created_at"></td>
-                                    <td x-text="doc.uploader_name || 'N/A'"></td>
-                                    <td style="text-align:center;">
-                                        <a :href="doc.download_url || '#'" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;text-decoration:none;" :download="doc.file_name" target="_blank"><i class="fa fa-download"></i></a>
-                                        <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;color:#d05454;" @click="deleteDocument(idx)"><i class="fa fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                    
-                    <div class="file-upload-zone" @click="$refs.documentInput.click()">
-                        <i class="fa fa-cloud-upload" style="font-size: 24px; color: #32c5d2; display: block; margin-bottom: 5px;"></i>
-                        <span style="font-size: 12px; color: #888;">Drag & drop files here or click to browse</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== WORK ORDER TAB ==================== -->
-        <div x-show="activeTab === 'workorder'" x-cloak>
-            <div class="portlet">
-                <div class="portlet-title">
-                    <div class="caption caption-subject">
-                        <span style="display: inline-block; width: 14px; height: 18px; background: #fff; clip-path: polygon(100% 0, 100% 66%, 50% 100%, 0 66%, 0 0); margin-right: 5px;"></span>
-                        Work Orders
-                    </div>
-                    <div>
-                        <button type="button" class="btn-default-gf"><i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i></button>
-                    </div>
-                </div>
-                
-                <div class="portlet-body" style="padding: 0;">
-                    <div style="padding: 10px; background: #eef1f5; display: flex; gap: 4px;">
-                        <button type="button" class="btn-gf-inline" style="margin: 0; background: #32c5d2;" @click="createWorkOrder()"><i class="fa fa-plus"></i></button>
-                        <button type="button" class="btn-default-gf dark" style="margin: 0; padding: 4px 10px; border-radius: 3px; border: 1px solid #ccc; color: #555;" @click="deleteSelectedWorkOrders()" :disabled="selectedWorkOrders.length === 0"><i class="fa fa-trash"></i></button>
-                        <button type="button" class="btn-default-gf dark" style="margin-left:auto;" @click="syncWorkOrders()"><i class="fa fa-refresh"></i> Refresh</button>
-                    </div>
-                    <table class="memo-table memo-table-dark" style="margin-bottom: 0;">
-                        <thead>
-                            <tr>
-                                <th style="width: 30px; text-align: center;"><input type="checkbox" @change="toggleAllWorkOrders($event.target.checked)"></th>
-                                <th style="text-align: center; width: 50px;">No.</th>
-                                <th style="text-align: center;">D/O Type</th>
-                                <th>Freight Pickup</th>
-                                <th>Delivery</th>
-                                <th>Trucker</th>
-                                <th style="text-align: center;">Status</th>
-                                <th style="text-align: center;">Last Modified</th>
-                                <th style="text-align: center;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-if="workOrders.length === 0">
-                                <tr>
-                                    <td colspan="9" style="background: #f9f9f9; text-align: center; color: #888; padding: 20px;">
-                                        <i class="fa fa-truck" style="font-size:18px;display:block;margin-bottom:5px;"></i>
-                                        No work orders yet. Click the "+" button to create one.
-                                    </td>
-                                </tr>
-                            </template>
-                            <template x-for="(wo, idx) in workOrders" :key="wo.id">
-                                <tr>
-                                    <td style="text-align:center;"><input type="checkbox" :value="wo.id" x-model="selectedWorkOrders"></td>
-                                    <td style="text-align:center;" x-text="wo.work_order_no || wo.no"></td>
-                                    <td style="text-align:center;" x-text="wo.type || 'Delivery'"></td>
-                                    <td x-text="wo.freight_pickup_name || '-'"></td>
-                                    <td x-text="wo.delivery_name || '-'"></td>
-                                    <td x-text="wo.trucker || wo.vendor_name || '-'"></td>
-                                    <td style="text-align:center;">
-                                        <span :class="'status-badge status-' + (wo.status || 'PENDING').toLowerCase()" 
-                                              style="font-size:9px;padding:2px 6px;border-radius:2px;"
-                                              :style="wo.status === 'COMPLETED' ? 'background:#26c281;color:#fff;' : wo.status === 'IN_PROGRESS' ? 'background:#578ebe;color:#fff;' : wo.status === 'CANCELLED' ? 'background:#d05454;color:#fff;' : 'background:#e8e8e8;color:#555;'"
-                                              x-text="wo.status || 'PENDING'"></span>
-                                    </td>
-                                    <td style="text-align:center;" x-text="wo.updated_at || wo.date || '-'"></td>
-                                    <td style="text-align:center;">
-                                        <div style="display:flex;gap:4px;justify-content:center;">
-                                            <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;" @click="editWorkOrder(wo.id)"><i class="fa fa-pencil"></i></button>
-                                            <button type="button" class="btn-default-gf dark" style="padding:1px 5px;font-size:9px;color:#d05454;" @click="deleteWorkOrder(wo.id)"><i class="fa fa-trash"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
         <!-- ==================== STATUS TAB ==================== -->
         <div x-show="activeTab === 'status'" x-cloak>
@@ -1862,13 +1871,99 @@
     <script>
         function truckCreateApp() {
             return {
-                activeTab: 'basic',
+                activeTab: (function() {
+                    const hash = window.location.hash.replace('#', '');
+                    const validTabs = ['basic', 'container', 'accounting', 'doc', 'workorder', 'status'];
+                    if (validTabs.includes(hash)) return hash;
+                    const stored = sessionStorage.getItem('truck_create_active_tab');
+                    if (stored && validTabs.includes(stored)) return stored;
+                    return 'basic';
+                })(),
                 saved: typeof truckShipmentSaved !== "undefined" ? truckShipmentSaved : @json(isset($truckShipment) ? true : false),
                 errors: {},
                 chargeStep: 1,
                 toolsOpen: false,
                 showMore: false,
                 loadFromQuotation: false,
+
+                switchTab(tab) {
+                    const validTabs = ['basic', 'container', 'accounting', 'doc', 'workorder', 'status'];
+                    if (!validTabs.includes(tab)) return;
+                    this.activeTab = tab;
+                    window.location.hash = tab;
+                    sessionStorage.setItem('truck_create_active_tab', tab);
+                },
+                
+                // ===== Tools Dropdown Actions =====
+                copyShipmentForm() {
+                    this.toolsOpen = false;
+                    @if(isset($truckShipment))
+                        if (typeof showToast === 'function') {
+                            showToast('info', 'Copying shipment to create new form...');
+                        }
+                        window.location.href = '/truck/create?copy={{ $truckShipment->id }}';
+                    @else
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                        const rand = Math.floor(1000 + Math.random() * 9000);
+                        this.form.file_no = 'TK-' + year + '-' + month + '-' + rand;
+                        this.saved = false;
+                        if (typeof showToast === 'function') {
+                            showToast('success', 'Copied current form as new shipment (' + this.form.file_no + ')');
+                        }
+                    @endif
+                },
+                deleteShipment() {
+                    this.toolsOpen = false;
+                    if (!this.saved) {
+                        if (typeof showToast === 'function') {
+                            showToast('warning', 'Cannot delete an unsaved shipment.');
+                        }
+                        return;
+                    }
+                    
+                    @if(isset($truckShipment))
+                    if (!confirm('Are you sure you want to delete Truck Shipment ' + (this.form.file_no || '') + '?')) {
+                        return;
+                    }
+                    
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (typeof showToast === 'function') {
+                        showToast('info', 'Deleting shipment...');
+                    }
+                    
+                    fetch('/truck/{{ $truckShipment->id }}', {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken || '',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success || res.ok) {
+                            if (typeof showToast === 'function') {
+                                showToast('success', 'Truck Shipment deleted successfully');
+                            }
+                            setTimeout(() => {
+                                window.location.href = '/truck/my-shipment-list';
+                            }, 600);
+                        } else {
+                            if (typeof showToast === 'function') {
+                                showToast('error', data.message || 'Failed to delete shipment');
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Delete error:', err);
+                        if (typeof showToast === 'function') {
+                            showToast('error', 'Failed to delete shipment');
+                        }
+                    });
+                    @endif
+                },
                 
                 // Warehouse Modal States
                 showWarehouseLoadModal: false,
@@ -1998,8 +2093,11 @@
                     vessel_flight_no: '',
                     carrier_bkg_no: '',
                     shipper: '',
+                    shipper_id: '',
                     consignee: '',
+                    consignee_id: '',
                     trucker: '',
+                    trucker_id: '',
                     op: '',
                     detail: ''
                 },
@@ -2032,6 +2130,24 @@
                     if (this.quoteForm.sales_person_id) this.form.sales_id = this.quoteForm.sales_person_id;
                     if (this.quoteForm.pol_id) this.form.pol_id = this.quoteForm.pol_id;
                     if (this.quoteForm.pod_id) this.form.pod_id = this.quoteForm.pod_id;
+                    if (this.quoteForm.shipper_id) this.form.shipper_id = this.quoteForm.shipper_id;
+                    if (this.quoteForm.consignee_id) this.form.consignee_id = this.quoteForm.consignee_id;
+                    if (this.quoteForm.trucker_id) this.form.trucker_id = this.quoteForm.trucker_id;
+                    if (this.quoteForm.vessel_flight_no) this.form.vessel_flight_no = this.quoteForm.vessel_flight_no;
+                    if (this.quoteForm.carrier_bkg_no) this.form.carrier_bkg_no = this.quoteForm.carrier_bkg_no;
+
+                    if (this.selectedQuote && this.selectedQuote.commodity) {
+                        this.commodities.push({
+                            id: null,
+                            description: this.selectedQuote.commodity,
+                            hts_code: '',
+                            container_idx: '',
+                            container_id: null,
+                            po_no: '',
+                            _unsaved: true
+                        });
+                    }
+
                     if (this.selectedQuote && this.selectedQuote.items) {
                         const items = this.selectedQuote.items.filter(item => item.selected !== false);
                         items.forEach(item => {
@@ -2060,6 +2176,10 @@
                         });
                     }
                     this.showQuoteModal = false;
+                    this.activeTab = 'basic';
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Quotation loaded into form successfully!');
+                    }
                 },
                 async searchQuotes() {
                     try {
@@ -2073,7 +2193,11 @@
                         if (this.filters.status) params.append('status', this.filters.status);
                         if (this.filters.op) params.append('op', this.filters.op);
                         
-                        const response = await fetch(`/api/quotations?transport_mode=TRUCK&${params.toString()}`);
+                        params.append('module', 'Truck');
+                        let response = await fetch(`/api/quotations?${params.toString()}`);
+                        if (!response.ok) {
+                            response = await fetch(`/api/dropdown-options/quotations?${params.toString()}`);
+                        }
                         if (response.ok) {
                             const data = await response.json();
                             this.quoteSearch.results = data.data || data || [];
@@ -2087,11 +2211,6 @@
                 closeQuoteModal() {
                     this.showQuoteModal = false;
                     this.quoteStep = 1;
-                    if (window.location.pathname.includes('create-quote')) {
-                        window.location.href = '/truck/create';
-                    } else if (new URLSearchParams(window.location.search).has('load_from_quotation')) {
-                        window.location.href = '/truck/create';
-                    }
                 },
                 
                 // ===== Tab State =====
@@ -2553,6 +2672,57 @@
                 copyCommoditiesToDescription() {
                     this.form.description = this.commodities.map(c => c.description).filter(Boolean).join(', ');
                 },
+                createPierPassAP() {
+                    this.charges.push({
+                        id: null,
+                        type: 'AP',
+                        charge_code: 'PIERPASS',
+                        charge_name: 'Pier Pass Charge',
+                        amount: 50.00,
+                        rate: 50.00,
+                        qty: 1,
+                        is_invoiced: false,
+                        party_name: 'Pier Pass Authority'
+                    });
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Created Pier Pass A/P charge item in Accounting tab');
+                    }
+                },
+                copyPoToDescription() {
+                    const pos = [];
+                    this.containers.forEach(c => { if(c.po_no) pos.push(c.po_no); });
+                    this.commodities.forEach(c => { if(c.po_no) pos.push(c.po_no); });
+                    if (this.poList && Array.isArray(this.poList)) {
+                        this.poList.forEach(p => { if(p) pos.push(p); });
+                    }
+                    const uniquePos = [...new Set(pos)].filter(Boolean);
+                    if (uniquePos.length > 0) {
+                        this.form.description = (this.form.description ? this.form.description + '\nP.O. No: ' : 'P.O. No: ') + uniquePos.join(', ');
+                        if (typeof showToast === 'function') {
+                            showToast('success', 'P.O. numbers copied to Description field');
+                        }
+                    } else {
+                        if (typeof showToast === 'function') {
+                            showToast('info', 'No P.O. numbers to copy');
+                        }
+                    }
+                },
+                copyCommodityAndHtsToDescription() {
+                    const items = this.commodities.map(c => {
+                        if (c.description && c.hts_code) return `${c.description} (HTS: ${c.hts_code})`;
+                        return c.description || c.hts_code || '';
+                    }).filter(Boolean);
+                    if (items.length > 0) {
+                        this.form.description = items.join(', ');
+                        if (typeof showToast === 'function') {
+                            showToast('success', 'Commodity & HTS copied to Description field');
+                        }
+                    } else {
+                        if (typeof showToast === 'function') {
+                            showToast('info', 'No commodity/HTS data to copy');
+                        }
+                    }
+                },
                 
                 // ===== Warehouse Load Modal Methods =====
                 openWarehouseLoadModal() {
@@ -2779,120 +2949,14 @@
                     return { revenue, cost, balance, profit, profitPercentage, profitMargin };
                 },
                 
-                // ===== Document Management =====
-                documents: [],
-                selectedDocuments: [],
-                toggleAllDocuments(checked) {
-                    if (checked) {
-                        this.selectedDocuments = this.documents.map((_, idx) => idx);
-                    } else {
-                        this.selectedDocuments = [];
-                    }
-                },
-                async uploadDocument(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    
-                    const formData = new FormData();
-                    formData.append('document', file);
-                    formData.append('file_name', file.name);
-                    
-                    try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                        @if(isset($truckShipment))
-                        const response = await fetch('/api/truck-shipments/{{ $truckShipment->id }}/documents', {
-                            method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json' },
-                            body: formData
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.documents.push(data.data || data);
-                        }
-                        @else
-                        alert('Please save the shipment first before uploading documents.');
-                        @endif
-                    } catch (e) {
-                        console.error('Upload failed:', e);
-                        alert('Failed to upload document.');
-                    }
-                    event.target.value = '';
-                },
-                deleteDocument(idx) {
-                    const doc = this.documents[idx];
-                    if (!doc) return;
-                    if (!confirm('Delete this document?')) return;
-                    
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                    fetch(`/api/truck-shipments/documents/${doc.id}`, {
-                        method: 'DELETE',
-                        headers: { 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json' }
-                    }).then(r => {
-                        if (r.ok) this.documents.splice(idx, 1);
-                    }).catch(e => console.error('Delete failed:', e));
-                },
-                
-                // ===== Work Order Management =====
-                workOrders: [],
-                selectedWorkOrders: [],
-                toggleAllWorkOrders(checked) {
-                    if (checked) {
-                        this.selectedWorkOrders = this.workOrders.map(wo => wo.id);
-                    } else {
-                        this.selectedWorkOrders = [];
-                    }
-                },
-                createWorkOrder() {
-                    @if(isset($truckShipment))
-                        window.open('/ocean-export/work-order/create?workable_type=App%5CModels%5CTruckShipment&workable_id={{ $truckShipment->id }}', '_blank');
-                    @else
-                        alert('Please save the shipment first before creating a work order.');
-                    @endif
-                },
-                editWorkOrder(id) {
-                    window.open(`/ocean-export/work-order/${id}/edit`, '_blank');
-                },
-                async deleteWorkOrder(id) {
-                    if (!confirm('Delete this work order?')) return;
-                    try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                        const response = await fetch(`/ocean-export/work-order/${id}`, {
-                            method: 'DELETE',
-                            headers: { 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json' }
-                        });
-                        if (response.ok) {
-                            this.syncWorkOrders();
-                        }
-                    } catch (e) {
-                        console.error('Failed to delete work order:', e);
-                    }
-                },
-                deleteSelectedWorkOrders() {
-                    if (this.selectedWorkOrders.length === 0) return;
-                    if (!confirm(`Delete ${this.selectedWorkOrders.length} work order(s)?`)) return;
-                    this.selectedWorkOrders.forEach(id => this.deleteWorkOrder(id));
-                },
-                async syncWorkOrders() {
-                    @if(isset($truckShipment))
-                    try {
-                        const response = await fetch(`/api/work-orders?workable_type=App%5CModels%5CTruckShipment&workable_id={{ $truckShipment->id }}`);
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.workOrders = Array.isArray(data) ? data : (data.data || []);
-                        }
-                    } catch (e) {
-                        console.error('Failed to sync work orders:', e);
-                    }
-                    @else
-                    this.workOrders = [];
-                    @endif
-                },
+
                 
                 // ===== Status Logs =====
                 statusLogs: [],
                 
                 // ===== Memo Management =====
                 memos: [],
+                selectedMemo: null,
                 selectedMemoContent: '',
                 memoModalOpen: false,
                 memoEditIndex: -1,
@@ -3175,22 +3239,10 @@
                 },
                 
                 openInTrackTrace() {
-                    @if(isset($truckShipment))
-                    const fileNo = '{{ $truckShipment->file_no ?? '' }}';
-                    if (fileNo) {
-                        window.open(`/track-trace?file_no=${encodeURIComponent(fileNo)}`, '_blank');
-                        if (typeof showToast === 'function') {
-                            showToast('info', 'Opening in Track-Trace...');
-                        }
-                    } else {
-                        alert('File number not available');
-                    }
-                    @else
-                    alert('Please save the shipment first');
-                    @endif
+                    window.openTrackTrace({ type: 'container', number: '' });
                 },
                 
-openMemoModal() {
+                openMemoModal() {
                     this.memoEditIndex = -1;
                     this.memoForm = { subject: '', content: '', has_alert: false };
                     this.memoModalOpen = true;
@@ -3205,10 +3257,33 @@ openMemoModal() {
                     this.memoModalOpen = true;
                 },
                 viewMemo(memo) {
-                    this.selectedMemoContent = memo.content || 'No content.';
+                    this.selectedMemo = memo;
+                    this.selectedMemoContent = memo ? (memo.content || '') : '';
+                },
+                onMemoContentInput() {
+                    if (this.selectedMemo) {
+                        this.selectedMemo.content = this.selectedMemoContent;
+                    }
+                },
+                async toggleMemoAlert(memo) {
+                    @if(isset($truckShipment))
+                    if (memo && memo.id) {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                        try {
+                            await fetch(`/api/truck-shipments/{{ $truckShipment->id }}/memos/${memo.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json' },
+                                body: JSON.stringify({ subject: memo.subject, content: memo.content || '', has_alert: memo.has_alert })
+                            });
+                        } catch (e) { console.error('Failed to update alert state', e); }
+                    }
+                    @endif
                 },
                 async saveMemo() {
-                    if (!this.memoForm.subject.trim()) return;
+                    if (!this.memoForm.subject.trim()) {
+                        if (typeof showToast === 'function') showToast('warning', 'Please enter a subject for the memo');
+                        return;
+                    }
                     
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
                     
@@ -3223,7 +3298,12 @@ openMemoModal() {
                             });
                             if (response.ok) {
                                 const data = await response.json();
-                                this.memos.push(data.data || data);
+                                const created = data.data || data;
+                                this.memos.push(created);
+                                this.viewMemo(created);
+                                if (typeof showToast === 'function') showToast('success', 'Memo added successfully');
+                            } else {
+                                if (typeof showToast === 'function') showToast('error', 'Failed to save memo');
                             }
                         } else {
                             // Update existing memo
@@ -3235,46 +3315,65 @@ openMemoModal() {
                             });
                             if (response.ok) {
                                 Object.assign(memo, this.memoForm);
+                                this.viewMemo(memo);
+                                if (typeof showToast === 'function') showToast('success', 'Memo updated successfully');
+                            } else {
+                                if (typeof showToast === 'function') showToast('error', 'Failed to update memo');
                             }
                         }
                         this.memoModalOpen = false;
                     } catch (e) {
                         console.error('Memo save failed:', e);
+                        if (typeof showToast === 'function') showToast('error', 'An error occurred while saving memo');
                     }
                     @else
                     // Local-only mode before save
                     if (this.memoEditIndex === -1) {
-                        this.memos.push({
+                        const newMemo = {
                             id: Date.now(),
                             subject: this.memoForm.subject,
                             content: this.memoForm.content,
                             has_alert: this.memoForm.has_alert,
-                            created_at: new Date().toISOString().split('T')[0],
-                            updated_at: new Date().toISOString().split('T')[0]
-                        });
+                            created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                            updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+                        };
+                        this.memos.push(newMemo);
+                        this.viewMemo(newMemo);
                     } else {
                         Object.assign(this.memos[this.memoEditIndex], this.memoForm);
+                        this.viewMemo(this.memos[this.memoEditIndex]);
                     }
                     this.memoModalOpen = false;
+                    if (typeof showToast === 'function') showToast('success', 'Memo saved');
                     @endif
                 },
                 deleteMemo(idx) {
-                    if (!confirm('Delete this memo?')) return;
+                    if (!confirm('Are you sure you want to delete this memo?')) return;
                     
-                    @if(isset($truckShipment))
                     const memo = this.memos[idx];
-                    if (memo.id) {
+                    @if(isset($truckShipment))
+                    if (memo && memo.id) {
                         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
                         fetch(`/api/truck-shipments/{{ $truckShipment->id }}/memos/${memo.id}`, {
                             method: 'DELETE',
                             headers: { 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json' }
+                        }).then(() => {
+                            if (typeof showToast === 'function') showToast('success', 'Memo deleted successfully');
                         }).catch(e => console.error('Delete failed:', e));
                     }
                     @endif
                     this.memos.splice(idx, 1);
+                    if (this.selectedMemo === memo) {
+                        this.selectedMemo = null;
+                        this.selectedMemoContent = '';
+                    }
                 },
                 
                 init() {
+                    if (this.showQuoteModal) {
+                        this.searchQuotes();
+                    }
+                    
                     // Load dropdown options first
                     this.loadDropdownOptions();
                     
@@ -3306,14 +3405,7 @@ openMemoModal() {
                         // Load charges
                         this.charges = @json($truckShipment->charges ?? []);
                         
-                        // Load documents
-                        this.documents = @json($truckShipment->documents ?? []);
-                        
-                        // Load work orders
-                        this.syncWorkOrders();
-                        
-                        // Poll for work orders
-                        setInterval(() => { this.syncWorkOrders(); }, 5000);
+
                     @elseif(isset($copyShipment))
                         this.memos = @json($copyShipment->memos ?? []);
                         this.containers = @json($copyShipment->containers ?? []);
@@ -3333,7 +3425,7 @@ openMemoModal() {
                             fetch('/api/dropdown-options/agents').then(r => r.json()).catch(() => ({ data: [] })),
                             fetch('/api/dropdown-options/ports').then(r => r.json()).catch(() => ({ data: [] })),
                             fetch('/api/dropdown-options/offices').then(r => r.json()).catch(() => ({ data: [] })),
-                            fetch('/api/dropdown-options/quotations').then(r => r.json()).catch(() => ({ data: [] })),
+                            fetch('/api/dropdown-options/quotations?module=Truck').then(r => r.json()).catch(() => ({ data: [] })),
                             fetch('/api/dropdown-options/truckers').then(r => r.json()).catch(() => ({ data: [] })),
                             fetch('/api/dropdown-options/locations').then(r => r.json()).catch(() => ({ data: [] })),
                             fetch('/api/dropdown-options/package-units').then(r => r.json()).catch(() => ({ data: [] })),
@@ -3347,6 +3439,7 @@ openMemoModal() {
                         this.ports = ports.data || ports || [];
                         this.offices = offices.data || offices || [];
                         this.quotations = quotations.data || quotations || [];
+                        this.quoteSearch.results = this.quotations;
                         this.truckers = truckers.data || truckers || [];
                         this.locations = locations.data || locations || [];
                         this.packageUnits = packageUnits.data || packageUnits || [];

@@ -20,18 +20,19 @@
     .grid-container { width: 100%; overflow: hidden; background: #fff; }
     .grid-wrapper { width: 100%; overflow: auto; height: calc(100vh - 225px); min-height: 300px; }
     .grid-table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 10px; table-layout: fixed; }
-    .grid-table th { background: #f8fafc; color: #475569; font-weight: 600; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #e2e8f0; border-top: 1px solid #cbd5e1; padding: 2px 4px; white-space: nowrap; height: 24px; position: sticky; top: 0; z-index: 10; text-align: left; user-select: none; }
+    .grid-table th { background: #f8fafc !important; color: #475569 !important; font-weight: 600; border-bottom: 1px solid #cbd5e1 !important; border-right: 1px solid #e2e8f0 !important; border-top: 1px solid #cbd5e1 !important; padding: 2px 4px; white-space: nowrap; height: 24px; position: sticky; top: 0; z-index: 10; text-align: left; user-select: none; }
     .grid-table td { padding: 2px 4px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; height: 24px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; color: #334155; }
-    .sticky-col { position: sticky; left: 0; z-index: 5; background: #fff; border-right: 1px solid #cbd5e1 !important; }
-    .sticky-col-header { z-index: 15 !important; background: #f8fafc !important; }
+    .sticky-col { position: sticky; left: 0; z-index: 15; background: #ffffff !important; border-right: 1px solid #cbd5e1 !important; }
+    .sticky-col-header { position: sticky !important; top: 0 !important; z-index: 40 !important; background: #f8fafc !important; color: #475569 !important; border-right: 1px solid #cbd5e1 !important; }
     .grid-table tr:hover td { background-color: #f1f5f9 !important; }
-    .grid-table tr:hover .sticky-col { background-color: #f1f5f9 !important; }
+    .grid-table tr:hover td.sticky-col { background-color: #f1f5f9 !important; }
     .grid-table tr.row-selected td { background-color: #eff6ff !important; }
-    .grid-table tr.row-selected .sticky-col { background-color: #eff6ff !important; }
+    .grid-table tr.row-selected td.sticky-col { background-color: #eff6ff !important; }
     .grid-table tr { cursor: pointer; }
 
     /* Filter Row */
     .filter-row td { background: #eff6ff !important; padding: 2px 3px; }
+    .filter-row td.sticky-col { position: sticky !important; background: #eff6ff !important; z-index: 30 !important; }
     .filter-input { width: 100%; height: 18px; border: 1px solid #93c5fd; font-size: 9px; border-radius: 2px; padding: 0 3px; box-sizing: border-box; outline: none; background: #fff; }
     .filter-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,0.2); }
 
@@ -144,5 +145,109 @@
         background: #eef1f5;
         min-height: calc(100vh - 50px);
         font-family: 'Inter', 'Open Sans', sans-serif !important;
+    }
+
+    @media print {
+        .page-sidebar-wrapper, .page-sidebar, .page-header, .header, .sidebar, 
+        .page-bar, .nav-tabs-custom, .portlet-title .actions, .portlet-tool:not(.bottom), 
+        .filter-row, #filter-row, .toast-container, .overlay, .modal-box, 
+        .config-panel, #grid-loading, #pagination-container {
+            display: none !important;
+        }
+
+        html, body {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .page-content {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #ffffff !important;
+            min-height: auto !important;
+        }
+
+        .portlet.light {
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .portlet-title {
+            border-bottom: 2px solid #0f172a !important;
+            padding: 4px 0 8px 0 !important;
+            margin-bottom: 8px !important;
+        }
+
+        .caption-subject {
+            font-size: 14pt !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+        }
+
+        .grid-container {
+            width: 100% !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+        }
+
+        .grid-wrapper {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .grid-table {
+            width: 100% !important;
+            table-layout: auto !important;
+            border-collapse: collapse !important;
+            font-size: 9pt !important;
+        }
+
+        .grid-table th {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            border: 1px solid #94a3b8 !important;
+            padding: 5px 6px !important;
+            position: static !important;
+            top: auto !important;
+        }
+
+        .grid-table td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 4px 6px !important;
+            font-size: 8.5pt !important;
+            color: #1e293b !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            height: auto !important;
+        }
+
+        .sticky-col, .sticky-col-header {
+            position: static !important;
+            left: auto !important;
+            background: transparent !important;
+            border-right: 1px solid #cbd5e1 !important;
+        }
+
+        .portlet-tool.bottom {
+            display: flex !important;
+            border-top: 1px solid #cbd5e1 !important;
+            margin-top: 8px !important;
+            padding: 6px 0 !important;
+            background: transparent !important;
+        }
+
+        .col-link {
+            color: #0f172a !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+        }
     }
 </style>

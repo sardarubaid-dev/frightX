@@ -15,7 +15,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h1 class="caption-subject" style="font-size: 18px;">New Automobile</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" form="automobile-form" class="btn-gofreight"><i class="fa fa-save"></i> SAVE</button>
+                <button type="submit" form="automobile-form" class="btn-freightx"><i class="fa fa-save"></i> SAVE</button>
                 <a href="{{ route('warehouse.automobile.index') }}" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -277,7 +277,7 @@
                         <i class="fa fa-info-circle" style="font-size: 24px; color: #3b82f6; margin-bottom: 10px; display: block;"></i>
                         <p style="font-size: 14px; font-weight: 500;">Please save the Automobile first.</p>
                         <p style="font-size: 12px; color: #64748b;">You can upload and manage pictures after creating the record.</p>
-                        <button type="submit" class="btn-gofreight" style="margin-top: 15px; border-radius: 2px; background: #3b82f6;">
+                        <button type="submit" class="btn-freightx" style="margin-top: 15px; border-radius: 2px; background: #3b82f6;">
                             Save Automobile
                         </button>
                     </div>
@@ -285,7 +285,7 @@
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
-                <button type="submit" class="btn-gofreight" style="min-width: 120px; justify-content: center;" :disabled="isSaving">
+                <button type="submit" class="btn-freightx" style="min-width: 120px; justify-content: center;" :disabled="isSaving">
                     <span x-text="isSaving ? 'Saving...' : 'Save'"></span>
                 </button>
             </div>

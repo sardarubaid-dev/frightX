@@ -12,8 +12,8 @@
         .table-custom tbody td { padding: 8px 12px; border: 1px solid #e7ecf1; vertical-align: middle; }
         .table-custom tr:hover { background: #f9fafb; cursor: pointer; }
 
-        .btn-gofreight { background: #4b77be; color: #fff !important; border: none; padding: 5px 12px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-gofreight:hover { background: #3a62a4; }
+        .btn-freightx { background: #4b77be; color: #fff !important; border: none; padding: 5px 12px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-freightx:hover { background: #3a62a4; }
         .btn-default-gf { background: #fff; border: 1px solid #ccc; color: #333; padding: 4px 10px; font-size: 11px; border-radius: 3px; cursor: pointer; }
 
         .form-control-gf { width: 100%; height: 28px; border: 1px solid #c2cad8; padding: 4px 8px; font-size: 11px; border-radius: 2px; }
@@ -41,11 +41,11 @@
             <h1 class="caption-subject" style="font-size: 18px;" x-text="isCreating ? 'System Partner / New' : 'Trade Partner Directory'"></h1>
             <div style="display: flex; gap: 8px;">
                 <template x-if="!isCreating">
-                    <button @click="openCreateForm" class="btn-gofreight"><i class="fa fa-plus"></i> NEW TRADE PARTNER</button>
+                    <button @click="openCreateForm" class="btn-freightx"><i class="fa fa-plus"></i> NEW TRADE PARTNER</button>
                 </template>
                 <template x-if="isCreating">
                     <div style="display: flex; gap: 8px;">
-                        <button @click="savePartner" class="btn-gofreight"><i class="fa fa-save"></i> SAVE PARTNER</button>
+                        <button @click="savePartner" class="btn-freightx"><i class="fa fa-save"></i> SAVE PARTNER</button>
                         <button @click="isCreating = false" class="btn-default-gf">CANCEL</button>
                     </div>
                 </template>

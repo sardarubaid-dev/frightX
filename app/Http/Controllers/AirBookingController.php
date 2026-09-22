@@ -151,7 +151,8 @@ class AirBookingController extends Controller
         $currentUser = auth()->user();
         $cargoTypes = ['GENERAL CARGO','DANGEROUS GOODS','PERISHABLE','VALUABLE CARGO'];
         $shipTypes = ['NORMAL','CONSOL','EXPRESS'];
-        return view('air-export.new-booking', compact('offices', 'tradePartners', 'ports', 'users', 'packageUnits', 'incoterms', 'airExports', 'nextBookingNo', 'currentUser', 'cargoTypes', 'shipTypes'));
+        $quotations = \App\Models\Quotation::with(['customer', 'pol', 'pod', 'salesPerson', 'items', 'carrier'])->forModule('Air Export')->latest()->get();
+        return view('air-export.new-booking', compact('offices', 'tradePartners', 'ports', 'users', 'packageUnits', 'incoterms', 'airExports', 'nextBookingNo', 'currentUser', 'cargoTypes', 'shipTypes', 'quotations'));
     }
 
     public function store(Request $request)
@@ -211,7 +212,8 @@ class AirBookingController extends Controller
         $airExports = \App\Models\AirExport::whereNotNull('mawb_no')->select('id', 'mawb_no', 'file_no')->get();
         $nextBookingNo = 'ABE-' . date('ymd') . '-' . str_pad((\App\Models\AirBooking::withTrashed()->max('id') ?? 0) + 1, 4, '0', STR_PAD_LEFT);
         $currentUser = auth()->user();
-        return view('air-export.new-booking', compact('booking', 'offices', 'tradePartners', 'ports', 'users', 'packageUnits', 'incoterms', 'airExports', 'nextBookingNo', 'currentUser'));
+        $quotations = \App\Models\Quotation::with(['customer', 'pol', 'pod', 'salesPerson', 'items', 'carrier'])->forModule('Air Export')->latest()->get();
+        return view('air-export.new-booking', compact('booking', 'offices', 'tradePartners', 'ports', 'users', 'packageUnits', 'incoterms', 'airExports', 'nextBookingNo', 'currentUser', 'quotations'));
     }
 
     public function update(Request $request, $id)

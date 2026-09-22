@@ -10,7 +10,13 @@
         </td>
         {{-- Lock --}}
         <td class="sticky-col" style="width:25px;left:25px;text-align:center;" onclick="event.stopPropagation()">
-            <i class="fa fa-lock" style="color:#94a3b8;cursor:pointer;font-size:10px;" title="Lock / Unlock" onclick="toggleLock(this)"></i>
+            @php
+                $isBlocked = $shipment->is_blocked ?? false;
+                $lockClass = $isBlocked ? 'fa-lock' : 'fa-unlock';
+                $lockColor = $isBlocked ? '#94a3b8' : '#22c55e';
+                $lockTitle = $isBlocked ? 'Blocked' : 'Unlocked';
+            @endphp
+            <i class="fa {{ $lockClass }}" style="color:{{ $lockColor }};cursor:pointer;font-size:10px;" title="{{ $lockTitle }}" onclick="toggleLock(this)"></i>
         </td>
         {{-- File No. --}}
         <td class="sticky-col" style="width:110px;left:50px;" onclick="event.stopPropagation()">

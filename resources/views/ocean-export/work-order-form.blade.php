@@ -1,9 +1,9 @@
 
-Container & Item@php
+@php
     $isEdit = isset($workOrder);
     
     // Primary fields
-    $woNo = $isEdit ? $workOrder->work_order_no : ($prefilledData['booking_no'] ?? $workOrderNo);
+    $woNo = $isEdit ? $workOrder->work_order_no : (old('work_order_no') ?? $workOrderNo);
     $subject = old('subject', $isEdit ? $workOrder->subject : 'PICKUP & DELIVERY ORDER');
     $issueDate = old('issue_date', $isEdit ? ($workOrder->issue_date ? $workOrder->issue_date->format('Y-m-d') : '') : date('Y-m-d'));
     $dueDate = old('due_date', $isEdit ? ($workOrder->due_date ? $workOrder->due_date->format('Y-m-d') : '') : '');
@@ -54,7 +54,7 @@ Container & Item@php
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Pickup & Delivery Order | GoFreight</title>
+    <title>Pickup & Delivery Order | FreightX</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -344,13 +344,13 @@ Container & Item@php
             transition: all 0.2s;
         }
         .btn-default-gf:hover { background: #f8f9fa; border-color: #999; }
-        .btn-gofreight {
+        .btn-freightx {
             background: #4b77be; color: #fff; border: none; padding: 8px 16px;
             font-size: 12px; cursor: pointer; border-radius: 4px;
             font-weight: 600;
             transition: all 0.2s;
         }
-        .btn-gofreight:hover { background: #3a5f97; }
+        .btn-freightx:hover { background: #3a5f97; }
         
         /* Responsive Design */
         @media (max-width: 1024px) {
@@ -410,6 +410,19 @@ Container & Item@php
             setTimeout(() => {
                 const toast = document.querySelector('.toast');
                 if (toast) toast.style.display = 'none';
+            }, 5000);
+        </script>
+    @endif
+    
+    @if ($errors->any())
+        <div class="toast error" style="display:flex;">
+            {{ $errors->first() }}
+        </div>
+        <script>
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const toasts = document.querySelectorAll('.toast.error');
+                toasts.forEach(t => t.style.display = 'none');
             }, 5000);
         </script>
     @endif
@@ -483,7 +496,7 @@ Container & Item@php
                 <div class="doc-header">
                     <div class="logo-area"></div>
                     <div class="office-area">
-                        <h1 class="office-name">GOFREIGHT</h1>
+                        <h1 class="office-name">FREIGHTX</h1>
                         <div class="office-des">
                             9149 WILKERSON MEWS SUITE 546<br>
                             NEW VALERIEVIEW, VI 34553-1977<br>

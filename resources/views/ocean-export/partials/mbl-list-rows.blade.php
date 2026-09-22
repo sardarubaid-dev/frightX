@@ -27,7 +27,7 @@
     </td>
     <td class="sticky-col" style="left:50px;" onclick="event.stopPropagation()">
         <div style="display:flex;align-items:center;justify-content:space-between;">
-            <a href="{{ route('ocean-export.edit', $shipment->id) }}" class="col-link" target="_blank">{{ $shipment->file_no }}</a>
+            <a href="{{ route('ocean-export.edit', $shipment->id) }}" class="col-link">{{ $shipment->file_no }}</a>
             <i class="fa fa-external-link" style="color:#94a3b8;font-size:10px;cursor:pointer;" title="Open"></i>
         </div>
     </td>

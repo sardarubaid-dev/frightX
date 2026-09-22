@@ -226,6 +226,7 @@ class WorkOrderController extends Controller
                     'air_import' => ['route' => 'air-import.edit', 'param' => 'air_import'],
                     'ocean_export' => ['route' => 'ocean-export.edit', 'param' => 'ocean_export'],
                     'ocean_import' => ['route' => 'ocean-import.edit', 'param' => 'ocean_import'],
+                    'ocean_booking' => ['route' => 'ocean-bookings.edit', 'param' => 'id'],
                 ];
                 
                 if (isset($redirectMap[$source])) {
@@ -238,7 +239,7 @@ class WorkOrderController extends Controller
                     
                     return redirect()->route($routeInfo['route'], [
                         $routeInfo['param'] => $sourceId,
-                        'tab' => 'workorder'
+                        'tab' => 'work'
                     ])->with('success', 'Work order created successfully');
                 }
             }
@@ -361,6 +362,7 @@ class WorkOrderController extends Controller
                     'air_import' => ['route' => 'air-import.edit', 'param' => 'air_import'],
                     'ocean_export' => ['route' => 'ocean-export.edit', 'param' => 'ocean_export'],
                     'ocean_import' => ['route' => 'ocean-import.edit', 'param' => 'ocean_import'],
+                    'ocean_booking' => ['route' => 'ocean-bookings.edit', 'param' => 'id'],
                 ];
                 
                 if (isset($redirectMap[$source])) {
@@ -373,7 +375,7 @@ class WorkOrderController extends Controller
                     
                     return redirect()->route($routeInfo['route'], [
                         $routeInfo['param'] => $sourceId,
-                        'tab' => 'workorder'
+                        'tab' => 'work'
                     ])->with('success', 'Work order updated successfully');
                 }
             }
@@ -391,6 +393,49 @@ class WorkOrderController extends Controller
 
             return back()->withInput()->with('error', 'Failed to update Work Order: ' . $e->getMessage());
         }
+    }
+
+    public function exportExcel($id)
+    {
+        $workOrder = WorkOrder::with(['vendor', 'freightPickupLocation', 'emptyPickupLocation'])->findOrFail($id);
+
+        $filename = "WorkOrder_{$workOrder->work_order_no}.csv";
+        
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+        
+        $columns = [
+            'Work Order No', 'Subject', 'Vendor', 'Issue Date', 'Due Date', 
+            'Freight Pickup Location', 'Freight Pickup Date', 
+            'Empty Return Location', 'Empty Return Date', 'Status'
+        ];
+        
+        $callback = function() use($workOrder, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            
+            fputcsv($file, [
+                $workOrder->work_order_no,
+                $workOrder->subject,
+                $workOrder->vendor ? $workOrder->vendor->name : '',
+                $workOrder->issue_date ? $workOrder->issue_date->format('Y-m-d') : '',
+                $workOrder->due_date ? $workOrder->due_date->format('Y-m-d') : '',
+                $workOrder->freightPickupLocation ? $workOrder->freightPickupLocation->name : '',
+                $workOrder->freight_pickup_date,
+                $workOrder->emptyPickupLocation ? $workOrder->emptyPickupLocation->name : '',
+                $workOrder->empty_pickup_date,
+                $workOrder->status
+            ]);
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 
     public function destroy($id)

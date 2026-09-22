@@ -6,19 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class OceanImport extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
-        'file_no', 'mbl_no', 'post_date', 'office_id', 'op_id', 
+        'company_id', 'file_no', 'mbl_no', 'post_date', 'office_id', 'op_id', 
         'forwarding_agent_id', 'oversea_agent_id', 'co_loader_id', 
         'carrier_id', 'acct_carrier_id', 'business_referred_by_id',
         'is_direct_master', 'dm_customer_id', 'dm_shipper_id', 
         'dm_consignee_id', 'dm_notify_id', 'dm_bill_to_id', 
         'dm_sales_person_id', 'agent_ref_no', 'contract_no', 
         'sub_bl_no', 'bl_type', 'cargo_type', 'ship_mode', 
-        'vessel_id', 'voyage', 'pol_id', 'pod_id', 'del_id', 
+        'vessel_id', 'voyage', 'pol_id', 'pod_id', 'del_id', 'trans_shipment_id', 'trans_shipments',
         'fdest_id', 'receipt_id', 'etd', 'eta', 'atd', 'ata', 
         'etb', 'final_eta', 'receipt_etd', 'cy_location_id', 
         'cfs_location_id', 'return_location_id', 'service_term_from_id', 
@@ -33,6 +35,7 @@ class OceanImport extends Model
     ];
 
     protected $casts = [
+        'trans_shipments' => 'array',
         'post_date' => 'date',
         'etd' => 'date',
         'eta' => 'date',
@@ -85,6 +88,7 @@ class OceanImport extends Model
     public function releasedBy() { return $this->belongsTo(User::class, 'released_by_id'); }
     public function trucker() { return $this->belongsTo(TradePartner::class, 'trucker_id'); }
     public function placeOfDelivery() { return $this->belongsTo(Port::class, 'del_id'); }
+    public function transShipmentPort() { return $this->belongsTo(Port::class, 'trans_shipment_id'); }
     public function finalDestination() { return $this->belongsTo(Port::class, 'fdest_id'); }
     public function receipt() { return $this->belongsTo(Port::class, 'receipt_id'); }
     public function incoterm() { return $this->belongsTo(Incoterm::class, 'incoterm_id', 'code'); }

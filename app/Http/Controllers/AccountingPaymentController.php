@@ -291,7 +291,19 @@ class AccountingPaymentController extends Controller
         $tradePartners = TradePartner::orderBy('name')->get();
         $currencies = Currency::all();
         $offices = Office::where('is_active', true)->orderBy('name')->get();
-        $invoices = Invoice::with(['billTo', 'currency'])->where('status', '!=', 'PAID')->orderBy('invoice_date', 'desc')->get();
+        
+        // Filter invoices based on payment type and status
+        $invoiceType = $type === 'RECEIVED' ? 'AR' : 'AP';
+        $invoiceQuery = Invoice::with(['billTo', 'currency', 'office'])
+            ->where('type', $invoiceType)
+            ->where('status', '!=', 'PAID');
+        
+        // Apply office filter if provided
+        if ($request->filled('office_id')) {
+            $invoiceQuery->where('office_id', $request->input('office_id'));
+        }
+        
+        $invoices = $invoiceQuery->orderBy('invoice_date', 'desc')->get();
 
         $prefix = $type === 'MADE' ? 'PAY' : 'RCV';
         $paymentNo = $prefix . '-' . date('ymdHis');
@@ -299,7 +311,9 @@ class AccountingPaymentController extends Controller
         $viewName = $type === 'MADE' ? 'accounting.payment-make' : 'accounting.payment-receive';
         $payment = null;
         $selectedInvoiceId = $request->input('invoice_id');
-        return view($viewName, compact('payment', 'type', 'tradePartners', 'currencies', 'offices', 'invoices', 'paymentNo', 'selectedInvoiceId'));
+        $selectedOfficeId = $request->input('office_id');
+        
+        return view($viewName, compact('payment', 'type', 'tradePartners', 'currencies', 'offices', 'invoices', 'paymentNo', 'selectedInvoiceId', 'selectedOfficeId'));
     }
 
     public function store(StoreAccountingPaymentRequest $request)

@@ -72,6 +72,21 @@ class UpdateAirExportRequest extends FormRequest
             'notify_id' => 'nullable|exists:trade_partners,id',
             'actual_shipper_id' => 'nullable|exists:trade_partners,id',
 
+            // NEW FIELDS - Added from migration
+            'incoterm_id' => 'nullable|string',
+            'mark_number' => 'nullable|string',
+            'service_term_from' => 'nullable|string',
+            'service_term_to' => 'nullable|string',
+            'agent_id' => 'nullable|exists:trade_partners,id',
+            'co_loader_id' => 'nullable|exists:trade_partners,id',
+            'trans_port_id' => 'nullable|exists:ports,id',
+            'trans_port1_id' => 'nullable|exists:ports,id',
+            'trans_port2_id' => 'nullable|exists:ports,id',
+            'trans_port3_id' => 'nullable|exists:ports,id',
+            'delivery_port_id' => 'nullable|exists:ports,id',
+            'route_data' => 'nullable|json',
+            'dm_sales_person_id' => 'nullable|exists:users,id',
+
             'hbls' => 'nullable|array',
             'hbls.*.id' => 'nullable|integer',
             'hbls.*.hawb_no' => 'nullable|string',

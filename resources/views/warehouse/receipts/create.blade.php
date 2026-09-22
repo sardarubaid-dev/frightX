@@ -2,6 +2,10 @@
     @push('styles')
     <x-form-styles />
     <style>
+        .nav-tabs-custom { margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; gap: 4px; background: #fff; padding: 4px 8px 0 8px; border-radius: 2px 2px 0 0; }
+        .nav-tabs-custom .tab-item { padding: 6px 14px; font-size: 11px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+        .nav-tabs-custom .tab-item:hover { color: #2563eb; background: #f8fafc; }
+        .nav-tabs-custom .tab-item.active { color: #2563eb; font-weight: 700; border-bottom-color: #2563eb; background: #eff6ff; }
         [x-cloak] { display: none !important; }
         .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 12px; }
         .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 12px; }
@@ -19,6 +23,27 @@
     @endpush
 
     <div class="page-content" x-data="warehouseReceiptCreateApp()">
+        {{-- TOP TABS --}}
+        <div class="nav-tabs-custom">
+            <a href="{{ route('warehouse.receipts.create') }}" class="tab-item {{ request()->routeIs('warehouse.receipts.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Receipt
+            </a>
+            <a href="{{ route('warehouse.receipts.index') }}" class="tab-item {{ request()->routeIs('warehouse.receipts.index') ? 'active' : '' }}">
+                <i class="fa fa-file-text-o"></i> Receipt List
+            </a>
+            <a href="{{ route('receiving.create') }}" class="tab-item {{ request()->routeIs('receiving.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Receiving
+            </a>
+            <a href="{{ route('receiving.list') }}" class="tab-item {{ request()->routeIs('receiving.list') || request()->routeIs('receiving.index') ? 'active' : '' }}">
+                <i class="fa fa-list"></i> Receiving List
+            </a>
+            <a href="{{ route('shipping.create') }}" class="tab-item {{ request()->routeIs('shipping.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Shipping
+            </a>
+            <a href="{{ route('shipping.list') }}" class="tab-item {{ request()->routeIs('shipping.list') || request()->routeIs('shipping.index') ? 'active' : '' }}">
+                <i class="fa fa-truck"></i> Shipping List
+            </a>
+        </div>
         <form id="receiptForm" action="{{ isset($receipt) ? route('warehouse.receipts.update', $receipt->id) : route('warehouse.receipts.store') }}" method="POST">
             @csrf
             @if(isset($receipt)) @method('PUT') @endif
@@ -56,7 +81,7 @@
                     <i class="fa fa-file-text-o"></i> Warehouse Receipt — {{ isset($receipt) ? 'Edit' : 'New Entry' }}
                 </h1>
                 <div style="display:flex;gap:4px;">
-                    <button type="submit" class="btn-gofreight" @click="saveAction='save_close'; if(!validateForm()) $event.preventDefault();"><i class="fa fa-save"></i> @if(isset($receipt)) UPDATE @else SAVE @endif</button>
+                    <button type="submit" class="btn-freightx" @click="saveAction='save_close'; if(!validateForm()) $event.preventDefault();"><i class="fa fa-save"></i> @if(isset($receipt)) UPDATE @else SAVE @endif</button>
                     <a href="{{ route('warehouse.receipts.index') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>
@@ -305,9 +330,9 @@
                                         <td>
                                             <select class="form-control-gf" style="height:18px;font-size:9px;" x-model="item.unit">
                                                 <option value="">Sel</option>
-                                                <option>CTN</option><option>PLT</option><option>BAG</option><option>DRM</option>
-                                                <option>PCS</option><option>BOX</option><option>CRT</option><option>PL</option>
-                                                <option>RL</option><option>SET</option><option>UNT</option><option>BDL</option>
+                                                @foreach($packageUnits as $unit)
+                                                    <option value="{{ $unit->name }}">{{ $unit->name }}</option>
+                                                @endforeach
                                             </select>
                                         </td>
                                         <td><input type="text" class="form-control-gf" style="height:18px;" x-model="item.sku_po" placeholder="SKU"></td>
@@ -391,7 +416,7 @@
                     <div class="portlet-title">
                         <span class="caption-subject"><i class="fa fa-folder-open"></i> Document Center</span>
                         <div style="display:flex;gap:4px;">
-                            <label class="btn-gofreight" style="padding:2px 8px;font-size:9px;cursor:pointer;">
+                            <label class="btn-freightx" style="padding:2px 8px;font-size:9px;cursor:pointer;">
                                 <i class="fa fa-upload"></i> Upload
                                 <input type="file" x-ref="docInput" style="display:none;" @change="uploadDocument($event)">
                             </label>

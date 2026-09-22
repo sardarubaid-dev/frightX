@@ -215,10 +215,13 @@ class WarehouseShippingController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $shipping = WarehouseShipping::findOrFail($id);
         $shipping->delete();
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Shipping record deleted successfully.']);
+        }
         return redirect()->route('shipping.index')
             ->with('success', 'Shipping record deleted successfully.');
     }

@@ -66,61 +66,60 @@
             width: 60px !important;
             overflow: visible !important; /* Allow popover menus to float outside! */
         }
-        body.sidebar-collapsed aside .flex.flex-col.w-\[200px\] {
+        body.sidebar-collapsed aside .flex.flex-col.w-\[200px\],
+        body.sidebar-collapsed aside nav,
+        body.sidebar-collapsed aside .custom-sidebar-scrollbar {
             width: 60px !important;
             overflow: visible !important;
+            overflow-x: visible !important;
+            overflow-y: visible !important;
         }
-        body.sidebar-collapsed aside .custom-sidebar-scrollbar {
-            overflow: visible !important;
-        }
-        /* Hide text elements, separators, arrows, and search bar in collapsed state */
+
+        /* 1. HIDE ALL non-icon elements on the collapsed 60px rail */
         body.sidebar-collapsed aside nav span,
-        body.sidebar-collapsed aside nav div.pt-6, /* Hide separators */
+        body.sidebar-collapsed aside nav div.pt-6,
         body.sidebar-collapsed aside nav i.fa-angle-right,
         body.sidebar-collapsed aside nav i.fa-angle-down,
-        body.sidebar-collapsed aside .px-3.py-4 { /* Hide search bar */
+        body.sidebar-collapsed aside .px-3.py-4 {
             display: none !important;
         }
-        /* Center navigation icons & handles in collapsed state */
-        body.sidebar-collapsed aside nav a,
-        body.sidebar-collapsed aside nav button {
-            padding: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            margin: 0 !important;
-            justify-content: center !important;
-            align-items: center !important;
-            height: 42px;
-            width: 100% !important;
-            position: relative !important;
-            overflow: hidden !important;
-        }
-        /* Fix collapsed icon centering for <a> tags (Dashboard, Action Center, Intelligence items) */
-        body.sidebar-collapsed aside nav a.sidebar-nav-item {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
+
+        /* 2. Format ALL rail links and buttons as 60px centered flex boxes */
+        body.sidebar-collapsed aside nav a.sidebar-nav-item,
+        body.sidebar-collapsed aside nav button.sidebar-nav-item,
+        body.sidebar-collapsed aside nav .sidebar-nav-item {
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            border-left: none !important;
-        }
-        body.sidebar-collapsed aside nav a.sidebar-nav-item i {
+            padding: 0 !important;
             margin: 0 !important;
-        }
-        /* Target internal flex containers inside buttons to center properly */
-        body.sidebar-collapsed aside nav button .flex.items-center {
-            justify-content: center !important;
-            align-items: center !important;
-            width: auto !important;
+            height: 42px !important;
+            width: 60px !important;
+            min-width: 60px !important;
+            max-width: 60px !important;
+            border-left: none !important;
             position: relative !important;
             overflow: hidden !important;
         }
+
+        /* 3. Center the inner flex container inside button & link tags */
+        body.sidebar-collapsed aside nav button.sidebar-nav-item .flex,
+        body.sidebar-collapsed aside nav a.sidebar-nav-item .flex,
+        body.sidebar-collapsed aside nav div > button .flex,
+        body.sidebar-collapsed aside nav div > a .flex {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* 4. Force ALL rail icons to be perfectly centered, remove all margins (mr-3, etc) */
         body.sidebar-collapsed aside nav a i,
-        body.sidebar-collapsed aside nav button i {
+        body.sidebar-collapsed aside nav button i,
+        body.sidebar-collapsed aside nav .sidebar-nav-item i {
             margin: 0 !important;
             margin-left: 0 !important;
             margin-right: 0 !important;
@@ -140,18 +139,17 @@
             flex-shrink: 0 !important;
             flex-grow: 0 !important;
             position: relative !important;
-            top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            bottom: 0 !important;
         }
-        /* Center and format the logo area in collapsed state */
+
+        /* 5. Center logo area */
         body.sidebar-collapsed aside .flex.items-center.h-\[50px\].px-4 {
             justify-content: center !important;
             padding: 0 !important;
         }
 
-        /* PREMIUM COLLAPSED FLOATING SUBMENUS */
+        /* 6. PREMIUM COLLAPSED FLOATING SUBMENUS OVERRIDES */
         body.sidebar-collapsed aside nav > div {
             position: relative !important;
         }
@@ -160,57 +158,90 @@
             position: absolute !important;
             left: 60px !important;
             top: 0 !important;
-            width: 200px !important;
+            width: 230px !important;
+            min-width: 230px !important;
+            max-width: 260px !important;
             z-index: 99999 !important;
             background-color: #3b4b7a !important;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2) !important;
-            border-radius: 0 4px 4px 0 !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+            border-radius: 0 6px 6px 0 !important;
             border-left: 3px solid #0ab39c !important;
-            padding: 5px 0 !important;
+            padding: 6px 0 !important;
             height: auto !important;
+            max-height: calc(100vh - 40px) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        body.sidebar-collapsed .collapsed-floating-submenu.collapsed-floating-submenu-bottom {
+            top: auto !important;
+            bottom: 0 !important;
         }
 
         body.sidebar-collapsed .collapsed-floating-submenu a,
         body.sidebar-collapsed .collapsed-floating-submenu button {
-            display: block !important;
-            padding-left: 20px !important;
-            padding-right: 15px !important;
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            padding-left: 16px !important;
+            padding-right: 14px !important;
+            padding-top: 9px !important;
+            padding-bottom: 9px !important;
             text-align: left !important;
-            color: #a0a8c1 !important;
+            color: #c3cbe4 !important;
             text-decoration: none !important;
             font-size: 9px !important;
             text-transform: uppercase !important;
             letter-spacing: 0.05em !important;
             width: 100% !important;
             height: auto !important;
-            justify-content: flex-start !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+            min-height: 32px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            position: relative !important;
+            overflow: visible !important;
+            margin: 0 !important;
         }
 
         body.sidebar-collapsed .collapsed-floating-submenu a:hover,
         body.sidebar-collapsed .collapsed-floating-submenu button:hover {
             color: #ffffff !important;
-            background-color: rgba(255, 255, 255, 0.05) !important;
+            background-color: rgba(255, 255, 255, 0.08) !important;
         }
 
         body.sidebar-collapsed .collapsed-floating-submenu button .flex.items-center {
             justify-content: flex-start !important;
+            width: 100% !important;
         }
 
-        body.sidebar-collapsed .collapsed-floating-submenu button span {
-            display: inline-block !important; /* Re-enable headers */
+        body.sidebar-collapsed .collapsed-floating-submenu span {
+            display: inline-block !important; /* Re-enable link & header text */
+            color: inherit !important;
+            font-size: 9px !important;
+            font-weight: bold !important;
         }
 
-        body.sidebar-collapsed .collapsed-floating-submenu button i.fa-angle-right {
-            display: inline-block !important; /* Re-enable nested sub-arrows */
+        body.sidebar-collapsed .collapsed-floating-submenu i.fa-angle-right,
+        body.sidebar-collapsed .collapsed-floating-submenu i.fa-angle-down {
+            display: inline-block !important; /* Re-enable nested sub-arrows inside popups */
             margin-left: auto !important;
             width: auto !important;
+            height: auto !important;
+            font-size: 8px !important;
+            opacity: 0.6 !important;
         }
 
         body.sidebar-collapsed .collapsed-floating-submenu div[x-show="subOpen"] a {
-            padding-left: 32px !important;
+            padding-left: 28px !important;
+            font-size: 8.5px !important;
+            color: #a0a8c1 !important;
+            background-color: rgba(0, 0, 0, 0.15) !important;
+        }
+
+        body.sidebar-collapsed .collapsed-floating-submenu div[x-show="subOpen"] a:hover {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
         }
 
         [x-cloak] { display: none !important; }
@@ -246,6 +277,7 @@
     </div>
     
     <x-add-new-modal />
+    <x-track-trace />
     @stack('scripts')
 </body>
 </html>

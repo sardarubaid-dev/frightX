@@ -20,6 +20,22 @@
             box-shadow: 0 0 0 1px rgba(59,130,246,0.2);
         }
         
+        /* Action Icons Styling */
+        .action-icon {
+            font-size: 11px;
+            cursor: pointer;
+            margin: 0 4px;
+            color: #64748b;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .action-icon:hover {
+            color: #3b82f6;
+            transform: scale(1.15);
+        }
+        .action-icon.danger:hover {
+            color: #ef4444;
+        }
+        
         /* Button Group Styling - Better Alignment */
         .btn-group {
             display: inline-flex;
@@ -55,6 +71,126 @@
             padding: 12px 16px;
             background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Improved Grid Container */
+        .grid-container {
+            width: 100%;
+            overflow: visible;
+        }
+        
+        .grid-wrapper {
+            width: 100%;
+            height: calc(100vh - 320px);
+            min-height: 400px;
+            overflow-x: auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .grid-table {
+            min-width: 1400px;
+            width: 100%;
+        }
+        
+        /* Print Styles - Only print table data */
+        @media print {
+            /* Hide everything except table */
+            .page-bar,
+            .portlet-title,
+            .portlet-tool,
+            .btn-group,
+            .btn-action-round,
+            .actions,
+            .caption-subject,
+            #filter-row,
+            .pagination,
+            .portlet-tool.bottom,
+            body > *:not(.page-content),
+            .page-content > *:not(.portlet) {
+                display: none !important;
+            }
+            
+            /* Show only the table */
+            .page-content,
+            .portlet,
+            .portlet-body,
+            .grid-container,
+            .grid-wrapper,
+            .grid-table {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            
+            /* Remove sticky positioning for print */
+            .sticky-col {
+                position: static !important;
+                left: auto !important;
+            }
+            
+            /* Hide action icons and checkboxes */
+            .action-icon,
+            .row-check,
+            #select-all,
+            th[data-col="check"],
+            td:first-child,
+            th[data-col="actions"],
+            td:last-child {
+                display: none !important;
+            }
+            
+            /* Table styling for print */
+            .grid-table {
+                border-collapse: collapse !important;
+                font-size: 10px !important;
+                min-width: auto !important;
+            }
+            
+            .grid-table th,
+            .grid-table td {
+                border: 1px solid #ddd !important;
+                padding: 4px 6px !important;
+                text-align: left !important;
+            }
+            
+            .grid-table th {
+                background: #f3f4f6 !important;
+                font-weight: bold !important;
+                color: #000 !important;
+            }
+            
+            /* Color marks - print as colored circles */
+            .color-mark {
+                display: inline-block !important;
+                width: 12px !important;
+                height: 12px !important;
+                border-radius: 50% !important;
+                border: 1px solid #ccc !important;
+            }
+            
+            /* Status badges */
+            .badge-status {
+                border: 1px solid #000 !important;
+                padding: 2px 4px !important;
+                font-size: 9px !important;
+            }
+            
+            /* Links - show as normal text */
+            a {
+                color: #000 !important;
+                text-decoration: none !important;
+            }
+            
+            /* Page breaks */
+            tr {
+                page-break-inside: avoid !important;
+            }
         }
         
         /* Mobile Responsive Enhancements */
@@ -119,6 +255,11 @@
                 padding: 2px 4px !important;
                 height: 22px !important;
             }
+            
+            .action-icon {
+                font-size: 10px;
+                margin: 0 2px;
+            }
         }
     </style>
     @endpush
@@ -178,7 +319,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -195,21 +336,23 @@
 
             {{-- ── TOOLBAR ── --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <a class="btn-tool green" href="/air-export/create" title="New MAWB" target="_blank">
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <div class="btn-group">
+                        <a class="btn-tool green" href="/air-export/create" title="New MAWB">
                             <i class="fa fa-plus"></i>
                         </a>
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
                     </div>
-                    <div class="btn-group" style="display:flex;gap:0;">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:150px;"
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;"
                            placeholder="Quick search…" value="{{ request('search') }}"
                            oninput="quickSearch(this.value)">
                 </div>
@@ -226,22 +369,23 @@
                                     <th class="sticky-col sticky-col-header" data-col="check"   style="width:25px;text-align:center;">
                                         <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" title="Select All">
                                     </th>
-                                    <th class="sticky-col sticky-col-header" data-col="color"   style="width:35px;left:25px;text-align:center;">Color</th>
-                                    <th class="sticky-col sticky-col-header" data-col="status"  style="width:80px;left:60px;">Status</th>
+                                    <th class="sticky-col sticky-col-header" data-col="lock"    style="width:25px;left:25px;text-align:center;"><i class="fa fa-lock"></i></th>
+                                    <th class="sticky-col sticky-col-header" data-col="status"  style="width:90px;left:50px;">Status</th>
                                     <th class="sticky-col sticky-col-header" data-col="prefix"  style="width:50px;left:140px;">Prefix</th>
-                                    <th class="sticky-col sticky-col-header" data-col="waybill" style="width:110px;left:190px;">Waybill No.</th>
+                                    <th class="sticky-col sticky-col-header" data-col="waybill" style="width:120px;left:190px;">Waybill No.</th>
+                                    <th class="sticky-col sticky-col-header" data-col="color"   style="width:40px;left:310px;text-align:center;">Color</th>
                                     <th data-col="carrier" style="width:180px;">Carrier</th>
                                     <th data-col="file"    style="width:130px;">File No.</th>
                                     <th data-col="office"  style="width:90px;">Office</th>
                                     <th data-col="date"    style="width:130px;">Created Date</th>
-                                    <th data-col="actions" style="width:60px;">Actions</th>
+                                    <th data-col="actions" style="width:70px;">Actions</th>
                                 </tr>
 
                                 {{-- ── FILTER ROW (hidden by default) ── --}}
                                 <tr id="filter-row" style="display:none;background:#eff6ff;">
                                     <td class="sticky-col" style="left:0;background:#eff6ff;"></td>
                                     <td class="sticky-col" style="left:25px;background:#eff6ff;"></td>
-                                    <td class="sticky-col" style="left:60px;background:#eff6ff;">
+                                    <td class="sticky-col" style="left:50px;background:#eff6ff;">
                                         <select class="filter-select" data-col-idx="2" onchange="applyFilters()" style="width:100%;">
                                             <option value="">All</option>
                                             <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
@@ -253,17 +397,18 @@
                                     <td class="sticky-col" style="left:190px;background:#eff6ff;">
                                         <input class="filter-input" data-col-idx="4" placeholder="Waybill…" oninput="applyFiltersTyping()" onkeyup="if(event.key==='Enter') applyFilters()" style="width:100%;">
                                     </td>
+                                    <td class="sticky-col" style="left:310px;background:#eff6ff;"></td>
                                     <td>
-                                        <select class="filter-select" data-col-idx="5" onchange="applyFilters()" style="width:100%;">
+                                        <select class="filter-select" data-col-idx="6" onchange="applyFilters()" style="width:100%;">
                                             <option value="">All Carriers</option>
                                             @foreach($carriers as $c)
                                                 <option value="{{ $c->id }}" {{ request('carrier_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input class="filter-input" data-col-idx="6" placeholder="File No…" oninput="applyFiltersTyping()" onkeyup="if(event.key==='Enter') applyFilters()" style="width:100%;"></td>
+                                    <td><input class="filter-input" data-col-idx="7" placeholder="File No…" oninput="applyFiltersTyping()" onkeyup="if(event.key==='Enter') applyFilters()" style="width:100%;"></td>
                                     <td>
-                                        <select class="filter-select" data-col-idx="7" onchange="applyFilters()" style="width:100%;">
+                                        <select class="filter-select" data-col-idx="8" onchange="applyFilters()" style="width:100%;">
                                             <option value="">All Offices</option>
                                             @foreach($offices as $o)
                                                 <option value="{{ $o->id }}" {{ request('office_id') == $o->id ? 'selected' : '' }}>{{ $o->name }}</option>
@@ -288,23 +433,39 @@
                                     data-id="{{ $stock->id }}"
                                     data-file="{{ $stock->file_no ?? '' }}"
                                     onclick="rowClick(event, this)">
+                                    {{-- Checkbox --}}
                                     <td class="sticky-col" style="width:25px;text-align:center;" onclick="event.stopPropagation()">
                                         <input type="checkbox" name="ids[]" value="{{ $stock->id }}" class="row-check" onchange="updateToolbar()">
                                     </td>
-                                    <td class="sticky-col" style="width:35px;left:25px;text-align:center;">
-                                        <span class="color-mark" style="background:{{ $stock->color ?? '#94a3b8' }}" title="Click to change color" onclick="event.stopPropagation();openColorPicker({{ $stock->id }}, '{{ $stock->color ?? '' }}')"></span>
+                                    {{-- Lock --}}
+                                    <td class="sticky-col" style="left:25px;text-align:center;" onclick="event.stopPropagation()">
+                                        <i class="fa {{ $isBlocked ? 'fa-lock' : 'fa-unlock' }}" 
+                                           style="color:{{ $isBlocked ? '#94a3b8' : '#22c55e' }};cursor:pointer;font-size:10px;" 
+                                           title="{{ $isBlocked ? 'Blocked' : 'Unlocked' }}"></i>
                                     </td>
-                                    <td class="sticky-col" style="width:80px;left:60px;">
+                                    {{-- Status --}}
+                                    <td class="sticky-col" style="width:90px;left:50px;">
                                         <span class="badge-status {{ $badgeClass }}">{{ $statusLabel }}</span>
                                     </td>
+                                    {{-- Prefix --}}
                                     <td class="sticky-col" style="width:50px;left:140px;">{{ $stock->mawb_no ? substr($stock->mawb_no, 0, 3) : '---' }}</td>
-                                    <td class="sticky-col" style="width:110px;left:190px;font-weight:600;">
+                                    {{-- Waybill No. --}}
+                                    <td class="sticky-col" style="width:120px;left:190px;font-weight:600;">
                                         <a href="/air-export/{{ $stock->id }}/edit" class="col-link">{{ $stock->mawb_no ? substr($stock->mawb_no, 4) : '--' }}</a>
                                     </td>
+                                    {{-- Color --}}
+                                    <td class="sticky-col" style="width:40px;left:310px;text-align:center;">
+                                        <span class="color-mark" style="background:{{ $stock->color ?? '#94a3b8' }}" title="Click to change color" onclick="event.stopPropagation();openColorPicker({{ $stock->id }}, '{{ $stock->color ?? '' }}')"></span>
+                                    </td>
+                                    {{-- Carrier --}}
                                     <td>{{ $stock->carrier->name ?? '--' }}</td>
+                                    {{-- File No. --}}
                                     <td><a href="/air-export/{{ $stock->id }}/edit" class="col-link">{{ $stock->file_no ?? '--' }}</a></td>
+                                    {{-- Office --}}
                                     <td>{{ $stock->office->name ?? '-' }}</td>
+                                    {{-- Created Date --}}
                                     <td>{{ $stock->created_at ? $stock->created_at->format('m-d-Y H:i') : '--' }}</td>
+                                    {{-- Actions --}}
                                     <td onclick="event.stopPropagation()">
                                         <i class="fa fa-copy action-icon" title="Copy" onclick="copyRow({{ $stock->id }})"></i>
                                         <i class="fa fa-trash-o action-icon danger" title="Delete" onclick="deleteRow({{ $stock->id }})"></i>
@@ -312,7 +473,7 @@
                                 </tr>
                                 @empty
                                 <tr id="empty-row">
-                                    <td colspan="10" style="text-align:center;padding:30px 10px;color:#94a3b8;">
+                                    <td colspan="11" style="text-align:center;padding:30px 10px;color:#94a3b8;">
                                         <i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>
                                         No MAWB stocks found.
                                     </td>
@@ -327,7 +488,7 @@
             {{-- ── PAGINATION ── --}}
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $stocks->links() }}</div>
+                    <div id="pagination-container">{{ $stocks->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
                         Showing <span id="stat-first">{{ $stocks->firstItem() ?? 0 }}</span> – <span id="stat-last">{{ $stocks->lastItem() ?? 0 }}</span> of <span id="stat-total">{{ $stocks->total() }}</span> records
                     </div>
@@ -464,14 +625,14 @@
             selects.forEach(function(sel) {
                 var idx = parseInt(sel.dataset.colIdx);
                 if (idx === 2) sel.value = params.get('status') || '';
-                else if (idx === 5) sel.value = params.get('carrier_id') || '';
-                else if (idx === 7) sel.value = params.get('office_id') || '';
+                else if (idx === 6) sel.value = params.get('carrier_id') || '';
+                else if (idx === 8) sel.value = params.get('office_id') || '';
             });
             var inputs = row.querySelectorAll('input.filter-input');
             inputs.forEach(function(inp) {
                 var idx = parseInt(inp.dataset.colIdx);
                 if (idx === 4) inp.value = params.get('search') || '';
-                else if (idx === 6) inp.value = params.get('search') || '';
+                else if (idx === 7) inp.value = params.get('search') || '';
             });
         } else {
             document.querySelectorAll('#filter-row input').forEach(function(i) { i.value = ''; });
@@ -502,13 +663,13 @@
         var waybill = document.querySelector('#filter-row input[data-col-idx="4"]')?.value?.trim() || '';
         if (waybill) url.searchParams.set('search', waybill); // Use 'search' param for waybill
         
-        var carrier = document.querySelector('#filter-row select[data-col-idx="5"]')?.value || '';
+        var carrier = document.querySelector('#filter-row select[data-col-idx="6"]')?.value || '';
         if (carrier) url.searchParams.set('carrier_id', carrier);
         
-        var fileNo = document.querySelector('#filter-row input[data-col-idx="6"]')?.value?.trim() || '';
+        var fileNo = document.querySelector('#filter-row input[data-col-idx="7"]')?.value?.trim() || '';
         if (fileNo) url.searchParams.set('search', fileNo); // Use 'search' param for file_no
         
-        var office = document.querySelector('#filter-row select[data-col-idx="7"]')?.value || '';
+        var office = document.querySelector('#filter-row select[data-col-idx="8"]')?.value || '';
         if (office) url.searchParams.set('office_id', office);
         
         window.history.replaceState({}, '', url.toString());
@@ -516,7 +677,7 @@
     }
 
     /* ---------- Config ---------- */
-    var PINNED_COLS = ['check', 'color', 'status', 'prefix', 'waybill'];
+    var PINNED_COLS = ['check', 'lock', 'status', 'prefix', 'waybill', 'color'];
 
     function toggleConfig() {
         var panel = document.getElementById('config-panel');
@@ -707,10 +868,16 @@
         })
         .then(function(d) {
             if (d.success) {
-                // Update status badges for blocked items
+                // Update lock icons and status badges for blocked items
                 ids.forEach(function(id) {
                     var row = document.getElementById('stock-row-' + id);
                     if (row) {
+                        // Update lock icon (2nd column)
+                        var lockCell = row.querySelector('td:nth-child(2)');
+                        if (lockCell) {
+                            lockCell.innerHTML = '<i class="fa fa-lock" style="color:#94a3b8;cursor:pointer;font-size:10px;" title="Blocked"></i>';
+                        }
+                        // Update status badge (3rd column)
                         var statusCell = row.querySelector('td:nth-child(3)');
                         if (statusCell) {
                             statusCell.innerHTML = '<span class="badge-status bg-red">BLOCKED</span>';
@@ -744,10 +911,16 @@
         })
         .then(function(d) {
             if (d.success) {
-                // Update status badges for unblocked items (restore to available)
+                // Update lock icons and status badges for unblocked items
                 ids.forEach(function(id) {
                     var row = document.getElementById('stock-row-' + id);
                     if (row) {
+                        // Update lock icon to unlocked (2nd column)
+                        var lockCell = row.querySelector('td:nth-child(2)');
+                        if (lockCell) {
+                            lockCell.innerHTML = '<i class="fa fa-unlock" style="color:#22c55e;cursor:pointer;font-size:10px;" title="Unlocked"></i>';
+                        }
+                        // Update status badge (3rd column)
                         var statusCell = row.querySelector('td:nth-child(3)');
                         var fileNo = row.getAttribute('data-file');
                         if (statusCell) {

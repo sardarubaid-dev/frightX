@@ -1,68 +1,40 @@
 <x-layout>
     @push('styles')
+    <x-form-styles />
     <x-list-styles />
     <style>
-        .portlet-body { padding: 0 !important; }
+        .je-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; margin-bottom: 10px; }
+        .je-table { width: 100%; min-width: 1200px; border-collapse: collapse; font-size: 11px; }
+        .je-table th { background: #f8fafc; color: #475569; font-weight: 700; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #e2e8f0; padding: 6px; white-space: nowrap; height: 26px; text-align: left; position: sticky; top: 0; z-index: 5; }
+        .je-table td { padding: 3px 4px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; color: #334155; }
+        .je-table tr:hover td { background: #f1f5f9; }
+        .je-table tr.row-selected td { background: #eff6ff; }
+        .je-table input[type="text"], .je-table select { height: 22px; font-size: 10px; padding: 0 4px; border: 1px solid #cbd5e1; border-radius: 2px; width: 100%; box-sizing: border-box; background: #fff; }
+        .je-table input[type="text"]:focus, .je-table select:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+        .je-table .num { font-family: 'Consolas', 'Courier New', monospace; text-align: right; }
+        .je-table tfoot td { background: #f8fafc; font-weight: 700; border-top: 2px solid #cbd5e1; }
 
-        .jr-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        .jr-table th { background: #f8fafc; color: #475569; font-weight: 600; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #e2e8f0; border-top: 1px solid #cbd5e1; padding: 3px 4px; white-space: nowrap; height: 24px; position: sticky; top: 0; z-index: 10; text-align: left; user-select: none; }
-        .jr-table td { padding: 2px 3px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; height: 24px; vertical-align: middle; color: #334155; overflow: hidden; }
-        .jr-table tr:hover td { background: #f8fafc; }
-        .jr-table tr.row-selected td { background: #eff6ff; }
+        .balance-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+        .balance-pill.balanced { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .balance-pill.unbalanced { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
-        .jr-table .col-chk { width: 24px; text-align: center; border-left: 3px solid #cbd5e1; }
-        .jr-table .col-no { width: 32px; text-align: center; }
-        .jr-table .col-gl { width: 175px; }
-        .jr-table .col-sub { width: 48px; }
-        .jr-table .col-type { width: 92px; }
-        .jr-table .col-entity { width: 140px; }
-        .jr-table .col-desc { width: 130px; }
-        .jr-table .col-office { width: 72px; }
-        .jr-table .col-amt { width: 78px; text-align: right; }
-        .jr-table .col-cur { width: 68px; }
-        .jr-table .col-rate { width: 52px; text-align: right; }
+        .badge-status-gf { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; display: inline-block; }
+        .badge-status-gf.posted { background: #dcfce7; color: #15803d; }
+        .badge-status-gf.draft { background: #fef3c7; color: #92400e; }
 
-        .jr-table input[type="checkbox"] { width: 13px; height: 13px; margin: 0; cursor: pointer; accent-color: #3b82f6; vertical-align: middle; }
-        .jr-table input[type="text"],
-        .jr-table select { height: 20px; border: 1px solid transparent; font-size: 10px; padding: 0 3px; border-radius: 2px; color: #334155; background: transparent; width: 100%; box-sizing: border-box; outline: none; font-family: inherit; }
-        .jr-table input[type="text"]:focus,
-        .jr-table select:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 1px rgba(59,130,246,0.15); }
-        .jr-table select { cursor: pointer; appearance: auto; }
-        .jr-table input[type="text"][readonly] { background: #f1f5f9; color: #64748b; }
-        .jr-table .num { font-family: 'Courier New', monospace; text-align: right; }
-
-        .jr-table tfoot td { background: #f8fafc; font-weight: 700; border-top: 1px solid #cbd5e1; }
-
-        .jr-bottom { display: flex; align-items: flex-start; gap: 24px; padding: 10px 12px; border-top: 1px solid #e2e8f0; background: #fff; }
-        .jr-field { display: flex; flex-direction: column; gap: 2px; }
-        .jr-field label { font-size: 11px; font-weight: 600; color: #334155; }
-        .jr-field label .req { color: #ef4444; }
-        .jr-field input { height: 22px; border: 1px solid #cbd5e1; padding: 0 6px; font-size: 11px; border-radius: 2px; color: #334155; outline: none; font-family: inherit; }
-        .jr-field input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
-        .jr-field input[readonly] { background: #f1f5f9; color: #64748b; cursor: default; }
-        .jr-field input[type="date"] { width: 140px; }
-        .jr-field .entry-no { width: 160px; }
-        .jr-field .remark-input { width: 100%; min-width: 300px; }
-
-        .jr-savebar { display: flex; gap: 10px; padding: 12px; background: #fff; justify-content: center; border-top: 1px solid #e2e8f0; }
-        .jr-btn-save { height: 32px; padding: 0 28px; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
-        .jr-btn-save.blue { background: #3b82f6; color: #fff; }
-        .jr-btn-save.blue:hover { background: #2563eb; }
-        .jr-btn-save.gray { background: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; }
-        .jr-btn-save.gray:hover { background: #cbd5e1; }
-
-        .empty-msg { text-align: center; padding: 20px; color: #94a3b8; font-size: 11px; }
-
-        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.7); z-index: 9999; justify-content: center; align-items: center; }
-        .loading-overlay.active { display: flex; }
-        .loading-spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+            .form-grid-4 { grid-template-columns: 1fr !important; }
+            .action-header-toolbar { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+            .action-header-toolbar .btn-group-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+            .portlet-title { flex-direction: column; align-items: flex-start !important; gap: 6px; }
+        }
     </style>
     @endpush
 
     <div class="toast-container" id="toast-container"></div>
 
-    <div class="page-content">
+    <div class="page-content" x-data="journalEntryApp()" x-init="init()">
+        <!-- Breadcrumbs -->
         <div class="page-bar">
             <ul class="page-breadcrumb">
                 <li><i class="fa fa-home"></i> <a href="/">Home</a> <i class="fa fa-angle-right"></i></li>
@@ -72,358 +44,722 @@
             </ul>
         </div>
 
-        <div class="portlet light">
-            <div class="portlet-title">
-                <div class="caption" style="display:flex;align-items:center;gap:8px;">
-                    <span class="caption-subject">New Journal Entry</span>
-                </div>
-                <div class="actions" style="display:flex;gap:4px;align-items:center;">
-                    <span style="font-size:10px;color:#64748b;font-weight:600;" id="entry-no-display">{{ $nextEntryNo }}</span>
-                </div>
+        <!-- Top Header & Action Buttons Toolbar -->
+        <div class="action-header-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <h1 class="caption-subject" style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0; text-transform: uppercase;">
+                    <i class="fa fa-book" style="color:#3b82f6;"></i> General Journal Entry
+                </h1>
+                <span class="badge-status-gf posted" x-text="form.status"></span>
             </div>
+            <div class="btn-group-actions" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn-freightx" @click="saveEntry(false)">
+                    <i class="fa fa-save"></i> <span x-text="form.id ? 'UPDATE JOURNAL' : 'SAVE JOURNAL'"></span>
+                </button>
+                <button type="button" class="btn-default-gf" @click="saveEntry(true)">
+                    <i class="fa fa-plus-circle"></i> SAVE &amp; ANOTHER
+                </button>
+                <button type="button" class="btn-default-gf" @click="resetForm()">
+                    <i class="fa fa-refresh"></i> NEW ENTRY
+                </button>
+                <button type="button" class="btn-default-gf" @click="exportExcel()">
+                    <i class="fa fa-file-excel-o"></i> EXCEL
+                </button>
+            </div>
+        </div>
 
-            <div class="portlet-tool">
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <div class="btn-group">
-                        <button class="btn-tool green" id="btnAddRow" title="Add Row"><i class="fa fa-plus"></i></button>
-                        <button class="btn-tool" id="btnDelRow" title="Delete Selected Rows" disabled><i class="fa fa-trash"></i></button>
+        <!-- Navigation Tabs -->
+        <ul class="gf-tabs">
+            <li :class="activeTab === 'entry' ? 'active' : ''" @click="activeTab = 'entry'">
+                <a><i class="fa fa-pencil-square-o"></i> Main Journal Form</a>
+            </li>
+            <li :class="activeTab === 'list' ? 'active' : ''" @click="switchToListTab()">
+                <a><i class="fa fa-list"></i> Journal Entries History</a>
+            </li>
+        </ul>
+
+        <!-- ==================== FORM TAB ==================== -->
+        <div x-show="activeTab === 'entry'" class="main-grid">
+            <!-- Header Metadata Section -->
+            <div class="portlet light">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-info-circle" style="color:#3b82f6;"></i>
+                        <span class="caption-subject" x-text="form.id ? 'Edit Entry: ' + form.entry_no : 'New Entry Details'"></span>
                     </div>
-                    <div class="btn-group">
-                        <button class="btn-tool" id="btnBalanced" style="padding:0 10px;"><i class="fa fa-plus-circle"></i> Balanced Entry</button>
-                        <button class="btn-tool" id="btnImport" style="padding:0 10px;"><i class="fa fa-upload"></i> Import Journal</button>
+                    <div class="actions">
+                        <span style="font-size:11px;font-weight:700;color:#64748b;" x-text="'Entry No: ' + form.entry_no"></span>
                     </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="font-size:10px;color:#64748b;" id="line-count">0 lines</span>
+                <div class="portlet-body">
+                    <div class="form-grid-4">
+                        <div class="form-group-gf">
+                            <label class="form-label-gf"><span style="color:#ef4444;">*</span> Entry Date:</label>
+                            <div class="form-input-container">
+                                <input type="date" class="form-control-gf" x-model="form.entry_date">
+                            </div>
+                        </div>
+
+                        <div class="form-group-gf">
+                            <label class="form-label-gf">Entry No:</label>
+                            <div class="form-input-container">
+                                <input type="text" class="form-control-gf" x-model="form.entry_no" readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group-gf">
+                            <label class="form-label-gf">Office:</label>
+                            <div class="form-input-container">
+                                <select class="form-control-gf" x-model="form.office_id">
+                                    <option value="">-- Select Office --</option>
+                                    <template x-for="o in offices" :key="o.id">
+                                        <option :value="o.id" x-text="o.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group-gf">
+                            <label class="form-label-gf">Status:</label>
+                            <div class="form-input-container">
+                                <select class="form-control-gf" x-model="form.status">
+                                    <option value="POSTED">POSTED</option>
+                                    <option value="DRAFT">DRAFT</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-4" style="margin-top: 6px;">
+                        <div class="form-group-gf" style="grid-column: span 2;">
+                            <label class="form-label-gf">Description:</label>
+                            <div class="form-input-container">
+                                <input type="text" class="form-control-gf" x-model="form.description" placeholder="Enter general journal entry description...">
+                            </div>
+                        </div>
+
+                        <div class="form-group-gf" style="grid-column: span 2;">
+                            <label class="form-label-gf">Remark:</label>
+                            <div class="form-input-container">
+                                <input type="text" class="form-control-gf" x-model="form.remark" placeholder="Internal remarks...">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div style="width:100%;overflow-x:auto;background:#fff;">
-                <table class="jr-table" id="jTable">
-                    <thead>
-                        <tr>
-                            <th class="col-chk"><input type="checkbox" id="selAll"></th>
-                            <th class="col-no">No.</th>
-                            <th class="col-gl">G/L Account</th>
-                            <th class="col-sub">Sub</th>
-                            <th class="col-type">Type</th>
-                            <th class="col-entity">Entity (Customer)</th>
-                            <th class="col-desc">Description</th>
-                            <th class="col-office">Office</th>
-                            <th class="col-amt num">Local Dr</th>
-                            <th class="col-amt num">Local Cr</th>
-                            <th class="col-cur">Currency</th>
-                            <th class="col-rate num">Rate</th>
-                            <th class="col-amt num">Foreign Dr</th>
-                            <th class="col-amt num">Foreign Cr</th>
-                        </tr>
-                    </thead>
-                    <tbody id="jBody">
-                        <tr id="emptyRow">
-                            <td colspan="14" class="empty-msg">Click <i class="fa fa-plus" style="color:#3b82f6;"></i> to add a line</td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td class="col-chk"></td>
-                            <td class="col-no"></td>
-                            <td class="col-gl"></td>
-                            <td class="col-sub"></td>
-                            <td class="col-type"></td>
-                            <td class="col-entity"></td>
-                            <td class="col-desc"></td>
-                            <td class="col-office" style="text-align:right;font-weight:700;">Total</td>
-                            <td class="col-amt num" id="tLD" style="color:#2563eb;">0.00</td>
-                            <td class="col-amt num" id="tLC" style="color:#2563eb;">0.00</td>
-                            <td class="col-cur"></td>
-                            <td class="col-rate"></td>
-                            <td class="col-amt num" id="tFD">0.00</td>
-                            <td class="col-amt num" id="tFC">0.00</td>
-                        </tr>
-                        <tr>
-                            <td class="col-chk"></td>
-                            <td class="col-no"></td>
-                            <td class="col-gl"></td>
-                            <td class="col-sub"></td>
-                            <td class="col-type"></td>
-                            <td class="col-entity"></td>
-                            <td class="col-desc"></td>
-                            <td class="col-office" style="text-align:right;font-weight:700;">Balance</td>
-                            <td class="col-amt num" id="balAmt" style="color:#22c55e;" colspan="6">0.00</td>
-                            <td class="col-amt"></td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <!-- Line Items Table Section -->
+            <div class="portlet light">
+                <div class="portlet-title" style="background:#f8fafc;">
+                    <div class="caption">
+                        <i class="fa fa-table" style="color:#3b82f6;"></i>
+                        <span class="caption-subject">Journal Lines</span>
+                    </div>
+                    <div class="actions" style="display:flex;align-items:center;gap:10px;">
+                        <span class="balance-pill" :class="isBalanced ? 'balanced' : 'unbalanced'">
+                            <i class="fa" :class="isBalanced ? 'fa-check-circle' : 'fa-exclamation-triangle'"></i>
+                            <span x-text="isBalanced ? 'Balanced' : 'Out of Balance (Diff: $' + formatMoney(Math.abs(totals.local_debit - totals.local_credit)) + ')'"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="container-toolbar" style="margin: 6px; padding: 6px 10px;">
+                    <button type="button" class="btn-freightx" @click="addLine()">
+                        <i class="fa fa-plus"></i> Add Line
+                    </button>
+                    <button type="button" class="btn-default-gf" @click="addBalancedPair()">
+                        <i class="fa fa-plus-circle"></i> + Dr/Cr Pair
+                    </button>
+                    <button type="button" class="btn-default-gf" style="color:#ef4444;" @click="deleteSelectedLines()" :disabled="selectedLineIndices().length === 0">
+                        <i class="fa fa-trash"></i> Delete Selected (<span x-text="selectedLineIndices().length"></span>)
+                    </button>
+                    <div style="margin-left:auto; font-size:11px; color:#64748b; font-weight:600;" x-text="lines.length + ' line' + (lines.length !== 1 ? 's' : '')"></div>
+                </div>
+
+                <div class="portlet-body">
+                    <div class="je-table-wrapper">
+                        <table class="je-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:30px;text-align:center;"><input type="checkbox" x-model="selectAll" @change="toggleSelectAll()"></th>
+                                    <th style="width:36px;text-align:center;">No.</th>
+                                    <th style="width:190px;">G/L Account <span class="text-danger">*</span></th>
+                                    <th style="width:60px;">Sub</th>
+                                    <th style="width:90px;">Type</th>
+                                    <th style="width:140px;">Entity / Partner</th>
+                                    <th style="width:160px;">Description</th>
+                                    <th style="width:90px;">Office</th>
+                                    <th style="width:100px;text-align:right;">Local Dr ($)</th>
+                                    <th style="width:100px;text-align:right;">Local Cr ($)</th>
+                                    <th style="width:75px;">Currency</th>
+                                    <th style="width:70px;text-align:right;">Rate</th>
+                                    <th style="width:100px;text-align:right;">Foreign Dr</th>
+                                    <th style="width:100px;text-align:right;">Foreign Cr</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(line, idx) in lines" :key="idx">
+                                    <tr :class="line.selected ? 'row-selected' : ''">
+                                        <td style="text-align:center;"><input type="checkbox" x-model="line.selected"></td>
+                                        <td style="text-align:center;font-weight:600;color:#64748b;" x-text="idx + 1"></td>
+                                        <td>
+                                            <select x-model="line.gl_account_id" class="form-control-gf">
+                                                <option value="">-- Select G/L Account --</option>
+                                                <template x-for="gl in glAccounts" :key="gl.id">
+                                                    <option :value="gl.id" x-text="gl.code + ' - ' + gl.name"></option>
+                                                </template>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control-gf" x-model="line.sub" maxlength="50"></td>
+                                        <td>
+                                            <select class="form-control-gf" x-model="line.entity_type">
+                                                <option value="COMPANY">COMPANY</option>
+                                                <option value="BANK">BANK</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="form-control-gf" x-model="line.trade_partner_id">
+                                                <option value="">-- Select Partner --</option>
+                                                <template x-for="p in partners" :key="p.id">
+                                                    <option :value="p.id" x-text="p.name"></option>
+                                                </template>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control-gf" x-model="line.description" placeholder="Line detail..."></td>
+                                        <td>
+                                            <select class="form-control-gf" x-model="line.office_id">
+                                                <option value="">-- Office --</option>
+                                                <template x-for="o in offices" :key="o.id">
+                                                    <option :value="o.id" x-text="o.code || o.name"></option>
+                                                </template>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control-gf num" x-model="line.local_debit" @input="recalcLine(line, 'ld')"></td>
+                                        <td><input type="text" class="form-control-gf num" x-model="line.local_credit" @input="recalcLine(line, 'lc')"></td>
+                                        <td>
+                                            <select class="form-control-gf" x-model="line.currency_id">
+                                                <option value="">-- Cur --</option>
+                                                <template x-for="c in currencies" :key="c.id">
+                                                    <option :value="c.id" x-text="c.code"></option>
+                                                </template>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control-gf num" x-model="line.foreign_rate" @input="recalcLine(line, 'rate')"></td>
+                                        <td><input type="text" class="form-control-gf num" x-model="line.foreign_debit" @input="recalcLine(line, 'fd')"></td>
+                                        <td><input type="text" class="form-control-gf num" x-model="line.foreign_credit" @input="recalcLine(line, 'fc')"></td>
+                                    </tr>
+                                </template>
+                                <template x-if="lines.length === 0">
+                                    <tr>
+                                        <td colspan="14" class="empty-msg">
+                                            No line items added yet. Click <strong><i class="fa fa-plus"></i> Add Line</strong> or <strong><i class="fa fa-plus-circle"></i> + Dr/Cr Pair</strong> to start.
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="8" style="text-align:right;font-weight:700;padding-right:10px;color:#3b82f6;">TOTAL:</td>
+                                    <td class="num" style="color:#2563eb;font-weight:700;" x-text="formatMoney(totals.local_debit)"></td>
+                                    <td class="num" style="color:#2563eb;font-weight:700;" x-text="formatMoney(totals.local_credit)"></td>
+                                    <td colspan="2"></td>
+                                    <td class="num" style="font-weight:700;" x-text="formatMoney(totals.foreign_debit)"></td>
+                                    <td class="num" style="font-weight:700;" x-text="formatMoney(totals.foreign_credit)"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div class="jr-bottom">
-                <div class="jr-field">
-                    <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:2px;"><span style="color:#ef4444;">*</span> Date</label>
-                    <input type="date" id="fDate" value="{{ date('Y-m-d') }}">
-                </div>
-                <div class="jr-field">
-                    <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:2px;">Entry No</label>
-                    <input type="text" id="fEntryNo" value="{{ $nextEntryNo }}" readonly class="entry-no">
-                </div>
-                <div class="jr-field" style="flex:1;">
-                    <label style="font-size:10px;font-weight:600;color:#475569;display:block;margin-bottom:2px;">Remark</label>
-                    <input type="text" id="fRemark" class="remark-input" placeholder="Enter remark...">
-                </div>
+            <!-- Footer Save Actions Bar -->
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px; margin-bottom:30px;">
+                <button type="button" class="btn-default-gf" @click="resetForm()"><i class="fa fa-undo"></i> RESET</button>
+                <button type="button" class="btn-default-gf" @click="saveEntry(true)"><i class="fa fa-plus-circle"></i> SAVE &amp; ANOTHER</button>
+                <button type="button" class="btn-freightx" @click="saveEntry(false)"><i class="fa fa-save"></i> <span x-text="form.id ? 'UPDATE ENTRY' : 'SAVE ENTRY'"></span></button>
             </div>
+        </div>
 
-            <div class="jr-savebar">
-                <button type="button" class="jr-btn-save blue" id="btnSave"><i class="fa fa-check"></i> Save</button>
-                <button type="button" class="jr-btn-save gray" id="btnSaveNew">Save &amp; Create Another</button>
+        <!-- ==================== HISTORY / LIST TAB ==================== -->
+        <div x-show="activeTab === 'list'">
+            <div class="portlet light">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-history" style="color:#3b82f6;"></i>
+                        <span class="caption-subject">Journal Entries History</span>
+                    </div>
+                    <div class="actions" style="display:flex;gap:6px;">
+                        <button class="btn-default-gf" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> Excel Export</button>
+                        <button class="btn-freightx" @click="activeTab = 'entry'; resetForm();"><i class="fa fa-plus"></i> New Entry</button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div style="padding:10px 14px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div class="form-group-gf" style="width:200px;">
+                        <label class="form-label-gf" style="width:60px;">Search:</label>
+                        <div class="form-input-container">
+                            <input type="text" class="form-control-gf" x-model="listFilters.search" @input.debounce.300ms="loadList()" placeholder="Entry No, Description...">
+                        </div>
+                    </div>
+
+                    <div class="form-group-gf" style="width:180px;">
+                        <label class="form-label-gf" style="width:70px;">From Date:</label>
+                        <div class="form-input-container">
+                            <input type="date" class="form-control-gf" x-model="listFilters.from_date" @change="loadList()">
+                        </div>
+                    </div>
+
+                    <div class="form-group-gf" style="width:180px;">
+                        <label class="form-label-gf" style="width:60px;">To Date:</label>
+                        <div class="form-input-container">
+                            <input type="date" class="form-control-gf" x-model="listFilters.to_date" @change="loadList()">
+                        </div>
+                    </div>
+
+                    <div class="form-group-gf" style="width:160px;">
+                        <label class="form-label-gf" style="width:50px;">Status:</label>
+                        <div class="form-input-container">
+                            <select class="form-control-gf" x-model="listFilters.status" @change="loadList()">
+                                <option value="">All Statuses</option>
+                                <option value="POSTED">POSTED</option>
+                                <option value="DRAFT">DRAFT</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn-default-gf" @click="clearListFilters()"><i class="fa fa-eraser"></i> Clear</button>
+                </div>
+
+                <div class="portlet-body">
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th style="width:110px;">Entry No</th>
+                                    <th style="width:90px;">Date</th>
+                                    <th>Description / Remark</th>
+                                    <th style="width:100px;">Office</th>
+                                    <th style="width:100px;text-align:right;">Total Debit ($)</th>
+                                    <th style="width:100px;text-align:right;">Total Credit ($)</th>
+                                    <th style="width:60px;text-align:center;">Lines</th>
+                                    <th style="width:80px;text-align:center;">Status</th>
+                                    <th style="width:120px;text-align:center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="item in listData" :key="item.id">
+                                    <tr>
+                                        <td><strong style="color:#2563eb;" x-text="item.entry_no"></strong></td>
+                                        <td x-text="item.entry_date"></td>
+                                        <td>
+                                            <div style="font-weight:600;color:#1e293b;" x-text="item.description || 'No description'"></div>
+                                            <div style="font-size:10px;color:#64748b;" x-text="item.remark" x-show="item.remark"></div>
+                                        </td>
+                                        <td x-text="item.office_name"></td>
+                                        <td style="text-align:right;font-weight:600;color:#2563eb;" x-text="formatMoney(item.total_debit)"></td>
+                                        <td style="text-align:right;font-weight:600;color:#2563eb;" x-text="formatMoney(item.total_credit)"></td>
+                                        <td style="text-align:center;" x-text="item.lines_count"></td>
+                                        <td style="text-align:center;">
+                                            <span class="badge-status-gf posted" x-text="item.status"></span>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <div style="display:flex;gap:4px;justify-content:center;">
+                                                <button class="btn-default-gf" style="padding:2px 6px;font-size:10px;" @click="editEntry(item.id)" title="Edit Entry"><i class="fa fa-pencil"></i> Edit</button>
+                                                <button class="btn-default-gf" style="padding:2px 6px;font-size:10px;color:#ef4444;" @click="deleteEntry(item.id, item.entry_no)" title="Delete Entry"><i class="fa fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="listData.length === 0">
+                                    <tr>
+                                        <td colspan="9" class="empty-msg">No journal entries found matching criteria.</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div style="padding:10px 0 0 0; display:flex; justify-content:between; align-items:center;" x-show="pagination.total > 0">
+                        <span style="font-size:11px;color:#64748b;" x-text="'Showing ' + pagination.from + ' to ' + pagination.to + ' of ' + pagination.total + ' entries'"></span>
+                        <div style="display:flex;gap:4px;">
+                            <button class="btn-default-gf" :disabled="pagination.current_page <= 1" @click="changePage(pagination.current_page - 1)">Previous</button>
+                            <span style="font-size:11px;font-weight:600;padding:4px 8px;" x-text="pagination.current_page + ' / ' + pagination.last_page"></span>
+                            <button class="btn-default-gf" :disabled="pagination.current_page >= pagination.last_page" @click="changePage(pagination.current_page + 1)">Next</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="loading-overlay" id="ldg"><div class="loading-spinner"></div></div>
-
     <script>
-    (function(){
-        var CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        var offices = @json($offices);
-        var currencies = @json($currencies);
-        var partners = @json($partners);
-        var glAccounts = @json($glAccounts);
-        var rowNum = 0;
+    function journalEntryApp() {
+        return {
+            activeTab: 'entry',
+            offices: @json($offices),
+            currencies: @json($currencies),
+            partners: @json($partners),
+            glAccounts: @json($glAccounts),
+            nextEntryNo: @json($nextEntryNo),
+            
+            form: {
+                id: null,
+                entry_no: @json($nextEntryNo),
+                entry_date: new Date().toISOString().split('T')[0],
+                office_id: @json(count($offices) ? $offices[0]['id'] : null),
+                description: '',
+                remark: '',
+                status: 'POSTED'
+            },
 
-        function $(sel, ctx) { return (ctx || document).querySelector(sel); }
-        function $$(sel, ctx) { return (ctx || document).querySelectorAll(sel); }
+            lines: [],
+            selectAll: false,
 
-        function toast(type, msg) {
-            var c = document.getElementById('toast-container');
-            var t = document.createElement('div');
-            t.className = 'toast ' + type;
-            t.textContent = msg;
-            c.appendChild(t);
-            setTimeout(function(){ t.remove(); }, 4000);
-        }
-        function showLdg() { document.getElementById('ldg').classList.add('active'); }
-        function hideLdg() { document.getElementById('ldg').classList.remove('active'); }
-        function fmt(n) { return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-        function esc(s) { if(!s)return''; var d=document.createElement('div'); d.appendChild(document.createTextNode(String(s))); return d.innerHTML; }
+            // List State
+            listData: [],
+            listFilters: {
+                search: '',
+                from_date: '',
+                to_date: '',
+                status: ''
+            },
+            pagination: {
+                current_page: 1,
+                last_page: 1,
+                from: 0,
+                to: 0,
+                total: 0
+            },
 
-        function removeEmptyMsg() {
-            var er = document.getElementById('emptyRow');
-            if (er) er.remove();
-        }
+            init() {
+                if (this.lines.length === 0) {
+                    this.addBalancedPair();
+                }
+            },
 
-        function addEmptyMsg() {
-            if ($$('#jBody tr').length === 0) {
-                var er = document.createElement('tr');
-                er.id = 'emptyRow';
-                er.innerHTML = '<td colspan="14" class="empty-msg">Click <i class="fa fa-plus" style="color:#3b82f6;"></i> to add a line</td>';
-                $('#jBody').appendChild(er);
-            }
-        }
+            formatMoney(val) {
+                const num = parseFloat(val) || 0;
+                return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            },
 
-        function glOpts(selId) {
-            var h = '<option value="">-- Select G/L --</option>';
-            glAccounts.forEach(function(a){ h += '<option value="'+a.id+'"'+(selId&&selId==a.id?' selected':'')+'>'+esc(a.code)+' - '+esc(a.name)+'</option>'; });
-            return h;
-        }
-        function officeOpts(selId) {
-            var h = '<option value="">--</option>';
-            offices.forEach(function(o){ h += '<option value="'+o.id+'"'+(selId&&selId==o.id?' selected':'')+'>'+esc(o.code||o.name)+'</option>'; });
-            return h;
-        }
-        function curOpts(selId) {
-            var h = '<option value="">--</option>';
-            currencies.forEach(function(c){ h += '<option value="'+c.id+'"'+(selId&&selId==c.id?' selected':'')+'>'+esc(c.code)+'</option>'; });
-            return h;
-        }
-        function entityOpts(sel) {
-            var opts = ['COMPANY','BANK'];
-            var h = '';
-            opts.forEach(function(o){ h += '<option value="'+o+'"'+(sel===o?' selected':'')+'>'+o+'</option>'; });
-            return h;
-        }
-        function partnerOpts(selId) {
-            var h = '<option value="">--</option>';
-            partners.forEach(function(p){ h += '<option value="'+p.id+'"'+(selId&&selId==p.id?' selected':'')+'>'+esc(p.name)+'</option>'; });
-            return h;
-        }
-
-        function addLine(d) {
-            removeEmptyMsg();
-            rowNum++;
-            d = d || {};
-            var tr = document.createElement('tr');
-            tr.dataset.row = rowNum;
-            tr.innerHTML =
-                '<td class="col-chk"><input type="checkbox" class="rchk"></td>' +
-                '<td class="col-no" style="text-align:center;font-weight:600;color:#64748b;">'+rowNum+'</td>' +
-                '<td class="col-gl"><select class="gl-sel">'+glOpts(d.gl_id)+'</select></td>' +
-                '<td class="col-sub"><input type="text" class="f-sub" value="'+esc(d.sub||'')+'" maxlength="50"></td>' +
-                '<td class="col-type"><select class="f-etype">'+entityOpts(d.entity_type)+'</select></td>' +
-                '<td class="col-entity"><select class="f-partner">'+partnerOpts(d.partner_id)+'</select></td>' +
-                '<td class="col-desc"><input type="text" class="f-desc" value="'+esc(d.desc||'')+'"></td>' +
-                '<td class="col-office"><select class="f-office">'+officeOpts(d.office_id)+'</select></td>' +
-                '<td class="col-amt"><input type="text" class="num f-ld" value="'+esc(d.ld||'')+'" style="text-align:right"></td>' +
-                '<td class="col-amt"><input type="text" class="num f-lc" value="'+esc(d.lc||'')+'" style="text-align:right"></td>' +
-                '<td class="col-cur"><select class="f-cur">'+curOpts(d.cur_id)+'</select></td>' +
-                '<td class="col-rate"><input type="text" class="num f-rate" value="'+(d.rate||'1')+'" style="text-align:right"></td>' +
-                '<td class="col-amt"><input type="text" class="num f-fd" value="'+esc(d.fd||'')+'" style="text-align:right"></td>' +
-                '<td class="col-amt"><input type="text" class="num f-fc" value="'+esc(d.fc||'')+'" style="text-align:right"></td>';
-            $('#jBody').appendChild(tr);
-            wireRow(tr);
-            updateCount();
-            recalc();
-        }
-
-        function wireRow(tr) {
-            var chk = $('.rchk', tr);
-            chk.addEventListener('change', function(){
-                tr.classList.toggle('row-selected', this.checked);
-                updateDelBtn();
-            });
-            tr.addEventListener('click', function(e){
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
-                chk.checked = !chk.checked;
-                chk.dispatchEvent(new Event('change'));
-            });
-            $('.f-ld', tr).addEventListener('input', recalc);
-            $('.f-lc', tr).addEventListener('input', recalc);
-            $('.f-fd', tr).addEventListener('input', recalc);
-            $('.f-fc', tr).addEventListener('input', recalc);
-        }
-
-        function recalc() {
-            var ld=0,lc=0,fd=0,fc=0;
-            $$('#jBody tr').forEach(function(tr){
-                if (tr.id === 'emptyRow') return;
-                ld += parseFloat($('.f-ld',tr).value)||0;
-                lc += parseFloat($('.f-lc',tr).value)||0;
-                fd += parseFloat($('.f-fd',tr).value)||0;
-                fc += parseFloat($('.f-fc',tr).value)||0;
-            });
-            $('#tLD').textContent = fmt(ld);
-            $('#tLC').textContent = fmt(lc);
-            $('#tFD').textContent = fmt(fd);
-            $('#tFC').textContent = fmt(fc);
-            var bal = ld - lc;
-            $('#balAmt').textContent = fmt(Math.abs(bal));
-            $('#balAmt').style.color = Math.abs(bal)<0.01 ? '#22c55e' : '#ef4444';
-        }
-
-        function renum() {
-            var rows = $$('#jBody tr');
-            var idx = 0;
-            rows.forEach(function(tr){
-                if (tr.id === 'emptyRow') return;
-                idx++;
-                tr.dataset.row = idx;
-                $$('.col-no', tr)[0].textContent = idx;
-            });
-            rowNum = idx;
-        }
-
-        function updateCount() {
-            var n = $$('#jBody tr').length;
-            var empty = document.getElementById('emptyRow');
-            if (empty) n--;
-            $('#line-count').textContent = n + ' line' + (n !== 1 ? 's' : '');
-        }
-
-        function updateDelBtn() {
-            var n = $$('.rchk:checked').length;
-            $('#btnDelRow').disabled = n === 0;
-        }
-
-        function gatherData() {
-            var lines = [];
-            $$('#jBody tr').forEach(function(tr){
-                if (tr.id === 'emptyRow') return;
-                var glId = $('.gl-sel',tr).value;
-                var ld = parseFloat($('.f-ld',tr).value)||0;
-                var lc = parseFloat($('.f-lc',tr).value)||0;
-                lines.push({
-                    gl_account_id: glId || null,
-                    sub: $('.f-sub',tr).value||null,
-                    entity_type: $('.f-etype',tr).value,
-                    trade_partner_id: $('.f-partner',tr).value||null,
-                    description: $('.f-desc',tr).value||null,
-                    office_id: $('.f-office',tr).value||null,
-                    local_debit: ld,
-                    local_credit: lc,
-                    currency_id: $('.f-cur',tr).value||null,
-                    foreign_rate: parseFloat($('.f-rate',tr).value)||1,
-                    foreign_debit: parseFloat($('.f-fd',tr).value)||0,
-                    foreign_credit: parseFloat($('.f-fc',tr).value)||0,
+            get totals() {
+                let ld = 0, lc = 0, fd = 0, fc = 0;
+                this.lines.forEach(l => {
+                    ld += parseFloat(l.local_debit) || 0;
+                    lc += parseFloat(l.local_credit) || 0;
+                    fd += parseFloat(l.foreign_debit) || 0;
+                    fc += parseFloat(l.foreign_credit) || 0;
                 });
-            });
-            return {
-                entry_date: $('#fDate').value,
-                remark: $('#fRemark').value||null,
-                office_id: offices.length ? offices[0].id : null,
-                lines: lines
-            };
-        }
+                return { local_debit: ld, local_credit: lc, foreign_debit: fd, foreign_credit: fc };
+            },
 
-        function doSave(andAnother) {
-            var data = gatherData();
-            if (!data.lines.length) { toast('error','Please add at least one line.'); return; }
-            var missingIdx = -1;
-            data.lines.some(function(l, i){
-                if (!l.gl_account_id) { missingIdx = i; return true; }
-                return false;
-            });
-            if (missingIdx !== -1) { toast('error','Please select a G/L account for line ' + (missingIdx + 1) + '.'); return; }
-            var tDr = data.lines.reduce(function(s,l){return s+l.local_debit},0);
-            var tCr = data.lines.reduce(function(s,l){return s+l.local_credit},0);
-            if (Math.abs(tDr-tCr) > 0.01) { toast('error','Total debit must equal total credit.'); return; }
-            showLdg();
-            fetch('{{ route("accounting.journal.entry.store") }}',{
-                method:'POST',
-                headers:{'X-CSRF-TOKEN':CSRF,'Accept':'application/json','Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},
-                body: JSON.stringify(data)
-            })
-            .then(function(r){return r.json();})
-            .then(function(resp){
-                hideLdg();
-                if(!resp.success){toast('error',resp.message||'Save failed.');return;}
-                toast('success',resp.message||'Saved!');
-                if(andAnother){resetForm();}else{window.location='{{ route("accounting.journal.entry") }}';}
-            })
-            .catch(function(){hideLdg();toast('error','Network error.');});
-        }
+            get isBalanced() {
+                return Math.abs(this.totals.local_debit - this.totals.local_credit) < 0.01 && this.lines.length > 0;
+            },
 
-        function resetForm(){
-            $('#jBody').innerHTML='';
-            rowNum=0;
-            $('#fRemark').value='';
-            $('#fDate').value='{{ date("Y-m-d") }}';
-            updateCount();
-            addEmptyMsg();
-            fetch('{{ route("accounting.next-entry-no") }}',{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}})
-                .then(function(r){return r.json();})
-                .then(function(d){$('#fEntryNo').value=d.entry_no;$('#entry-no-display').textContent=d.entry_no;});
-        }
+            selectedLineIndices() {
+                return this.lines.filter(l => l.selected);
+            },
 
-        $('#btnAddRow').addEventListener('click', function(){ addLine(); });
-        $('#btnDelRow').addEventListener('click', function(){
-            var checked = $$('.rchk:checked');
-            if (!checked.length) { toast('error','Please select row(s) to delete.'); return; }
-            checked.forEach(function(cb){ cb.closest('tr').remove(); });
-            renum();
-            recalc();
-            updateCount();
-            addEmptyMsg();
-            updateDelBtn();
-        });
-        $('#btnBalanced').addEventListener('click', function(){
-            addLine({ld:'0.00',lc:'0.00'});
-            addLine({ld:'0.00',lc:'0.00'});
-        });
-        $('#btnImport').addEventListener('click', function(){ toast('info','Import Journal coming soon.'); });
-        $('#selAll').addEventListener('change', function(){
-            var c=this.checked; $$('.rchk').forEach(function(cb){cb.checked=c;cb.closest('tr').classList.toggle('row-selected',c);});
-            updateDelBtn();
-        });
-        $('#btnSave').addEventListener('click', function(){ doSave(false); });
-        $('#btnSaveNew').addEventListener('click', function(){ doSave(true); });
-    })();
+            toggleSelectAll() {
+                this.lines.forEach(l => l.selected = this.selectAll);
+            },
+
+            addLine(defaults = {}) {
+                const defaultOffice = this.form.office_id || (this.offices.length ? this.offices[0].id : '');
+                const defaultCurrency = this.currencies.length ? this.currencies[0].id : '';
+
+                this.lines.push({
+                    selected: false,
+                    gl_account_id: defaults.gl_account_id || '',
+                    sub: defaults.sub || '',
+                    entity_type: defaults.entity_type || 'COMPANY',
+                    trade_partner_id: defaults.trade_partner_id || '',
+                    description: defaults.description || '',
+                    office_id: defaults.office_id || defaultOffice,
+                    local_debit: defaults.local_debit !== undefined ? defaults.local_debit : '0.00',
+                    local_credit: defaults.local_credit !== undefined ? defaults.local_credit : '0.00',
+                    currency_id: defaults.currency_id || defaultCurrency,
+                    foreign_rate: defaults.foreign_rate !== undefined ? defaults.foreign_rate : '1.000000',
+                    foreign_debit: defaults.foreign_debit !== undefined ? defaults.foreign_debit : '0.00',
+                    foreign_credit: defaults.foreign_credit !== undefined ? defaults.foreign_credit : '0.00'
+                });
+            },
+
+            addBalancedPair() {
+                this.addLine({ local_debit: '0.00', local_credit: '0.00' });
+                this.addLine({ local_debit: '0.00', local_credit: '0.00' });
+            },
+
+            deleteSelectedLines() {
+                if (this.selectedLineIndices().length === 0) return;
+                this.lines = this.lines.filter(l => !l.selected);
+                this.selectAll = false;
+                if (typeof showToast === 'function') {
+                    showToast('info', 'Deleted selected line(s)');
+                }
+            },
+
+            recalcLine(line, field) {
+                const rate = parseFloat(line.foreign_rate) || 1;
+                
+                if (field === 'ld') {
+                    const ld = parseFloat(line.local_debit) || 0;
+                    if (ld > 0) line.local_credit = '0.00';
+                    line.foreign_debit = (ld * rate).toFixed(2);
+                } else if (field === 'lc') {
+                    const lc = parseFloat(line.local_credit) || 0;
+                    if (lc > 0) line.local_debit = '0.00';
+                    line.foreign_credit = (lc * rate).toFixed(2);
+                } else if (field === 'rate') {
+                    const ld = parseFloat(line.local_debit) || 0;
+                    const lc = parseFloat(line.local_credit) || 0;
+                    line.foreign_debit = (ld * rate).toFixed(2);
+                    line.foreign_credit = (lc * rate).toFixed(2);
+                } else if (field === 'fd') {
+                    const fd = parseFloat(line.foreign_debit) || 0;
+                    if (fd > 0) line.foreign_credit = '0.00';
+                    line.local_debit = rate > 0 ? (fd / rate).toFixed(2) : fd.toFixed(2);
+                } else if (field === 'fc') {
+                    const fc = parseFloat(line.foreign_credit) || 0;
+                    if (fc > 0) line.foreign_debit = '0.00';
+                    line.local_credit = rate > 0 ? (fc / rate).toFixed(2) : fc.toFixed(2);
+                }
+            },
+
+            async fetchNextEntryNo() {
+                try {
+                    const res = await fetch('/api/next-entry-no', { headers: { 'Accept': 'application/json' } });
+                    if (res.ok) {
+                        const data = await res.json();
+                        return data.entry_no;
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch next entry no:', e);
+                }
+                return 'JE-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-0001';
+            },
+
+            async resetForm() {
+                const nextNo = await this.fetchNextEntryNo();
+                this.form = {
+                    id: null,
+                    entry_no: nextNo,
+                    entry_date: new Date().toISOString().split('T')[0],
+                    office_id: this.offices.length ? this.offices[0].id : null,
+                    description: '',
+                    remark: '',
+                    status: 'POSTED'
+                };
+                this.lines = [];
+                this.addBalancedPair();
+                this.selectAll = false;
+            },
+
+            async saveEntry(createAnother = false) {
+                if (!this.lines.length) {
+                    if (typeof showToast === 'function') showToast('error', 'Please add at least one line.');
+                    return;
+                }
+
+                let missingIndex = -1;
+                this.lines.forEach((l, i) => {
+                    if (!l.gl_account_id) missingIndex = i;
+                });
+                if (missingIndex !== -1) {
+                    if (typeof showToast === 'function') showToast('error', 'Please select a G/L account for line ' + (missingIndex + 1));
+                    return;
+                }
+
+                if (!this.isBalanced) {
+                    if (typeof showToast === 'function') showToast('error', 'Total debit must equal total credit.');
+                    return;
+                }
+
+                const payload = {
+                    entry_id: this.form.id,
+                    entry_date: this.form.entry_date,
+                    description: this.form.description,
+                    remark: this.form.remark,
+                    office_id: this.form.office_id,
+                    lines: this.lines.map(l => ({
+                        gl_account_id: l.gl_account_id,
+                        sub: l.sub,
+                        entity_type: l.entity_type,
+                        trade_partner_id: l.trade_partner_id,
+                        description: l.description,
+                        office_id: l.office_id,
+                        local_debit: parseFloat(l.local_debit) || 0,
+                        local_credit: parseFloat(l.local_credit) || 0,
+                        currency_id: l.currency_id,
+                        foreign_rate: parseFloat(l.foreign_rate) || 1,
+                        foreign_debit: parseFloat(l.foreign_debit) || 0,
+                        foreign_credit: parseFloat(l.foreign_credit) || 0,
+                    }))
+                };
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    const response = await fetch('{{ route("accounting.journal.entry.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken || '',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        if (typeof showToast === 'function') {
+                            showToast('success', data.message || 'Journal Entry saved successfully');
+                        }
+
+                        if (createAnother) {
+                            await this.resetForm();
+                        } else {
+                            this.form.id = data.entry_id;
+                            this.form.entry_no = data.entry_no;
+                        }
+                    } else {
+                        if (typeof showToast === 'function') {
+                            showToast('error', data.message || 'Failed to save journal entry');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Save failed:', e);
+                    if (typeof showToast === 'function') showToast('error', 'Network or server error while saving');
+                }
+            },
+
+            // ===== LIST TAB METHODS =====
+            switchToListTab() {
+                this.activeTab = 'list';
+                this.loadList();
+            },
+
+            clearListFilters() {
+                this.listFilters = { search: '', from_date: '', to_date: '', status: '' };
+                this.loadList(1);
+            },
+
+            async loadList(page = 1) {
+                try {
+                    const params = new URLSearchParams();
+                    params.append('page', page);
+                    if (this.listFilters.search) params.append('search', this.listFilters.search);
+                    if (this.listFilters.from_date) params.append('from_date', this.listFilters.from_date);
+                    if (this.listFilters.to_date) params.append('to_date', this.listFilters.to_date);
+                    if (this.listFilters.status) params.append('status', this.listFilters.status);
+
+                    const response = await fetch(`/accounting/journal/list?${params.toString()}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (response.ok) {
+                        const res = await response.json();
+                        this.listData = res.data || [];
+                        this.pagination = {
+                            current_page: res.current_page || 1,
+                            last_page: res.last_page || 1,
+                            from: res.from || 0,
+                            to: res.to || 0,
+                            total: res.total || 0
+                        };
+                    }
+                } catch (e) {
+                    console.error('Failed to load list:', e);
+                }
+            },
+
+            changePage(page) {
+                if (page >= 1 && page <= this.pagination.last_page) {
+                    this.loadList(page);
+                }
+            },
+
+            async editEntry(id) {
+                try {
+                    const response = await fetch(`/accounting/journal/${id}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        const entry = await response.json();
+                        this.form = {
+                            id: entry.id,
+                            entry_no: entry.entry_no,
+                            entry_date: entry.entry_date ? entry.entry_date.substr(0,10) : '',
+                            office_id: entry.office_id || '',
+                            description: entry.description || '',
+                            remark: entry.remark || '',
+                            status: entry.status || 'POSTED'
+                        };
+
+                        this.lines = (entry.lines || []).map(l => ({
+                            selected: false,
+                            gl_account_id: l.gl_account_id || '',
+                            sub: l.sub || '',
+                            entity_type: l.entity_type || 'COMPANY',
+                            trade_partner_id: l.trade_partner_id || '',
+                            description: l.description || '',
+                            office_id: l.office_id || '',
+                            local_debit: parseFloat(l.local_debit || 0).toFixed(2),
+                            local_credit: parseFloat(l.local_credit || 0).toFixed(2),
+                            currency_id: l.currency_id || '',
+                            foreign_rate: parseFloat(l.foreign_rate || 1).toFixed(6),
+                            foreign_debit: parseFloat(l.foreign_debit || 0).toFixed(2),
+                            foreign_credit: parseFloat(l.foreign_credit || 0).toFixed(2)
+                        }));
+
+                        this.activeTab = 'entry';
+                        if (typeof showToast === 'function') {
+                            showToast('info', 'Loaded Entry ' + entry.entry_no + ' for editing');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch entry details:', e);
+                }
+            },
+
+            async deleteEntry(id, entryNo) {
+                if (!confirm(`Are you sure you want to delete Journal Entry ${entryNo}?`)) return;
+
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    const response = await fetch(`/accounting/journal/entry/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken || '',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const res = await response.json();
+                    if (response.ok && res.success) {
+                        if (typeof showToast === 'function') showToast('success', 'Journal Entry deleted successfully');
+                        this.loadList(this.pagination.current_page);
+                    } else {
+                        if (typeof showToast === 'function') showToast('error', res.message || 'Failed to delete entry');
+                    }
+                } catch (e) {
+                    console.error('Delete failed:', e);
+                }
+            },
+
+            exportExcel() {
+                const params = new URLSearchParams();
+                if (this.listFilters.search) params.append('search', this.listFilters.search);
+                if (this.listFilters.from_date) params.append('from_date', this.listFilters.from_date);
+                if (this.listFilters.to_date) params.append('to_date', this.listFilters.to_date);
+                if (this.listFilters.status) params.append('status', this.listFilters.status);
+
+                if (typeof showToast === 'function') showToast('info', 'Preparing Excel export...');
+                window.location.href = `/accounting/journal/export-excel?${params.toString()}`;
+            }
+        };
+    }
     </script>
 </x-layout>

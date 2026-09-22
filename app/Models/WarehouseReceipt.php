@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class WarehouseReceipt extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $table = 'warehouse_receipts';
 
     protected $fillable = [
+        'company_id',
         'receipt_no',
         'receipt_date',
         'warehouse_id',
@@ -50,22 +53,22 @@ class WarehouseReceipt extends Model
 
     public function warehouse()
     {
-        return $this->belongsTo(TradePartner::class, 'warehouse_id')->where('type', 'WAREHOUSE');
+        return $this->belongsTo(TradePartner::class, 'warehouse_id');
     }
 
     public function customer()
     {
-        return $this->belongsTo(TradePartner::class, 'customer_id')->where('type', 'CLIENT');
+        return $this->belongsTo(TradePartner::class, 'customer_id');
     }
 
     public function shipper()
     {
-        return $this->belongsTo(TradePartner::class, 'shipper_id')->whereIn('type', ['CLIENT', 'VENDOR']);
+        return $this->belongsTo(TradePartner::class, 'shipper_id');
     }
 
     public function consignee()
     {
-        return $this->belongsTo(TradePartner::class, 'consignee_id')->whereIn('type', ['CLIENT', 'VENDOR']);
+        return $this->belongsTo(TradePartner::class, 'consignee_id');
     }
 
     public function office()

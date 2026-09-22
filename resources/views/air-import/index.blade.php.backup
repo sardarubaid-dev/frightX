@@ -246,7 +246,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h1 class="caption-subject" style="font-size: 18px;">Create Air Import Shipment</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="button" @click="saveShipment" class="btn-gofreight"><i class="fa fa-save"></i> SAVE SHIPMENT</button>
+                <button type="button" @click="saveShipment" class="btn-freightx"><i class="fa fa-save"></i> SAVE SHIPMENT</button>
                 <a href="/air-import/list" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -739,7 +739,7 @@
                 </template>
 
                 <div class="flex justify-end" style="margin-top: 5px; margin-bottom: 20px;">
-                    <button type="button" @click="addHbl" class="btn-gofreight" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HAWB</button>
+                    <button type="button" @click="addHbl" class="btn-freightx" style="background:#f2bc00; padding: 4px 15px; font-size: 11px; border-radius: 2px;"><i class="fa fa-plus"></i> ADD HAWB</button>
                 </div>
             </div>
 
@@ -996,7 +996,7 @@
                     </div>
                     <div style="padding: 10px 15px; border-bottom: 1px solid #eee; display: flex; gap: 8px; flex-shrink: 0;">
                         <input type="text" class="form-control-gf" x-model="wrSearchQuery" placeholder="Search by receipt no, shipper, description..." style="flex: 1;" @keyup.enter="searchWarehouseList()">
-                        <button type="button" class="btn-gofreight" style="padding: 0 14px; font-size: 11px;" @click="searchWarehouseList()"><i class="fa fa-search"></i> Search</button>
+                        <button type="button" class="btn-freightx" style="padding: 0 14px; font-size: 11px;" @click="searchWarehouseList()"><i class="fa fa-search"></i> Search</button>
                     </div>
                     <div style="flex: 1; overflow-y: auto; padding: 10px 15px;">
                         <div x-show="wrLoading" style="text-align: center; padding: 30px; color: #888;"><i class="fa fa-spinner fa-spin fa-2x"></i><div style="margin-top:8px; font-size:12px;">Loading warehouse receipts...</div></div>
@@ -1035,7 +1035,7 @@
                         <span x-show="wrSearchResults.length === 0"></span>
                         <div style="display: flex; gap: 8px;">
                             <button type="button" class="btn-default-gf" @click="showWrModal = false">Cancel</button>
-                            <button type="button" class="btn-gofreight" @click="loadSelectedWarehouse()" :disabled="wrSearchResults.filter(r=>r.selected).length === 0" :style="wrSearchResults.filter(r=>r.selected).length === 0 ? 'opacity:0.5; cursor:not-allowed;' : ''"><i class="fa fa-check"></i> Load Selected</button>
+                            <button type="button" class="btn-freightx" @click="loadSelectedWarehouse()" :disabled="wrSearchResults.filter(r=>r.selected).length === 0" :style="wrSearchResults.filter(r=>r.selected).length === 0 ? 'opacity:0.5; cursor:not-allowed;' : ''"><i class="fa fa-check"></i> Load Selected</button>
                         </div>
                     </div>
                 </div>
@@ -1049,7 +1049,7 @@
                         <button type="button" @click="showDocModal = false" style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; line-height: 1;">&times;</button>
                     </div>
                     <div style="padding: 10px 15px; border-bottom: 1px solid #eee; display: flex; gap: 8px; flex-shrink: 0;">
-                        <button type="button" class="btn-gofreight" style="padding: 4px 14px; font-size: 11px;"><i class="fa fa-upload"></i> Upload Document</button>
+                        <button type="button" class="btn-freightx" style="padding: 4px 14px; font-size: 11px;"><i class="fa fa-upload"></i> Upload Document</button>
                         <button type="button" class="btn-tool-outline" style="padding: 4px 14px; font-size: 11px;"><i class="fa fa-link"></i> Attach Existing</button>
                     </div>
                     <div style="flex: 1; overflow-y: auto; padding: 15px;">

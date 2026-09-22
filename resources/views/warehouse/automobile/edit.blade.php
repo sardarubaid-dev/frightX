@@ -15,7 +15,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h1 class="caption-subject" style="font-size: 18px;">Edit Automobile</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" form="automobile-form" class="btn-gofreight"><i class="fa fa-save"></i> SAVE</button>
+                <button type="submit" form="automobile-form" class="btn-freightx"><i class="fa fa-save"></i> SAVE</button>
                 <a href="{{ route('warehouse.automobile.index') }}" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -271,7 +271,7 @@
                         Automobile Gallery
                     </div>
                     <div class="gallery-toolbar">
-                        <button type="button" class="btn-gofreight" @click="uploadModalOpen = true" style="border-radius:2px; padding: 4px 10px; font-size:11px; background:#10b981;">
+                        <button type="button" class="btn-freightx" @click="uploadModalOpen = true" style="border-radius:2px; padding: 4px 10px; font-size:11px; background:#10b981;">
                             <i class="fa fa-plus"></i>
                         </button>
                         <button type="button" class="btn-default-gf" @click="deleteSelected()" :disabled="selectedDocs.length === 0">
@@ -283,7 +283,7 @@
                             <option value="Loading">Loading</option>
                             <option value="Others">Others</option>
                         </select>
-                        <button type="button" class="btn-gofreight" @click="applyPurpose()" style="border-radius:2px; padding: 4px 10px; font-size:11px; background:#3b82f6;">Apply</button>
+                        <button type="button" class="btn-freightx" @click="applyPurpose()" style="border-radius:2px; padding: 4px 10px; font-size:11px; background:#3b82f6;">Apply</button>
                         
                         <div class="gallery-filters">
                             <template x-for="f in ['All Photo', 'Receiving', 'Loading', 'Others']">
@@ -291,7 +291,7 @@
                                         :style="filterType === f ? 'background:#f1f5f9; font-weight:700;' : ''"
                                         @click="filterType = f" x-text="f"></button>
                             </template>
-                            <a href="{{ route('warehouse.automobile.documents.download', $warehouseAutomobile) }}" class="btn-gofreight" style="margin-left: 10px; border-radius:2px; padding: 4px 10px; font-size:11px; background:#14b8a6; text-decoration:none;">Download All</a>
+                            <a href="{{ route('warehouse.automobile.documents.download', $warehouseAutomobile) }}" class="btn-freightx" style="margin-left: 10px; border-radius:2px; padding: 4px 10px; font-size:11px; background:#14b8a6; text-decoration:none;">Download All</a>
                         </div>
                     </div>
                     <div class="portlet-body" style="padding:0;">
@@ -359,14 +359,14 @@
                             </div>
                         </div>
                         <div style="padding:10px 14px; background:#f8fafc; border-top:1px solid #e2e8f0; text-align:right;">
-                            <button type="button" class="btn-gofreight" @click="uploadModalOpen = false">OK</button>
+                            <button type="button" class="btn-freightx" @click="uploadModalOpen = false">OK</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div style="text-align: center; margin-top: 20px;">
-                <button type="submit" class="btn-gofreight" style="min-width: 120px; justify-content: center;" :disabled="isSaving">
+                <button type="submit" class="btn-freightx" style="min-width: 120px; justify-content: center;" :disabled="isSaving">
                     <span x-text="isSaving ? 'Saving...' : 'Save'"></span>
                 </button>
             </div>

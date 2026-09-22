@@ -81,6 +81,21 @@ class StoreAirExportRequest extends FormRequest
             'notify_id' => 'nullable|exists:trade_partners,id',
             'actual_shipper_id' => 'nullable|exists:trade_partners,id',
 
+            // NEW FIELDS - Added for 100% functionality
+            'route_data' => 'nullable|array',
+            'itn_no' => 'nullable|string|max:255',
+            'cers_no' => 'nullable|string|max:255',
+            'reference_no' => 'nullable|string|max:255',
+            'awb_date' => 'nullable|date',
+            'cargo_ready_date' => 'nullable|date',
+            'issuing_carrier' => 'nullable|string|max:255',
+            'awb_type' => 'nullable|string|max:50',
+            'dv_carriage' => 'nullable|string|max:255',
+            'dv_customs' => 'nullable|string|max:255',
+            'insurance' => 'nullable|string|max:255',
+            'wt_val' => 'nullable|string|max:255',
+            'other_term' => 'nullable|string|max:255',
+
             'hbls' => 'nullable|array',
             'hbls.*.hawb_no' => 'nullable|string|unique:air_export_hbls,hawb_no',
             'hbls.*.customer_id' => 'nullable|exists:trade_partners,id',

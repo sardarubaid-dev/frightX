@@ -19,8 +19,8 @@
         .portlet-body { padding: 8px 10px; }
         .caption-subject { color: #3b82f6; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .btn-gofreight { background: #3b82f6; color: #fff !important; border: none; padding: 4px 10px; border-radius: 3px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2); }
-        .btn-gofreight:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25); }
+        .btn-freightx { background: #3b82f6; color: #fff !important; border: none; padding: 4px 10px; border-radius: 3px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2); }
+        .btn-freightx:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25); }
         .btn-default-gf { background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 3px 8px; font-size: 10px; border-radius: 3px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
         .btn-default-gf:hover { background: #f8fafc; border-color: #94a3b8; color: #0f172a; }
 
@@ -105,7 +105,7 @@
                 </span>
             </div>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
-                <a href="{{ route('accounting.invoices.edit', $invoice) }}" class="btn-gofreight" target="_blank"><i class="fa fa-pencil"></i> EDIT</a>
+                <a href="{{ route('accounting.invoices.edit', $invoice) }}" class="btn-freightx" target="_blank"><i class="fa fa-pencil"></i> EDIT</a>
                 <a href="javascript:window.print()" class="btn-default-gf"><i class="fa fa-print"></i> PRINT</a>
                 <form action="{{ route('accounting.invoices.destroy', $invoice) }}" method="POST" onsubmit="return confirmDelete()" style="display:inline;">
                     @csrf

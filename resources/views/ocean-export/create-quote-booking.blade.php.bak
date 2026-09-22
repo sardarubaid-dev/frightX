@@ -34,7 +34,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h1 class="caption-subject" style="font-size: 18px;">Create Ocean Export Booking</h1>
             <div style="display: flex; gap: 8px;">
-                <button class="btn-gofreight"><i class="fa fa-save"></i> SAVE BOOKING</button>
+                <button class="btn-freightx"><i class="fa fa-save"></i> SAVE BOOKING</button>
             </div>
         </div>
         <div style="height: 500px; border: 1px solid #e2e8f0; background: #fff; border-radius: 4px;"></div>
@@ -142,7 +142,7 @@
 
                     <div style="text-align: center; margin: 15px 0;">
                         <button class="btn-default-gf" @click="clearFilters()">Clear</button>
-                        <button class="btn-gofreight" @click="applyFilters()">Search</button>
+                        <button class="btn-freightx" @click="applyFilters()">Search</button>
                     </div>
 
                     <hr style="border: 0; border-top: 1px solid #ebedf2;">
@@ -279,8 +279,8 @@
             <div class="modal-footer">
                 <button class="btn-default-gf" @click="closeModal()">Cancel</button>
                 <button class="btn-default-gf" x-show="step > 1" @click="step--">Back</button>
-                <button class="btn-gofreight" x-show="step < 3" @click="step++" :disabled="!selectedQuoteId">Next <i class="fa fa-arrow-right"></i></button>
-                <button class="btn-gofreight" x-show="step === 3" @click="finish()"><i class="fa fa-check"></i> Finish</button>
+                <button class="btn-freightx" x-show="step < 3" @click="step++" :disabled="!selectedQuoteId">Next <i class="fa fa-arrow-right"></i></button>
+                <button class="btn-freightx" x-show="step === 3" @click="finish()"><i class="fa fa-check"></i> Finish</button>
             </div>
         </div>
     </div>

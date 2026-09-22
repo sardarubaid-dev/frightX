@@ -35,7 +35,7 @@
 <body>
     <div class="header">
         <div>
-            <h1><i class="fa fa-bank"></i> GO FREIGHT</h1>
+            <h1><i class="fa fa-bank"></i> FREIGHTX</h1>
             <p>Bank Reconciliation Report</p>
         </div>
         <div class="header-right">

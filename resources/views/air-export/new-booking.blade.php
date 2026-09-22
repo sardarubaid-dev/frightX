@@ -13,6 +13,35 @@
                     volume: '{{ old('volume', isset($booking) ? $booking->volume : '0') }}',
                     chargeable_weight: '{{ old('chargeable_weight', isset($booking) ? $booking->chargeable_weight : '0') }}'
                 },
+                quotations: @json($quotations ?? []),
+                selectedQuote: null,
+                quoteForm: {},
+                quoteSearch: { quote_no: '', customer_id: '', valid_date: '' },
+                matchQuote(q) {
+                    if (this.quoteSearch.quote_no && !q.quote_no.toLowerCase().includes(this.quoteSearch.quote_no.toLowerCase())) return false;
+                    if (this.quoteSearch.customer_id && q.customer_id != this.quoteSearch.customer_id) return false;
+                    return true;
+                },
+                selectQuote(q) {
+                    this.selectedQuote = q;
+                    this.quoteForm = Object.assign({}, q);
+                    // Pre-fill Step 2 form using quote data
+                    this.form.gross_weight = q.gross_weight_kg || '0';
+                    this.form.volume = q.volume || '0';
+                    this.form.chargeable_weight = q.chargeable_weight_kg || '0';
+                    this.step = 2;
+                },
+                confirmQuote() {
+                    // Finalize conversion
+                    if (this.selectedQuote) {
+                        const q = this.selectedQuote;
+                        document.querySelector('[name="customer_id"]').value = q.customer_id || '';
+                        document.querySelector('[name="sales_person_id"]').value = q.sales_person_id || '';
+                        document.querySelector('[name="dep_port_id"]').value = q.pol_id || '';
+                        document.querySelector('[name="dst_port_id"]').value = q.pod_id || '';
+                    }
+                    this.showQuoteModal = false;
+                },
                 addCommodity() {
                     this.commodities.push({ description: '', hts_code: '', po_number: '', selected: false });
                 },
@@ -336,7 +365,7 @@
         }
         .empty-row { text-align: center; color: #999; padding: 10px !important; }
 
-        /* Floating Footer replaced with standard GoFreight layout */
+        /* Floating Footer replaced with standard FreightX layout */
         .footer-save {
             position: relative;
             margin-top: 15px;
@@ -419,7 +448,7 @@
                             <div class="search-grid-lite">
                                 <div class="form-group-custom">
                                     <label class="label-custom">Customer</label>
-                                    <select class="input-custom" style="border: 1px solid #d1d9e6; border-radius: 4px; width:100%;">
+                                    <select class="input-custom" x-model="quoteSearch.customer_id" style="border: 1px solid #d1d9e6; border-radius: 4px; width:100%;">
                                         <option value="">Select Customer...</option>
                                         @foreach($tradePartners ?? [] as $tp)
                                             <option value="{{ $tp->id }}">{{ $tp->name }}</option>
@@ -428,15 +457,15 @@
                                 </div>
                                 <div class="form-group-custom">
                                     <label class="label-custom">Valid Date</label>
-                                    <input type="date" class="input-custom" style="border: 1px solid #d1d9e6; border-radius: 4px; width:100%;">
+                                    <input type="date" class="input-custom" x-model="quoteSearch.valid_date" style="border: 1px solid #d1d9e6; border-radius: 4px; width:100%;">
                                 </div>
                                 <div class="form-group-custom">
                                     <label class="label-custom">Quote No.</label>
-                                    <input type="text" class="input-custom" style="border: 1px solid #d1d9e6; border-radius: 4px; width:100%;" placeholder="Search Quote...">
+                                    <input type="text" class="input-custom" x-model="quoteSearch.quote_no" style="border: 1px solid #d1d9e6; border-radius: 4px; width:100%;" placeholder="Search Quote...">
                                 </div>
                             </div>
                             <div style="text-align: center; margin-bottom: 25px;">
-                                <button class="btn-premium primary" style="padding: 8px 30px;">Search Quotations</button>
+                                <button type="button" class="btn-premium primary" style="padding: 8px 30px;">Search Quotations</button>
                             </div>
                             <table class="premium-mini-table">
                                 <thead>
@@ -449,8 +478,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td colspan="5" style="text-align: center; padding: 40px; color: #999;">No quotation found. Please search.</td>
+                                    <template x-for="q in quotations" :key="q.id">
+                                        <tr x-show="matchQuote(q)">
+                                            <td style="text-align: center;"><input type="radio" name="quote_select_radio" @click="selectQuote(q)"></td>
+                                            <td x-text="q.quote_no"></td>
+                                            <td x-text="q.valid_date || '-'"></td>
+                                            <td x-text="q.customer ? q.customer.name : '-'"></td>
+                                            <td x-text="q.sales_person ? q.sales_person.name : '-'"></td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="quotations.filter(q => matchQuote(q)).length === 0">
+                                        <td colspan="5" style="text-align: center; padding: 40px; color: #999;">No quotation found matching filters.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -461,16 +499,16 @@
                             <h4 class="form-section-title">Verify Booking Information</h4>
                             <div class="form-grid" style="padding: 0; gap: 15px;">
                                 <div class="form-group-custom">
-                                    <label class="label-custom">Booking No.</label>
-                                    <input type="text" class="input-custom" value="AUTO-GENERATE" disabled style="background:#f5f5f5; border:1px solid #ddd; width:100%;">
+                                    <label class="label-custom">Quote No.</label>
+                                    <input type="text" class="input-custom" :value="quoteForm.quote_no" disabled style="background:#f5f5f5; border:1px solid #ddd; width:100%;">
                                 </div>
                                 <div class="form-group-custom">
-                                    <label class="label-custom">Booking Date</label>
-                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" value="2026-05-15">
+                                    <label class="label-custom">Quote Date</label>
+                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" :value="quoteForm.quote_date">
                                 </div>
                                 <div class="form-group-custom">
-                                    <label class="label-custom">Departure Date</label>
-                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;">
+                                    <label class="label-custom">Valid Date</label>
+                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" :value="quoteForm.valid_date">
                                 </div>
                             </div>
                         </div>
@@ -482,7 +520,7 @@
                             <table class="premium-mini-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 40px;"><input type="checkbox"></th>
+                                        <th style="width: 40px;"><input type="checkbox" checked></th>
                                         <th>Freight Code</th>
                                         <th>Description</th>
                                         <th>Rate</th>
@@ -490,7 +528,16 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
+                                    <template x-for="item in (selectedQuote ? selectedQuote.items : [])" :key="item.id">
+                                        <tr>
+                                            <td style="text-align: center;"><input type="checkbox" checked></td>
+                                            <td x-text="item.freight_code"></td>
+                                            <td x-text="item.description"></td>
+                                            <td x-text="item.rate"></td>
+                                            <td x-text="item.amount"></td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="!selectedQuote || !selectedQuote.items || selectedQuote.items.length === 0">
                                         <td colspan="5" style="text-align: center; padding: 40px; color: #999;">No charge items found in this quotation.</td>
                                     </tr>
                                 </tbody>
@@ -499,9 +546,9 @@
                     </div>
 
                     <div class="modal-footer-premium">
-                        <button @click="closeModal()" class="btn-premium">Cancel</button>
-                        <button x-show="step > 1" @click="step--" class="btn-premium">Previous</button>
-                        <button @click="step < 3 ? step++ : closeModal()" class="btn-premium success" x-text="step === 3 ? 'Convert to Booking' : 'Next Step'"></button>
+                        <button type="button" @click="closeModal()" class="btn-premium">Cancel</button>
+                        <button type="button" x-show="step > 1" @click="step--" class="btn-premium">Previous</button>
+                        <button type="button" @click="step < 3 ? step++ : confirmQuote()" class="btn-premium success" x-text="step === 3 ? 'Convert to Booking' : 'Next Step'"></button>
                     </div>
                 </div>
             </div>
@@ -515,7 +562,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h1 class="caption-subject" style="font-size: 18px;">{{ isset($booking) ? 'Edit Air Export Booking' : 'Create Air Export Booking' }}</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="submit" form="airBookingForm" class="btn-gofreight"><i class="fa fa-save"></i> SAVE BOOKING</button>
+                <button type="submit" form="airBookingForm" class="btn-freightx"><i class="fa fa-save"></i> SAVE BOOKING</button>
                 <a href="/air-export/list" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -757,7 +804,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 11px; font-weight: 700; color: #444;">ITEMIZED COMMODITY LIST</span>
                         <div style="display: flex; gap: 5px;">
-                            <button type="button" class="btn-gofreight" style="padding: 2px 6px; font-size: 10px;" @click="addCommodity"><i class="fa fa-plus"></i> Add</button>
+                            <button type="button" class="btn-freightx" style="padding: 2px 6px; font-size: 10px;" @click="addCommodity"><i class="fa fa-plus"></i> Add</button>
                             <button type="button" class="btn-default-gf" style="padding: 2px 6px; font-size: 10px; color: #e7505a;" @click="removeSelectedCommodities"><i class="fa fa-trash"></i> Remove</button>
                         </div>
                     </div>

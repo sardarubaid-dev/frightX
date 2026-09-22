@@ -1,6 +1,12 @@
 <x-layout>
     @push('styles')
     <x-list-styles />
+    <style>
+        .nav-tabs-custom { margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; display: flex; gap: 4px; background: #fff; padding: 4px 8px 0 8px; border-radius: 2px 2px 0 0; }
+        .nav-tabs-custom .tab-item { padding: 6px 14px; font-size: 11px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+        .nav-tabs-custom .tab-item:hover { color: #2563eb; background: #f8fafc; }
+        .nav-tabs-custom .tab-item.active { color: #2563eb; font-weight: 700; border-bottom-color: #2563eb; background: #eff6ff; }
+    </style>
     @endpush
 
     {{-- ═══════ TOAST CONTAINER ═══════ --}}
@@ -37,6 +43,18 @@
 
     {{-- ═══════ MAIN PAGE ═══════ --}}
     <div class="page-content">
+        {{-- TOP TABS --}}
+        <div class="nav-tabs-custom">
+            <a href="{{ route('truck.create') }}" class="tab-item {{ request()->routeIs('truck.create') ? 'active' : '' }}">
+                <i class="fa fa-plus-circle"></i> New Shipment
+            </a>
+            <a href="{{ route('truck.index') }}" class="tab-item {{ request()->routeIs('truck.index') ? 'active' : '' }}">
+                <i class="fa fa-list"></i> Shipment List
+            </a>
+            <a href="{{ route('truck.my-shipment-list') }}" class="tab-item {{ request()->routeIs('truck.my-shipment-list') ? 'active' : '' }}">
+                <i class="fa fa-user"></i> My Shipment List
+            </a>
+        </div>
 
         <div class="page-bar">
             <ul class="page-breadcrumb">
@@ -67,12 +85,12 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="window.print()" title="Print this page">
+                    <button class="btn-action-round white" onclick="printReport()" title="Print this page">
                         <i class="fa fa-print"></i> Print
                     </button>
-                    <a class="btn-action-round white" href="#" onclick="return exportExcel(event)" title="Download as CSV/Excel">
-                        <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
-                    </a>
+                    <button class="btn-action-round white" onclick="exportExcel(event)" title="Download as CSV/Excel">
+                        <i class="fa fa-file-excel-o"></i> Excel
+                    </button>
                 </div>
             </div>
 
@@ -290,6 +308,9 @@
     function blockSelected() {
         const ids = getSelectedIds();
         if (!ids.length) return;
+        
+        showToast('info', 'Blocking shipment(s)...');
+        
         fetch('{{ route("truck.bulk-block") }}', {
             method: 'POST',
             headers: {
@@ -301,12 +322,35 @@
             body: JSON.stringify({ ids })
         })
         .then(r => r.json())
-        .then(d => { if (d.success) { showToast('success', d.message); setTimeout(() => updateGrid(window.location.href), 600); } else showToast('error', d.message); })
+        .then(d => { 
+            if (d.success) { 
+                showToast('success', d.message);
+                // Update lock icons for blocked shipments
+                ids.forEach(id => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        const lockIcon = row.querySelector('.fa-lock, .fa-unlock');
+                        if (lockIcon) {
+                            lockIcon.classList.remove('fa-unlock');
+                            lockIcon.classList.add('fa-lock');
+                            lockIcon.style.color = '#ef4444'; // Red for blocked
+                            lockIcon.title = 'Blocked';
+                        }
+                    }
+                });
+            } else {
+                showToast('error', d.message);
+            }
+        })
         .catch(() => showToast('error', 'Failed to block shipment(s).'));
     }
+    
     function unblockSelected() {
         const ids = getSelectedIds();
         if (!ids.length) return;
+        
+        showToast('info', 'Unblocking shipment(s)...');
+        
         fetch('{{ route("truck.bulk-unblock") }}', {
             method: 'POST',
             headers: {
@@ -318,7 +362,26 @@
             body: JSON.stringify({ ids })
         })
         .then(r => r.json())
-        .then(d => { if (d.success) { showToast('success', d.message); setTimeout(() => updateGrid(window.location.href), 600); } else showToast('error', d.message); })
+        .then(d => { 
+            if (d.success) { 
+                showToast('success', d.message);
+                // Update lock icons for unblocked shipments
+                ids.forEach(id => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        const lockIcon = row.querySelector('.fa-lock, .fa-unlock');
+                        if (lockIcon) {
+                            lockIcon.classList.remove('fa-lock');
+                            lockIcon.classList.add('fa-unlock');
+                            lockIcon.style.color = '#22c55e'; // Green for unblocked
+                            lockIcon.title = 'Unlocked';
+                        }
+                    }
+                });
+            } else {
+                showToast('error', d.message);
+            }
+        })
         .catch(() => showToast('error', 'Failed to unblock shipment(s).'));
     }
 
@@ -607,15 +670,49 @@
        PAGE SIZE
     ================================================================ */
     function exportExcel(e) {
+        if (e) e.preventDefault();
+        
         const url = new URL('{{ route("truck.export-csv") }}');
-        // Preserve current search/filter/sort params
         const current = new URL(window.location.href);
         ['search','filter_file_no','filter_post_date','filter_customer','sort','dir'].forEach(p => {
             if (current.searchParams.has(p)) url.searchParams.set(p, current.searchParams.get(p));
         });
-        window.location.href = url.toString();
-        e.preventDefault();
+        
+        showToast('info', 'Preparing Excel export...');
+        
+        fetch(url.toString())
+            .then(response => {
+                if (!response.ok) throw new Error('Export failed');
+                return response.blob();
+            })
+            .then(blob => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'truck-shipments-' + new Date().toISOString().split('T')[0] + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+                showToast('success', 'Excel file downloaded successfully');
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('error', 'Failed to export Excel file');
+            });
+        
         return false;
+    }
+    
+    function printReport() {
+        const url = new URL('{{ route("truck.my-shipment-list-print") }}');
+        const current = new URL(window.location.href);
+        ['search','filter_file_no','filter_post_date','filter_customer','sort','dir'].forEach(p => {
+            if (current.searchParams.has(p)) url.searchParams.set(p, current.searchParams.get(p));
+        });
+        
+        showToast('info', 'Opening print view...');
+        window.open(url.toString(), '_blank');
     }
 
     function changePageSize(size) {

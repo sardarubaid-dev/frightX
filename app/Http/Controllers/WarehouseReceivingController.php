@@ -177,7 +177,8 @@ class WarehouseReceivingController extends Controller
         $users = User::all();
         $offices = Office::where('is_active', true)->get();
         $tradePartners = TradePartner::all();
-        return view('warehouse.receiving.create', compact('receipts', 'users', 'offices', 'tradePartners'));
+        $packageUnits = \App\Models\PackageUnit::all();
+        return view('warehouse.receiving.create', compact('receipts', 'users', 'offices', 'tradePartners', 'packageUnits'));
     }
 
     public function store(StoreWarehouseReceivingRequest $request)
@@ -268,8 +269,9 @@ class WarehouseReceivingController extends Controller
         $users = User::all();
         $offices = Office::where('is_active', true)->get();
         $tradePartners = TradePartner::all();
+        $packageUnits = \App\Models\PackageUnit::all();
         $receiving = $warehouse_receiving;
-        return view('warehouse.receiving.create', compact('receiving', 'warehouse_receiving', 'receipts', 'users', 'offices', 'tradePartners', 'docData', 'memoData', 'itemData'));
+        return view('warehouse.receiving.create', compact('receiving', 'warehouse_receiving', 'receipts', 'users', 'offices', 'tradePartners', 'packageUnits', 'docData', 'memoData', 'itemData'));
     }
 
     public function update(UpdateWarehouseReceivingRequest $request, WarehouseReceiving $warehouse_receiving)
@@ -324,9 +326,12 @@ class WarehouseReceivingController extends Controller
         }
     }
 
-    public function destroy(WarehouseReceiving $warehouse_receiving)
+    public function destroy(Request $request, WarehouseReceiving $warehouse_receiving)
     {
         $warehouse_receiving->delete();
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Receiving record deleted successfully.']);
+        }
         return redirect()->route('receiving.index')
             ->with('success', 'Receiving record deleted successfully.');
     }

@@ -26,7 +26,7 @@
     </td>
     <td class="sticky-col" style="left:50px;" onclick="event.stopPropagation()">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
-            <a href="{{ route('ocean-import.edit', $shipment->id) }}" class="col-link" target="_blank">{{ $shipment->file_no }}</a>
+            <a href="{{ route('ocean-import.edit', $shipment->id) }}" class="col-link">{{ $shipment->file_no }}</a>
             <i class="fa fa-external-link" style="color:#94a3b8;font-size:10px;cursor:pointer;" title="Open in new tab"></i>
         </div>
     </td>
@@ -57,7 +57,7 @@
     <td><span class="badge-status bg-green">MATCHED</span></td>
     <td>
         @if($shipment->hbls->count())
-            <a href="{{ route('ocean-import.edit', $shipment->id) }}#hbls" class="col-link" target="_blank">{{ $shipment->hbls->first()->hbl_no }}</a>
+            <a href="{{ route('ocean-import.edit', $shipment->id) }}#hbls" class="col-link">{{ $shipment->hbls->first()->hbl_no }}</a>
         @else
             --
         @endif

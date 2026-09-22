@@ -130,7 +130,7 @@
                     <a class="btn-action-round white" href="{{ route('accounting.invoices.export-csv') }}" title="Download as CSV/Excel" target="_blank">
                         <i class="fa fa-file-excel-o"></i> Excel <i class="fa fa-angle-down"></i>
                     </a>
-                    <a href="{{ route('accounting.invoices.create') }}" class="btn-action-round green-btn" target="_blank">
+                    <a href="{{ route('accounting.invoices.create') }}" class="btn-action-round green-btn">
                         <i class="fa fa-plus"></i> New Invoice
                     </a>
                 </div>
@@ -140,7 +140,7 @@
             <div class="portlet-tool">
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <div class="btn-group">
-                        <a class="btn-tool green" href="{{ route('accounting.invoices.create') }}" title="New Invoice" target="_blank">
+                        <a class="btn-tool green" href="{{ route('accounting.invoices.create') }}" title="New Invoice">
                             <i class="fa fa-plus"></i>
                         </a>
                         <button class="btn-tool" id="btn-copy"   disabled title="Copy Selected (select 1 row)" onclick="copySelected()">

@@ -1,6 +1,6 @@
-# GoFreight Complete Functional Requirements
+# FreightX Complete Functional Requirements
 
-This document outlines the comprehensive module and feature requirements extracted from the GoFreight platform. The Freight Management System (FMS) must cover the following domains, structured perfectly into API routes, models, and UI components consistent with the platform theme.
+This document outlines the comprehensive module and feature requirements extracted from the FreightX platform. The Freight Management System (FMS) must cover the following domains, structured perfectly into API routes, models, and UI components consistent with the platform theme.
 
 ## 1. Dashboard & Analytics
 - **Total Profit**: KPI chart and numerical tracking for overall profitability.
@@ -67,7 +67,7 @@ This document outlines the comprehensive module and feature requirements extract
 - **Audit Reports**: System access logs, User Log In/Out Active Reports.
 
 ## 14. Settings & Configurations
-- **Financial Settings**: Accounting configurations (Currency Tables, Bank Lists, Billing Codes, G/L Codes), and digital payment gateway settings (e.g., GoFreight Pay mechanics).
+- **Financial Settings**: Accounting configurations (Currency Tables, Bank Lists, Billing Codes, G/L Codes), and digital payment gateway settings (e.g., FreightX Pay mechanics).
 - **Operational Setup**: To Do List configuration, IT No. Management, AWB No. Management, Package Unit dictionary, Container TP/SZ templates.
 - **System Admin**: Role-based User Management, Tracking User Management, Country/Port Management.
 - **Integrations**: Customer Portal configurations, Tracking Notification (Email/SMS) & Custom Report Settings.

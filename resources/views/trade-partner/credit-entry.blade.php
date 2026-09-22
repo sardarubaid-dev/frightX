@@ -2,24 +2,24 @@
     @push('styles')
     <x-list-styles />
     <style>
-        .grid-wrapper { height: calc(100vh - 260px); min-height: 300px; }
+        .grid-wrapper { height: calc(100vh - 260px); min-height: 300px; overflow: auto; width: 100%; }
         .grid-table input[type="text"],
         .grid-table input[type="number"],
         .grid-table select {
-            width: 100%; height: 20px; border: 1px solid #cbd5e1; padding: 0 4px;
+            width: 100%; height: 22px; border: 1px solid #cbd5e1; padding: 0 6px;
             font-size: 10px; border-radius: 2px; outline: none; box-sizing: border-box;
-            background: #fff;
+            background: #fff; color: #1e293b;
         }
         .grid-table input:focus,
         .grid-table select:focus {
-            border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,0.2);
+            border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,0.25);
         }
         .grid-table td.editable-cell { padding: 1px 2px; }
-        .summary-bar { background: #f8fafc; padding: 6px 12px; border-bottom: 1px solid #e2e8f0; display: flex; gap: 20px; font-size: 10px; color: #64748b; }
+        .summary-bar { background: #f8fafc; padding: 6px 12px; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 16px; font-size: 11px; color: #64748b; align-items: center; }
         .summary-bar .val { color: #1e293b; font-weight: 600; }
         .summary-bar .val.over { color: #dc2626; }
-        .sticky-save-bar { position: sticky; bottom: 0; background: #fff; border-top: 2px solid #3b82f6; padding: 8px 16px; display: flex; justify-content: center; gap: 10px; z-index: 50; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); }
-        .btn-primary-save { background: #3b82f6; color: #fff; border: none; padding: 6px 40px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .sticky-save-bar { position: sticky; bottom: 0; background: #fff; border-top: 2px solid #3b82f6; padding: 8px 16px; display: flex; justify-content: center; gap: 10px; z-index: 50; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
+        .btn-primary-save { background: #3b82f6; color: #fff; border: none; padding: 6px 30px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary-save:hover { background: #2563eb; }
         .btn-primary-save:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { background: #fff; color: #475569; border: 1px solid #cbd5e1; padding: 6px 20px; border-radius: 4px; font-size: 11px; cursor: pointer; }
@@ -27,17 +27,18 @@
 
         /* Validation styles */
         .field-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 1px rgba(239,68,68,0.2) !important; }
-        .validation-error { font-size: 8px; color: #ef4444; display: block; line-height: 1; }
+        .validation-error { font-size: 9px; color: #ef4444; display: block; line-height: 1.2; }
+
         /* ── Ocean Module Tabs ── */
-        .ce-tabs { display: flex; gap: 0; border-bottom: 1px solid #cbd5e1; padding: 0 12px; background: #fff; margin: 0; list-style: none; }
+        .ce-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid #cbd5e1; padding: 0 12px; background: #fff; margin: 0; list-style: none; overflow-x: auto; }
         .ce-tabs li { margin-bottom: -1px; list-style: none; }
         .ce-tabs li a {
-            display: block; padding: 7px 16px; font-size: 11px; font-weight: 600;
+            display: inline-flex; align-items: center; padding: 7px 16px; font-size: 11px; font-weight: 600;
             color: #64748b; text-decoration: none;
             border: 1px solid transparent; border-bottom: none;
             border-radius: 3px 3px 0 0;
             transition: all 0.15s ease;
-            position: relative;
+            position: relative; white-space: nowrap;
         }
         .ce-tabs li a:hover { color: #1e293b; background: #f1f5f9; }
         .ce-tabs li.active a {
@@ -49,43 +50,37 @@
             height: 2px; background: #3b82f6;
         }
 
-        /* ── Ocean Module Pagination ── */
-        .ce-pages {
-            display: flex; gap: 2px; align-items: center;
-            margin: 0; padding: 0; font-size: 10px; list-style: none;
-        }
-        .ce-page-item { list-style: none; }
-        .ce-page-link {
+        /* ── Action Buttons ── */
+        .btn-action-icon {
             display: inline-flex; align-items: center; justify-content: center;
-            min-width: 22px; height: 20px; padding: 0 6px;
-            border: 1px solid #cbd5e1; background: #fff; color: #334155;
-            text-decoration: none; border-radius: 2px;
-            transition: all 0.12s ease; line-height: 1; font-family: inherit;
-            cursor: pointer; box-sizing: border-box;
+            width: 22px; height: 22px; border-radius: 3px; border: 1px solid #cbd5e1;
+            background: #ffffff; color: #475569; font-size: 11px; cursor: pointer;
+            transition: all 0.15s ease; box-sizing: border-box; line-height: 1;
         }
-        .ce-page-link i { font-size: 8px; }
-        .ce-page-item:not(.disabled) .ce-page-link:hover {
-            background: #f1f5f9; border-color: #94a3b8; color: #1e293b;
-        }
-        .ce-page-item.active .ce-page-link {
-            background: #3b82f6; color: #fff; border-color: #2563eb;
-            font-weight: 600; cursor: default;
-        }
-        .ce-page-item.disabled .ce-page-link {
-            opacity: 0.4; cursor: not-allowed; background: #f8fafc; color: #94a3b8;
-        }
-        .ce-page-link.dots {
-            border-color: transparent; background: transparent;
-            min-width: 16px; cursor: default;
+        .btn-action-icon:hover { background: #f1f5f9; border-color: #94a3b8; color: #1e293b; }
+        .btn-action-icon.edit:hover { background: #eff6ff; color: #2563eb; border-color: #93c5fd; }
+        .btn-action-icon.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; }
+
+        .btn-tool.danger-outline { background: #fff; color: #ef4444; border-color: #fca5a5; }
+        .btn-tool.danger-outline:hover:not(:disabled) { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
+        .btn-tool.danger-outline:disabled { background: #f8fafc; color: #cbd5e1; border-color: #e2e8f0; opacity: 0.6; cursor: not-allowed; }
+
+        /* ── Responsive rules ── */
+        @media (max-width: 768px) {
+            .portlet-title { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .portlet-title .actions { width: 100%; justify-content: flex-start; }
+            .portlet-tool { flex-direction: column; align-items: stretch; gap: 8px; }
+            .summary-bar { font-size: 10px; gap: 8px; }
+            .grid-wrapper { height: calc(100vh - 340px); }
         }
 
-        /* Fix overlay display conflict with Alpine x-show — .overlay has display:none in list-styles */
+        /* Fix overlay display conflict with Alpine x-show */
         .portlet.light .overlay { display: flex; }
         .portlet.light .overlay[x-cloak] { display: none !important; }
 
-        .group-name-link { color: #3b82f6; font-weight: 600; text-decoration: none; cursor: pointer; }
-        .group-name-link:hover { text-decoration: underline; }
-        .members-count { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 20px; padding: 0 6px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 9px; font-weight: 600; }
+        .group-name-link { color: #2563eb; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .group-name-link:hover { text-decoration: underline; color: #1d4ed8; }
+        .members-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 6px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 10px; font-weight: 600; }
     </style>
     @endpush
 
@@ -324,7 +319,7 @@
                             <button class="btn-tool" @click="refreshGroups()" title="Refresh groups list">
                                 <i class="fa fa-refresh"></i>
                             </button>
-                            <button class="btn-tool" @click="confirmBulkDeleteGroups()" :disabled="selectedGroups.size === 0" title="Delete selected groups" style="color:#ef4444;">
+                            <button class="btn-tool danger-outline" @click="confirmBulkDeleteGroups()" :disabled="selectedGroups.size === 0" title="Delete selected groups">
                                 <i class="fa fa-trash"></i> Delete (<span x-text="selectedGroups.size">0</span>)
                             </button>
                         </div>
@@ -347,7 +342,7 @@
                                         <th style="width:50px;text-align:center;">Days</th>
                                         <th style="width:100px;text-align:right;">Credit Limit</th>
                                         <th style="width:80px;text-align:center;">Members</th>
-                                        <th style="width:130px;text-align:center;">Actions</th>
+                                        <th style="width:100px;text-align:center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="groups-body">
@@ -366,12 +361,14 @@
                                             <span class="members-count">{{ $group->tradePartners->count() }}</span>
                                         </td>
                                         <td style="text-align:center;">
-                                            <button class="btn-tool" data-group-edit data-group-id="{{ $group->id }}" title="Edit" style="padding:0 5px;height:18px;">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button class="btn-tool" data-group-delete data-group-id="{{ $group->id }}" title="Delete" style="padding:0 5px;height:18px;color:#ef4444;">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
+                                            <div style="display:inline-flex;align-items:center;gap:4px;justify-content:center;">
+                                                <button type="button" class="btn-action-icon edit" data-group-edit data-group-id="{{ $group->id }}" title="Edit Group">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                                <button type="button" class="btn-action-icon delete" data-group-delete data-group-id="{{ $group->id }}" title="Delete Group">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     @empty
@@ -564,6 +561,22 @@
             groupFormErrors: {},
 
             init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const tabFromUrl = urlParams.get('tab');
+                const savedTab = sessionStorage.getItem('ceActiveTab');
+                if (tabFromUrl && ['partners', 'groups'].includes(tabFromUrl)) {
+                    this.activeTab = tabFromUrl;
+                } else if (savedTab && ['partners', 'groups'].includes(savedTab)) {
+                    this.activeTab = savedTab;
+                }
+
+                this.$watch('activeTab', (val) => {
+                    sessionStorage.setItem('ceActiveTab', val);
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', val);
+                    window.history.replaceState({}, '', url.toString());
+                });
+
                 this.$nextTick(() => {
                     this.wirePagination();
                     this.wireGroupEvents();
@@ -767,6 +780,9 @@
                     if (data.success) {
                         this.showToast('success', data.message || 'Credit entries saved successfully');
                         this.modifiedIds.clear();
+                        if (data.totalCreditLimitAll !== undefined) {
+                            this.totalCreditLimitAll = data.totalCreditLimitAll;
+                        }
                         Object.keys(this.entries).forEach(id => {
                             if (this.entries[id]) {
                                 this.entries[id]._modified = false;
@@ -1019,13 +1035,17 @@
                         if (!tbody) return;
 
                         if (data.data.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px 10px;color:#94a3b8;"><i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>No credit limit groups defined. Click <strong>+ Add</strong> to create one.</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px 10px;color:#94a3b8;"><i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>No credit limit groups defined. Click <strong>+ Add</strong> to create one.</td></tr>';
                             return;
                         }
 
                         tbody.innerHTML = data.data.map((g, i) => {
-                            const limit = parseFloat(g.credit_limit || 0).toFixed(2);
-                            return '<tr id="group-row-' + g.id + '">'
+                            const limit = parseFloat(g.credit_limit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            const isChecked = this.selectedGroups.has(g.id);
+                            return '<tr id="group-row-' + g.id + '" class="' + (isChecked ? 'row-selected' : '') + '">'
+                                + '<td style="text-align:center;" onclick="event.stopPropagation()">'
+                                + '<input type="checkbox" ' + (isChecked ? 'checked' : '') + ' class="group-check" data-id="' + g.id + '">'
+                                + '</td>'
                                 + '<td style="text-align:center;color:#64748b;">' + (i + 1) + '</td>'
                                 + '<td><span class="group-name-link" data-group-edit data-group-id="' + g.id + '">' + g.name + '</span></td>'
                                 + '<td style="color:#64748b;">' + (g.payment_type || '--') + '</td>'
@@ -1034,8 +1054,10 @@
                                 + '<td style="text-align:right;font-weight:600;">' + limit + '</td>'
                                 + '<td style="text-align:center;"><span class="members-count">' + (g.trade_partners_count || 0) + '</span></td>'
                                 + '<td style="text-align:center;">'
-                                + '<button class="btn-tool" data-group-edit data-group-id="' + g.id + '" title="Edit" style="padding:0 5px;height:18px;"><i class="fa fa-pencil"></i></button> '
-                                + '<button class="btn-tool" data-group-delete data-group-id="' + g.id + '" title="Delete" style="padding:0 5px;height:18px;color:#ef4444;"><i class="fa fa-trash"></i></button>'
+                                + '<div style="display:inline-flex;align-items:center;gap:4px;justify-content:center;">'
+                                + '<button type="button" class="btn-action-icon edit" data-group-edit data-group-id="' + g.id + '" title="Edit Group"><i class="fa fa-pencil"></i></button>'
+                                + '<button type="button" class="btn-action-icon delete" data-group-delete data-group-id="' + g.id + '" title="Delete Group"><i class="fa fa-trash"></i></button>'
+                                + '</div>'
                                 + '</td></tr>';
                         }).join('');
 

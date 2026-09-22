@@ -62,11 +62,14 @@ class TruckShipmentService
             }
 
             foreach ($memos as $memo) {
-                $shipment->memos()->create([
-                    'subject' => $memo['subject'] ?? '',
-                    'content' => $memo['content'] ?? '',
-                    'user_id' => auth()->id(),
-                ]);
+                if (!empty($memo['subject'])) {
+                    $shipment->memos()->create([
+                        'subject' => $memo['subject'] ?? '',
+                        'content' => $memo['content'] ?? '',
+                        'has_alert' => !empty($memo['has_alert']),
+                        'user_id' => auth()->id(),
+                    ]);
+                }
             }
 
             return $shipment;
@@ -77,7 +80,7 @@ class TruckShipmentService
     {
         return DB::transaction(function () use ($truckShipment, $data) {
             $containers = json_decode($data['containers'] ?? '[]', true);
-            $memos = json_decode($data['memos'] ?? '[]', true);
+            $memosJson = $data['memos'] ?? null;
             unset($data['containers'], $data['memos']);
 
             $data = $this->sanitizeData($data);
@@ -85,19 +88,45 @@ class TruckShipmentService
             $truckShipment->update($data);
 
             // Sync containers: delete old, create new
-            $truckShipment->containers()->delete();
-            foreach ($containers as $container) {
-                $truckShipment->containers()->create($container);
+            if (!empty($containers)) {
+                $truckShipment->containers()->delete();
+                foreach ($containers as $container) {
+                    $truckShipment->containers()->create($container);
+                }
             }
 
-            // Sync memos: delete old, create new
-            $truckShipment->memos()->delete();
-            foreach ($memos as $memo) {
-                $truckShipment->memos()->create([
-                    'subject' => $memo['subject'] ?? '',
-                    'content' => $memo['content'] ?? '',
-                    'user_id' => auth()->id(),
-                ]);
+            // Sync memos safely
+            if (is_string($memosJson) && !empty($memosJson)) {
+                $memosList = json_decode($memosJson, true);
+                if (is_array($memosList) && count($memosList) > 0) {
+                    $keepIds = [];
+                    foreach ($memosList as $memoData) {
+                        if (!empty($memoData['subject'])) {
+                            if (!empty($memoData['id']) && is_numeric($memoData['id']) && $memoData['id'] < 2000000000) {
+                                $existing = $truckShipment->memos()->find($memoData['id']);
+                                if ($existing) {
+                                    $existing->update([
+                                        'subject' => $memoData['subject'],
+                                        'content' => $memoData['content'] ?? '',
+                                        'has_alert' => !empty($memoData['has_alert']),
+                                    ]);
+                                    $keepIds[] = $existing->id;
+                                    continue;
+                                }
+                            }
+                            $newMemo = $truckShipment->memos()->create([
+                                'subject' => $memoData['subject'],
+                                'content' => $memoData['content'] ?? '',
+                                'has_alert' => !empty($memoData['has_alert']),
+                                'user_id' => auth()->id(),
+                            ]);
+                            $keepIds[] = $newMemo->id;
+                        }
+                    }
+                    if (!empty($keepIds)) {
+                        $truckShipment->memos()->whereNotIn('id', $keepIds)->delete();
+                    }
+                }
             }
 
             return $truckShipment;

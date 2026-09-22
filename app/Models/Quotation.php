@@ -6,15 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class Quotation extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $guarded = [];
 
     protected $casts = [
         'quote_date' => 'date',
         'expiry_date' => 'date',
+        'valid_date' => 'date',
+        'create_date' => 'date',
     ];
 
     public function customer()
@@ -75,5 +79,17 @@ class Quotation extends Model
     public function documents()
     {
         return $this->morphMany(Document::class, 'documentable');
+    }
+
+    public function scopeForModule($query, string $module)
+    {
+        $module = trim($module);
+
+        return $query->where(function ($q) use ($module) {
+            $q->where('shipping_type', $module)
+              ->orWhere('transport_mode', $module)
+              ->orWhere('shipping_type', 'LIKE', '%' . $module . '%')
+              ->orWhere('transport_mode', 'LIKE', '%' . $module . '%');
+        });
     }
 }

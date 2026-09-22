@@ -7,8 +7,8 @@
         .portlet-body { padding: 15px; }
         .caption-subject { color: #4b77be; font-size: 13px; font-weight: 700; text-transform: uppercase; }
         
-        .btn-gofreight { background: #4b77be; color: #fff !important; border: none; padding: 5px 12px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-gofreight:hover { background: #3a62a4; }
+        .btn-freightx { background: #4b77be; color: #fff !important; border: none; padding: 5px 12px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-freightx:hover { background: #3a62a4; }
         .btn-default-gf { background: #fff; border: 1px solid #ccc; color: #333; padding: 4px 10px; font-size: 11px; border-radius: 3px; cursor: pointer; }
 
         .form-control-gf { width: 100%; height: 26px; border: 1px solid #c2cad8; padding: 2px 8px; font-size: 11px; border-radius: 2px; background: #fff; }
@@ -38,7 +38,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h1 class="caption-subject" style="font-size: 18px;">Lead Pipeline</h1>
             <div style="display: flex; gap: 8px;">
-                <button onclick="document.getElementById('new-lead-modal').style.display='flex'" class="btn-gofreight"><i class="fa fa-plus"></i> NEW LEAD</button>
+                <button onclick="document.getElementById('new-lead-modal').style.display='flex'" class="btn-freightx"><i class="fa fa-plus"></i> NEW LEAD</button>
                 <button class="btn-default-gf"><i class="fa fa-filter"></i> FILTER</button>
             </div>
         </div>
@@ -151,7 +151,7 @@
                     </div>
                     <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #eef1f5; pt-15; margin-top: 15px; padding-top: 15px;">
                         <button type="button" onclick="document.getElementById('new-lead-modal').style.display='none'" class="btn-default-gf">CANCEL</button>
-                        <button type="submit" class="btn-gofreight">SAVE PROSPECT</button>
+                        <button type="submit" class="btn-freightx">SAVE PROSPECT</button>
                     </div>
                 </form>
             </div>

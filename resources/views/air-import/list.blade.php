@@ -106,7 +106,7 @@
                     <button class="btn-action-round" id="btn-filter" onclick="toggleFilter()" title="Toggle filter row">
                         <i class="fa fa-filter"></i> Filter
                     </button>
-                    <div style="position:relative;">
+                    <div style="position:relative;display:inline-flex;align-items:center;">
                         <button class="btn-action-round" id="btn-config" onclick="toggleConfig()" title="Column visibility">
                             <i class="fa fa-cogs"></i> Config
                         </button>
@@ -115,7 +115,7 @@
                             <div id="col-toggles"></div>
                         </div>
                     </div>
-                    <button class="btn-action-round white" onclick="exportCsv()" title="Export CSV">
+                    <button class="btn-action-round white" onclick="exportCsv()" title="Download as CSV/Excel">
                         <i class="fa fa-file-excel-o"></i> Excel
                     </button>
                 </div>
@@ -123,19 +123,19 @@
 
             {{-- TOOLBAR --}}
             <div class="portlet-tool">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;align-items:center;">
                     <div class="btn-group">
-                        <a href="{{ route('air-import.create') }}" class="btn-tool green" target="_blank" title="New Shipment"><i class="fa fa-plus"></i></a>
-                        <button class="btn-tool" id="btn-copy" disabled title="Copy (select 1)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
-                        <button class="btn-tool" id="btn-delete" disabled title="Delete selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
+                        <a href="{{ route('air-import.create') }}" class="btn-tool green" title="New Shipment"><i class="fa fa-plus"></i></a>
+                        <button class="btn-tool" id="btn-copy" disabled title="Copy Selected (select 1 row)" onclick="copySelected()"><i class="fa fa-files-o"></i></button>
+                        <button class="btn-tool" id="btn-delete" disabled title="Delete Selected" onclick="confirmDelete()"><i class="fa fa-trash"></i></button>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 10px;" onclick="blockSelected()">Block</button>
-                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 10px;" onclick="unblockSelected()">Unblock</button>
+                        <button class="btn-tool" id="btn-block"   disabled style="padding:0 12px;" onclick="blockSelected()">Block</button>
+                        <button class="btn-tool" id="btn-unblock" disabled style="padding:0 12px;" onclick="unblockSelected()">Unblock</button>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-tool" id="btn-profit-s" disabled><i class="fa fa-file-text-o"></i> Profit – Summary</button>
-                        <button class="btn-tool" id="btn-profit-d" disabled><i class="fa fa-file-text-o"></i> Profit – Detail</button>
+                        <button class="btn-tool" id="btn-profit-s" disabled onclick="openProfitSummary()"><i class="fa fa-file-text-o"></i> Profit – Summary</button>
+                        <button class="btn-tool" id="btn-profit-d" disabled onclick="openProfitDetail()"><i class="fa fa-file-text-o"></i> Profit – Detail</button>
                     </div>
                     <div class="btn-group">
                         <select class="select-tool" id="sel-op" disabled onchange="onOpChange(this)">
@@ -148,7 +148,7 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <i class="fa fa-search" style="font-size:10px;color:#94a3b8;"></i>
-                    <input type="text" id="quick-search" class="input-inline" style="width:150px;" placeholder="Quick search…" oninput="quickSearch(this.value)" value="{{ request('search') }}">
+                    <input type="text" id="quick-search" class="input-inline" style="width:160px;" placeholder="Quick search…" oninput="quickSearch(this.value)" value="{{ request('search') }}">
                 </div>
             </div>
 
@@ -206,10 +206,10 @@
 
             <div class="portlet-tool bottom">
                 <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                    <div id="pagination-container">{{ $shipments->links() }}</div>
+                    <div id="pagination-container">{{ $shipments->links('vendor.pagination.custom') }}</div>
                     <div style="font-size:10px;color:#64748b;">
                         Showing <span id="stat-first">{{ $shipments->firstItem() ?? 0 }}</span>
-                        &ndash; <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span>
+                        – <span id="stat-last">{{ $shipments->lastItem() ?? 0 }}</span>
                         of <span id="stat-total">{{ $shipments->total() }}</span> records
                     </div>
                 </div>
@@ -252,6 +252,21 @@
             var cb = row.querySelector('.row-check');
             row.classList.toggle('row-selected', cb && cb.checked);
         });
+    }
+
+    /* ── PROFIT REPORTS ── */
+    function openProfitSummary() {
+        var ids = getSelectedIds();
+        if (!ids.length) return;
+        if (ids.length > 1) { showToast('info', 'Please select only 1 shipment'); return; }
+        window.open('/air-import/' + ids[0] + '/profit-summary', '_blank');
+    }
+
+    function openProfitDetail() {
+        var ids = getSelectedIds();
+        if (!ids.length) return;
+        if (ids.length > 1) { showToast('info', 'Please select only 1 shipment'); return; }
+        window.open('/air-import/' + ids[0] + '/profit-detail', '_blank');
     }
 
     function toggleSelectAll(el) {
@@ -481,39 +496,67 @@
     function openColorPicker(id, current) {
         _colorShipmentId = id;
         var grid = document.getElementById('color-picker-grid');
-        grid.innerHTML = COLOR_OPTIONS.map(o =>
-            '<div class="color-picker-opt '+(o.value===current?'active':'')+'" onclick="selectColor(\''+o.value+'\',this)"><span class="swatch" style="background:'+o.value+'"></span><span>'+o.label+'</span><i class="fa fa-check"></i></div>'
-        ).join('');
+        grid.innerHTML = COLOR_OPTIONS.map(o => {
+            const active = o.value === current;
+            return `<div class="color-picker-opt ${active ? 'active' : ''}" onclick="selectColor('${o.value}', this)"><span class="swatch" style="background:${o.value}"></span><span>${o.label}</span><i class="fa fa-check"></i></div>`;
+        }).join('');
         document.getElementById('color-picker-overlay').classList.add('open');
     }
+
     function selectColor(color, el) {
-        document.querySelectorAll('.color-picker-opt').forEach(c=>c.classList.remove('active'));
+        document.querySelectorAll('.color-picker-opt').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        fetch('/air-import/'+_colorShipmentId+'/color', {
-            method:'PATCH',
-            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
-            body:JSON.stringify({color})
-        }).then(r=>r.json()).then(d => {
-            if (d.success) {
-                var m = document.querySelector('#shipment-row-'+_colorShipmentId+' .color-mark');
-                if (m) m.style.background = color;
-                showToast('success','Color updated');
+        const id = _colorShipmentId;
+        fetch('{{ route("air-import.update-color", "ID") }}'.replace('ID', id), {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+            },
+            body: JSON.stringify({ color }),
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                const span = document.querySelector(`#shipment-row-${id} .color-mark`);
+                if (span) span.style.background = color;
+                showToast('success', 'Status color updated');
+            } else {
+                showToast('error', data.message || 'Failed to update color');
             }
+        }).catch(err => {
+            console.error('Color update error:', err);
+            showToast('error', 'Failed to update color');
         });
         closeColorPicker();
     }
-    function closeColorPicker() { document.getElementById('color-picker-overlay').classList.remove('open'); _colorShipmentId=null; }
+
+    function closeColorPicker() {
+        document.getElementById('color-picker-overlay').classList.remove('open');
+        _colorShipmentId = null;
+    }
+
     function clearColor() {
-        fetch('/air-import/'+_colorShipmentId+'/color', {
-            method:'PATCH',
-            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
-            body:JSON.stringify({color:''})
-        }).then(r=>r.json()).then(d => {
-            if (d.success) {
-                var m = document.querySelector('#shipment-row-'+_colorShipmentId+' .color-mark');
-                if (m) m.style.background='#94a3b8';
-                showToast('success','Color cleared');
+        if (!_colorShipmentId) return;
+        const id = _colorShipmentId;
+        fetch('{{ route("air-import.update-color", "ID") }}'.replace('ID', id), {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json', 
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+            },
+            body: JSON.stringify({ color: '' }),
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                const span = document.querySelector(`#shipment-row-${id} .color-mark`);
+                if (span) span.style.background = '#94a3b8';
+                showToast('success', 'Status color cleared');
+            } else {
+                showToast('error', data.message || 'Failed to clear color');
             }
+        }).catch(err => {
+            console.error('Color clear error:', err);
+            showToast('error', 'Failed to clear color');
         });
         closeColorPicker();
     }

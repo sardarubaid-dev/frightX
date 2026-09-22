@@ -45,6 +45,14 @@
         .btn-green:hover { background: #26a1ab; }
         .tp-save-btn { background: #3b82f6; color: #fff; padding: 6px 50px; border-radius: 20px; font-weight: 700; text-transform: uppercase; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; }
         .tp-save-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59,130,246,0.25); }
+
+        @media (max-width: 1280px) {
+            .main-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 768px) {
+            .form-row { display: flex !important; flex-direction: column !important; gap: 6px !important; }
+            .form-row > .form-group { grid-column: span 12 !important; width: 100% !important; }
+        }
     </style>
     @endpush
 
@@ -80,6 +88,7 @@
                 activeTab: 'basic',
                 firstTabSaved: {{ isset($tradePartner) && $tradePartner->id ? 'true' : 'false' }},
                 tradePartyOpen: true,
+                toolsOpen: false,
 
                 // Settings / Configs / Permissions based on user criteria:
                 vm: {
@@ -155,10 +164,20 @@
 
                 init() {
                     this.$watch('activeTab', (value) => {
+                        sessionStorage.setItem('tpActiveTab', value);
                         if (value === 'status') {
                             this.fetchLogs();
                         }
                     });
+
+                    const savedTab = sessionStorage.getItem('tpActiveTab');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const tabParam = urlParams.get('tab');
+                    if (tabParam) {
+                        this.activeTab = tabParam;
+                    } else if (savedTab && (this.firstTabSaved || savedTab === 'basic')) {
+                        this.activeTab = savedTab;
+                    }
 
                     // Initialize previews
                     this.updatePreviews();
@@ -570,6 +589,71 @@
                     });
                 },
 
+                copyTradePartner() {
+                    this.toolsOpen = false;
+                    if (this.form.id) {
+                        showToast('info', 'Copying Trade Partner details...');
+                        this.form.id = '';
+                        this.form.code = '';
+                        if (this.form.name && !this.form.name.includes('(COPY)')) {
+                            this.form.name = this.form.name + ' (COPY)';
+                        }
+                        if (this.form.print_name && !this.form.print_name.includes('(COPY)')) {
+                            this.form.print_name = this.form.print_name + ' (COPY)';
+                        }
+                        this.firstTabSaved = false;
+                        if (window.history && window.history.pushState) {
+                            window.history.pushState({}, '', '/trade-partner/create');
+                        }
+                        showToast('success', 'Copied to new Trade Partner form. Click SAVE TRADE PARTNER to persist.');
+                    } else {
+                        if (this.form.name && !this.form.name.includes('(COPY)')) {
+                            this.form.name = this.form.name + ' (COPY)';
+                        }
+                        if (this.form.print_name && !this.form.print_name.includes('(COPY)')) {
+                            this.form.print_name = this.form.print_name + ' (COPY)';
+                        }
+                        showToast('info', 'Form details copied.');
+                    }
+                },
+
+                async deleteTradePartner() {
+                    this.toolsOpen = false;
+                    if (!this.form.id) {
+                        showToast('warning', 'Cannot delete an unsaved Trade Partner.');
+                        return;
+                    }
+                    var confirmed = await showConfirm('Delete Trade Partner', 'Are you sure you want to delete Trade Partner "' + (this.form.name || '') + '"?');
+                    if (!confirmed) return;
+                    
+                    fetch(`/trade-partner/${this.form.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            _method: 'DELETE'
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success || data.message) {
+                            showToast('success', 'Trade Partner deleted successfully.');
+                            setTimeout(() => {
+                                window.location.href = '/trade-partner/list';
+                            }, 600);
+                        } else {
+                            showToast('error', data.message || 'Failed to delete Trade Partner.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Delete error:', err);
+                        showToast('error', 'Failed to delete Trade Partner.');
+                    });
+                },
+
                 submitForm() {
                     let errors = [];
                     if (!this.form.type) errors.push('TP Type is required.');
@@ -641,10 +725,21 @@
                     .then(data => {
                         this.firstTabSaved = true;
                         showToast('success', data.message || 'Trade Partner saved successfully.');
-                        if (data.redirect) {
-                            window.location.href = data.redirect;
-                        } else if (!this.form.id && data.id) {
-                            window.location.href = `/trade-partner/${data.id}/edit`;
+                        sessionStorage.setItem('tpActiveTab', this.activeTab);
+                        const targetId = data.id || this.form.id;
+                        if (targetId) {
+                            this.form.id = targetId;
+                            setTimeout(() => {
+                                window.location.href = `/trade-partner/${targetId}/edit`;
+                            }, 500);
+                        } else if (data.redirect) {
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 500);
+                        } else {
+                            if (this.activeTab === 'status') {
+                                this.fetchLogs();
+                            }
                         }
                     })
                     .catch(err => {
@@ -676,7 +771,30 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h1 class="caption-subject" style="font-size: 18px;" x-text="form.id ? 'Edit Trade Partner' : 'New Trade Partner'">New Trade Partner</h1>
             <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn-gofreight" @click.prevent="submitForm()" x-show="vm.user_permissions.hasEditPerm && vm.user_permissions.hasAnyEditInfoPerm"><i class="fa fa-save"></i> SAVE TRADE PARTNER</button>
+                <button type="button" class="btn-freightx" @click.prevent="submitForm()" x-show="vm.user_permissions.hasEditPerm && vm.user_permissions.hasAnyEditInfoPerm"><i class="fa fa-save"></i> SAVE TRADE PARTNER</button>
+
+                <!-- Tools Dropdown Header -->
+                <div style="position: relative; display: inline-block;">
+                    <button type="button" class="btn-default-gf" style="padding:6px 14px;" @click.stop="toolsOpen = !toolsOpen">
+                        <i class="fa fa-cogs"></i> Tools <i class="fa fa-angle-down"></i>
+                    </button>
+                    <div x-show="toolsOpen" @click.away="toolsOpen = false" x-cloak
+                         style="position: absolute; right: 0; top: 100%; margin-top: 4px; z-index: 1050; min-width: 160px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); padding: 4px 0;">
+                        <button type="button" @click="copyTradePartner()" 
+                                style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #334155; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease;"
+                                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                            <i class="fa fa-copy" style="color: #475569; font-size: 13px; width: 14px;"></i> Copy
+                        </button>
+                        <div style="height: 1px; background: #e2e8f0; margin: 4px 0;"></div>
+                        <button type="button" @click="deleteTradePartner()" 
+                                :disabled="!firstTabSaved"
+                                :style="firstTabSaved ? 'display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #ef4444; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease;' : 'display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 14px; font-size: 13px; font-weight: 500; color: #cbd5e1; background: transparent; border: none; cursor: not-allowed; opacity: 0.6;'"
+                                onmouseover="if(firstTabSaved) this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                            <i class="fa fa-trash-o" :style="firstTabSaved ? 'color: #ef4444; font-size: 13px; width: 14px;' : 'color: #cbd5e1; font-size: 13px; width: 14px;'"></i> Delete
+                        </button>
+                    </div>
+                </div>
+
                 <a href="/trade-partner/list" class="btn-default-gf">BACK TO LIST</a>
             </div>
         </div>
@@ -985,7 +1103,7 @@
                         <div class="portlet light">
                             <div class="portlet-title">
                                 <span class="caption-subject"><i class="fa fa-calculator"></i> Accounting Setting</span>
-                                <button type="button" class="btn-gofreight" @click="copyFromLocalAddress()"><i class="fa fa-copy"></i> Copy from Local Address</button>
+                                <button type="button" class="btn-freightx" @click="copyFromLocalAddress()"><i class="fa fa-copy"></i> Copy from Local Address</button>
                             </div>
                             <div class="portlet-body">
                                 <div class="form-group" style="margin-bottom: 8px;">
@@ -1245,7 +1363,7 @@
                                                     </tr>
                                                 </template>
                                                 <tr x-show="relatedParties.filter(p => p.party_type === pt.db).length === 0">
-                                                    <td colspan="5" style="text-align: center; color: #aaa; padding: 10px;">No Data Available. Click the green + button to add a relation.</td>
+                                                    <td colspan="5" style="text-align: center; color: #aaa; padding: 10px;">No Data Available. Click the + button to add a relation.</td>
                                                 </tr>
                                             </tbody>
                                         </table>

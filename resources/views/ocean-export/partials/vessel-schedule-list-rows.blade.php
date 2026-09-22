@@ -15,7 +15,7 @@
         <input type="checkbox" name="ids[]" value="{{ $s->id }}" class="row-check" onchange="updateToolbar()">
     </td>
     <td class="sticky-col" style="left:25px;" onclick="event.stopPropagation()">
-        <a href="{{ route('vessel-schedules.edit', $s->id) }}" class="col-link" target="_blank">{{ $s->schedule_no ?? 'VS-' . $s->id }}</a>
+        <a href="{{ route('vessel-schedules.edit', $s->id) }}" class="col-link">{{ $s->schedule_no ?? 'VS-' . $s->id }}</a>
     </td>
     <td class="sticky-col" style="left:185px;text-align:center;">
         <span class="color-mark" style="background:{{ $s->color ?? '#94a3b8' }}" title="Click to change status color" onclick="event.stopPropagation();openColorPicker({{ $s->id }}, '{{ $s->color ?? '' }}')"></span>

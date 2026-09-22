@@ -71,6 +71,8 @@
             <input type="hidden" name="tax_total" :value="totals.tax.toFixed(2)">
             <input type="hidden" name="total_amount" :value="totals.total.toFixed(2)">
             <input type="hidden" name="balance_amount" :value="totals.balance.toFixed(2)">
+            <input type="hidden" name="invoiceable_type" :value="form.invoiceable_type">
+            <input type="hidden" name="invoiceable_id" :value="form.invoiceable_id">
 
             @if(session('success'))
                 <div style="background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:10px 15px;border-radius:4px;margin-bottom:15px;font-size:12px;display:flex;align-items:center;gap:8px;">
@@ -102,7 +104,7 @@
                     <i class="fa fa-file-text-o"></i> Invoice — {{ $editMode ? 'Edit' : 'New Entry' }}
                 </h1>
                 <div style="display:flex;gap:4px;">
-                    <button type="button" class="btn-gofreight" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($editMode) UPDATE @else SAVE @endif</button>
+                    <button type="button" class="btn-freightx" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($editMode) UPDATE @else SAVE @endif</button>
                     <a href="{{ route('accounting.invoices.index') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>
@@ -450,7 +452,7 @@
                     <div class="portlet-title">
                         <span class="caption-subject"><i class="fa fa-folder-open"></i> Document Center</span>
                         <div style="display:flex;gap:4px;">
-                            <label class="btn-gofreight" style="padding:2px 8px;font-size:9px;cursor:pointer;">
+                            <label class="btn-freightx" style="padding:2px 8px;font-size:9px;cursor:pointer;">
                                 <i class="fa fa-upload"></i> Upload
                                 <input type="file" x-ref="docInput" style="display:none;" @change="uploadDocument($event)">
                             </label>
@@ -543,6 +545,8 @@
 
                 form: {
                     invoice_no: '{{ old("invoice_no", $editMode ? $invoice->invoice_no : $invoiceNo) }}',
+                    invoiceable_type: '{{ old("invoiceable_type", $editMode ? $invoice->invoiceable_type : ($invoiceableType ?? "")) }}',
+                    invoiceable_id: '{{ old("invoiceable_id", $editMode ? $invoice->invoiceable_id : ($invoiceableId ?? "")) }}',
                     invoice_date: '{{ old("invoice_date", $editMode && $invoice->invoice_date ? $invoice->invoice_date->format("Y-m-d") : date("Y-m-d")) }}',
                     due_date: '{{ old("due_date", $editMode && $invoice->due_date ? $invoice->due_date->format("Y-m-d") : "") }}',
                     type: '{{ old("type", $editMode ? $invoice->type : ($defaultType ?? "AR")) }}',

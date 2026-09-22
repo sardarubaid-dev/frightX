@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>General Journal | GoFreight</title>
+    <title>General Journal | FreightX</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         body { font-family: 'Open Sans', Arial, sans-serif; margin: 0; padding: 20px; color: #333; font-size: 11px; background: #fff; }
@@ -24,7 +24,7 @@
         <div>
             <h1>GENERAL JOURNAL</h1>
             <div style="font-size:10px;color:#64748b;margin-top:4px;">
-                GoFreight ERP — Accounting Module
+                FreightX ERP — Accounting Module
             </div>
         </div>
         <div class="meta">
@@ -80,7 +80,7 @@
     </table>
 
     <div class="footer">
-        General Journal Report — GoFreight ERP — Printed {{ now()->format('Y-m-d H:i:s') }}
+        General Journal Report — FreightX ERP — Printed {{ now()->format('Y-m-d H:i:s') }}
     </div>
 </body>
 </html>

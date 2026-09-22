@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\BelongsToTenant;
+
 class Schedule extends Model
 {
+    use BelongsToTenant;
 
     protected $fillable = [
-        'schedule_no', 'vessel_name', 'voyage', 'pol_name', 'pod_name', 'etd', 'eta',
+        'company_id', 'schedule_no', 'vessel_name', 'voyage', 'pol_name', 'pod_name', 'etd', 'eta',
         'carrier_bkg_no', 'shipping_agent', 'office_id', 'itn_no',
         'oversea_agent_id', 'bl_type', 'notify_id', 'op_id', 'post_date',
         'forwarding_agent_id', 'vessel_id', 'pol_id', 'pod_id', 'fdest_id',

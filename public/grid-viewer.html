@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Template Grid Viewer</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #333; color: white; display: flex; flex-direction: column; gap: 40px; align-items: center; }
+        .template-wrapper { position: relative; width: 820px; height: 1160px; background: white; margin-bottom: 20px; border: 2px solid red; box-sizing: border-box; }
+        .template-wrapper img { width: 100%; height: 100%; position: absolute; top: 0; left: 0; opacity: 0.8; }
+        .grid-line-h { position: absolute; left: 0; width: 100%; border-top: 1px solid rgba(255, 0, 0, 0.4); z-index: 10; pointer-events: none; }
+        .grid-line-v { position: absolute; top: 0; height: 100%; border-left: 1px solid rgba(255, 0, 0, 0.4); z-index: 10; pointer-events: none; }
+        .grid-label-h { position: absolute; left: -30px; font-size: 10px; color: red; z-index: 11; background: #fff; padding: 1px; }
+        .grid-label-v { position: absolute; top: -15px; font-size: 10px; color: red; z-index: 11; background: #fff; padding: 1px; }
+        
+        .box { position: absolute; border: 2px solid blue; background: rgba(0,0,255,0.2); color: blue; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 20; }
+    </style>
+</head>
+<body>
+    <h1>Silk Container Lines Grid</h1>
+    <div class="template-wrapper" id="silk">
+        <img src="/assets/images/hbl/silk-1.png" />
+    </div>
+    
+    <h1>NTG Grid</h1>
+    <div class="template-wrapper" id="ntg">
+        <img src="/assets/images/hbl/ntg_air-1.png" />
+    </div>
+
+    <script>
+        function drawGrid(wrapperId) {
+            const wrapper = document.getElementById(wrapperId);
+            for (let i = 0; i <= 100; i += 5) {
+                // Horizontal lines
+                const hLine = document.createElement('div');
+                hLine.className = 'grid-line-h';
+                hLine.style.top = i + '%';
+                const hLabel = document.createElement('div');
+                hLabel.className = 'grid-label-h';
+                hLabel.style.top = (i - 0.5) + '%';
+                hLabel.innerText = i + '%';
+                wrapper.appendChild(hLine);
+                wrapper.appendChild(hLabel);
+                
+                // Vertical lines
+                const vLine = document.createElement('div');
+                vLine.className = 'grid-line-v';
+                vLine.style.left = i + '%';
+                const vLabel = document.createElement('div');
+                vLabel.className = 'grid-label-v';
+                vLabel.style.left = (i - 1) + '%';
+                vLabel.innerText = i + '%';
+                wrapper.appendChild(vLine);
+                wrapper.appendChild(vLabel);
+            }
+        }
+        drawGrid('silk');
+        drawGrid('ntg');
+    </script>
+</body>
+</html>

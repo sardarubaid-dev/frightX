@@ -11,20 +11,21 @@
         .rpt-row .rpt-label { min-width: 120px; max-width: 140px; flex-shrink: 0; }
         .rpt-row .rpt-input-wrap { flex: 1; min-width: 0; }
         .rpt-inline-label { font-size: 10px; color: #64748b; font-weight: 600; }
-        .rpt-radio-group { display: flex; gap: 10px; align-items: center; }
-        .rpt-radio-group label, .rpt-chk-group label { font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: #334155; white-space: nowrap; }
-        .rpt-radio-group input[type="radio"], .rpt-chk-group input[type="checkbox"] { width: 12px !important; height: 12px !important; accent-color: #3b82f6; }
+        .rpt-radio-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .rpt-radio-group label, .rpt-chk-group label { font-size: 10px; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #334155; white-space: nowrap; user-select: none; }
+        .rpt-radio-group input[type="radio"], .rpt-chk-group input[type="checkbox"] { width: 13px !important; height: 13px !important; accent-color: #3b82f6; cursor: pointer; }
         .rpt-chk-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .rpt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
         .rpt-filter-section { padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .rpt-view-btn { background: #3b82f6; color: #fff; border: none; padding: 6px 24px; font-size: 11px; font-weight: 700; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; transition: all 0.2s; }
         .rpt-view-btn:hover { background: #2563eb; }
         .rpt-view-btn:active { transform: translateY(1px); }
-        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: box-shadow 0.2s; }
-        .kpi-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.06); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: all 0.2s; }
+        .kpi-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.06); transform: translateY(-1px); }
         .kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
         .kpi-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
-        .kpi-icon { font-size: 20px; opacity: 0.15; }
+        .kpi-icon { font-size: 20px; opacity: 0.2; }
         .table-custom { width: 100%; border-collapse: collapse; font-size: 11px; }
         .table-custom thead th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; cursor: pointer; user-select: none; }
         .table-custom thead th:hover { background: #e2e8f0; }
@@ -43,19 +44,117 @@
         .pagination button:hover { background: #f1f5f9; border-color: #94a3b8; }
         .pagination button.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
         .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
-        .search-box { border: 1px solid #d1d5db; border-radius: 3px; padding: 4px 8px; font-size: 11px; height: 28px; width: 200px; background: #fff; }
-        .search-box:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
-        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 4px; }
+        .search-box { border: 1px solid #d1d5db; border-radius: 3px; padding: 4px 8px; font-size: 11px; height: 28px; width: 220px; background: #fff; transition: all 0.2s; }
+        .search-box:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 4px; backdrop-filter: blur(1px); }
         .spinner { width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .rpt-grid-2 { grid-template-columns: 1fr; gap: 8px; }
+            .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .rpt-row { flex-direction: column; align-items: stretch; margin-bottom: 8px; }
+            .rpt-row .rpt-label { min-width: 100%; max-width: 100%; border-radius: 2px 2px 0 0; border-right: 1px solid #e2e8f0; height: 24px; }
+            .rpt-row .rpt-input-wrap { border-radius: 0 0 2px 2px; }
+            .search-box { width: 100%; margin-top: 6px; }
+            .table-custom { font-size: 10px; }
+            .table-custom thead th, .table-custom tbody td { padding: 6px 8px; }
+        }
+
+        .print-header { display: none; }
+
+        @media print {
+            aside, header, nav, .sidebar, .top-navbar, .page-bar, .portlet-title, .rpt-filter-section, .pagination, .search-box, .loading-overlay, button, .btn-freightx, .rpt-view-btn, .no-print, [onclick*="sidebar"] {
+                display: none !important;
+            }
+
+            html, body, .app-wrapper, .main-content-wrapper, main {
+                background: #fff !important;
+                color: #000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            .portlet.light {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            .print-header {
+                display: block !important;
+                margin-bottom: 16px !important;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 8px !important;
+                margin-bottom: 15px !important;
+                page-break-inside: avoid !important;
+            }
+
+            .kpi-card {
+                border: 1px solid #94a3b8 !important;
+                box-shadow: none !important;
+                padding: 6px 8px !important;
+                background: #fff !important;
+            }
+
+            .kpi-icon {
+                display: none !important;
+            }
+
+            .table-custom {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 9px !important;
+            }
+
+            .table-custom th, .table-custom td {
+                border: 1px solid #cbd5e1 !important;
+                padding: 5px 7px !important;
+                color: #000 !important;
+            }
+
+            .table-custom thead th {
+                background-color: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
     </style>
     @endpush
 
     <div style="background: #eef1f5; min-height: 100vh; padding: 12px;">
         <div x-data="volumeProfitTable()" x-init="init()" style="position: relative;">
-            <div x-show="loading" class="loading-overlay"><div class="spinner"></div></div>
+            <div x-show="loading" class="loading-overlay no-print"><div class="spinner"></div></div>
 
-            <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+            <!-- Print Header (Visible only when printing) -->
+            <div class="print-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase;">FreightX - Volume & Profit Report</h2>
+                        <div style="font-size: 10px; color: #475569; margin-top: 4px;">
+                            <strong>Period:</strong> <span x-text="filters.date_from + ' ~ ' + filters.date_to + ' (' + filters.period_type.toUpperCase() + ')'"></span> | 
+                            <strong>Profit Filter:</strong> <span x-text="filters.profit_filter.toUpperCase()"></span>
+                        </div>
+                    </div>
+                    <div style="text-align: right; font-size: 9px; color: #64748b;">
+                        <div>Printed Date: {{ date('Y-m-d H:i:s') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;" class="no-print">
                 <a href="/" style="color: #64748b; text-decoration: none;" target="_blank"><i class="fa fa-home"></i> Home</a>
                 <i class="fa fa-angle-right" style="margin: 0 4px; opacity: 0.5;"></i>
                 <a href="/report" style="color: #64748b; text-decoration: none;">Reports</a>
@@ -64,32 +163,32 @@
             </div>
 
             <div class="portlet light">
-                <div class="portlet-title">
+                <div class="portlet-title no-print" style="flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa fa-table" style="color: #3b82f6; font-size: 12px;"></i>
-                        <span class="caption-subject">Volume & Profit Analysis</span>
+                        <i class="fa fa-table" style="color: #3b82f6; font-size: 14px;"></i>
+                        <span class="caption-subject" style="font-weight: 700;">Volume & Profit Analysis</span>
                     </div>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn-gofreight" @click="printReport()"><i class="fa fa-print"></i> PRINT</button>
-                        <button class="btn-gofreight" style="background: #10b981;" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> EXPORT</button>
+                    <div style="display: flex; gap: 6px; margin-left: auto;">
+                        <button class="btn-freightx" @click="printReport()"><i class="fa fa-print"></i> PRINT</button>
+                        <button class="btn-freightx" style="background: #10b981;" @click="exportExcel()"><i class="fa fa-file-excel-o"></i> EXPORT</button>
                     </div>
                 </div>
 
-                <div class="rpt-filter-section">
+                <div class="rpt-filter-section no-print">
                     <div class="rpt-grid-2">
                         <div>
                             <div class="rpt-row">
                                 <div class="rpt-label">Period</div>
                                 <div class="rpt-input-wrap" style="flex-direction:column; align-items:stretch; gap:4px; padding:4px 6px;">
                                     <div class="rpt-radio-group">
-                                        <label><input type="radio" name="period_type" value="post_date" x-model="filters.period_type"> Post Date</label>
-                                        <label><input type="radio" name="period_type" value="etd" x-model="filters.period_type"> ETD</label>
-                                        <label><input type="radio" name="period_type" value="eta" x-model="filters.period_type"> ETA</label>
+                                        <label><input type="radio" name="period_type" value="post_date" x-model="filters.period_type" @change="fetchData()"> Post Date</label>
+                                        <label><input type="radio" name="period_type" value="etd" x-model="filters.period_type" @change="fetchData()"> ETD</label>
+                                        <label><input type="radio" name="period_type" value="eta" x-model="filters.period_type" @change="fetchData()"> ETA</label>
                                     </div>
                                     <div style="display:flex; gap:4px; align-items:center;">
-                                        <input type="date" x-model="filters.date_from" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_from" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                         <span style="font-size:10px; color:#64748b;">~</span>
-                                        <input type="date" x-model="filters.date_to" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_to" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                     </div>
                                 </div>
                             </div>
@@ -98,7 +197,7 @@
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-chk-group">
                                         @foreach($shippingTypes as $st)
-                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types"> {{ $st }}</label>
+                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types" @change="fetchData()"> {{ $st }}</label>
                                         @endforeach
                                     </div>
                                 </div>
@@ -107,10 +206,10 @@
                                 <div class="rpt-label">Profit Filter</div>
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-radio-group">
-                                        <label><input type="radio" name="profit_filter" value="all" x-model="filters.profit_filter"> All</label>
-                                        <label><input type="radio" name="profit_filter" value="profit" x-model="filters.profit_filter"> Profit Only</label>
-                                        <label><input type="radio" name="profit_filter" value="loss" x-model="filters.profit_filter"> Loss Only</label>
-                                        <label><input type="radio" name="profit_filter" value="breakeven" x-model="filters.profit_filter"> Breakeven</label>
+                                        <label><input type="radio" name="profit_filter" value="all" x-model="filters.profit_filter" @change="fetchData()"> All</label>
+                                        <label><input type="radio" name="profit_filter" value="profit" x-model="filters.profit_filter" @change="fetchData()"> Profit Only</label>
+                                        <label><input type="radio" name="profit_filter" value="loss" x-model="filters.profit_filter" @change="fetchData()"> Loss Only</label>
+                                        <label><input type="radio" name="profit_filter" value="breakeven" x-model="filters.profit_filter" @change="fetchData()"> Breakeven</label>
                                     </div>
                                 </div>
                             </div>
@@ -119,7 +218,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Office</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.office_id" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.office_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         <option value="">All Offices</option>
                                         @foreach($offices as $o)
                                         <option value="{{ $o->id }}">{{ $o->code }} - {{ $o->name }}</option>
@@ -130,7 +229,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Sales Person</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.sales_person_id" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.sales_person_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         <option value="">All Sales Persons</option>
                                         @foreach($salesPersons as $sp)
                                         <option value="{{ $sp->id }}">{{ $sp->name }}</option>
@@ -141,7 +240,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Per Page</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.per_page" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.per_page" @change="fetchData()" class="form-control-gf" style="width:100%;">
                                         <option value="25">25</option>
                                         <option value="50">50</option>
                                         <option value="100">100</option>
@@ -150,13 +249,14 @@
                             </div>
                         </div>
                     </div>
-                    <div style="text-align:center; margin-top:4px;">
-                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Generate Report</button>
+                    <div style="text-align:center; margin-top:6px;">
+                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Results</button>
                     </div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px;">
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
                 <div class="kpi-card">
                     <div>
                         <div class="kpi-label">Total Revenue</div>
@@ -194,13 +294,14 @@
                 </div>
             </div>
 
+            <!-- Data Table Section -->
             <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 14px;">
-                <div style="padding: 8px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                <div style="padding: 8px 14px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; flex-wrap: wrap; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">
                             <i class="fa fa-list" style="margin-right: 4px;"></i> Data Table
                         </span>
-                        <span style="font-size: 10px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 2px;" x-text="data.summary.row_count + ' rows'"></span>
+                        <span style="font-size: 10px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 2px; font-weight: 600;" x-text="data.summary.row_count + ' rows'"></span>
                     </div>
                     <input type="text" class="search-box" placeholder="Search shipping type, partner..." x-model="filters.search" @input.debounce.300ms="fetchData()">
                 </div>
@@ -271,7 +372,7 @@
                     </table>
                 </div>
 
-                <div style="padding: 8px 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                <div style="padding: 8px 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; flex-wrap: wrap; gap: 8px;">
                     <div style="font-size: 10px; color: #64748b;">
                         <span x-text="'Showing ' + getShowingText()"></span>
                     </div>
@@ -294,7 +395,7 @@
         return {
             loading: false,
             filters: {
-                date_from: '{{ now()->subMonths(6)->startOfMonth()->format("Y-m-d") }}',
+                date_from: '2025-01-01',
                 date_to: '{{ now()->endOfMonth()->format("Y-m-d") }}',
                 period_type: 'post_date',
                 shipping_types: [],

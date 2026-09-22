@@ -95,7 +95,7 @@
                     <i class="fa fa-file-text-o"></i> General and Administrative Expense (AP) — {{ $editMode ? 'Edit Entry' : 'New Entry' }}
                 </h1>
                 <div style="display:flex;gap:4px;">
-                    <button type="button" class="btn-gofreight" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($editMode) UPDATE @else SAVE @endif</button>
+                    <button type="button" class="btn-freightx" @click="handleSubmit('save_close')"><i class="fa fa-save"></i> @if($editMode) UPDATE @else SAVE @endif</button>
                     <a href="{{ route('accounting.ga-expense.index') }}" class="btn-default-gf">BACK TO LIST</a>
                 </div>
             </div>
