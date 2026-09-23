@@ -973,15 +973,17 @@ class ReportController extends Controller
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 25);
 
+        $companyId = auth()->user()?->company_id ?? 1;
+
         // If trade partner filter is set, find matching shipment IDs via HBLs
         $tpShipIds = null;
         if ($tradePartnerId) {
             $tpShipIds = [
-                'ocean_import' => DB::table('ocean_import_hbls')->where('customer_id', $tradePartnerId)->pluck('ocean_import_id')->toArray(),
-                'ocean_export' => DB::table('ocean_export_hbls')->where('customer_id', $tradePartnerId)->pluck('ocean_export_id')->toArray(),
-                'air_import' => DB::table('air_import_hbls')->where('customer_id', $tradePartnerId)->pluck('air_import_id')->toArray(),
-                'air_export' => DB::table('air_export_hbls')->where('customer_id', $tradePartnerId)->pluck('air_export_id')->toArray(),
-                'truck' => DB::table('truck_shipments')->where('customer_id', $tradePartnerId)->pluck('id')->toArray(),
+                'ocean_import' => DB::table('ocean_import_hbls')->where('company_id', $companyId)->where('customer_id', $tradePartnerId)->pluck('ocean_import_id')->toArray(),
+                'ocean_export' => DB::table('ocean_export_hbls')->where('company_id', $companyId)->where('customer_id', $tradePartnerId)->pluck('ocean_export_id')->toArray(),
+                'air_import' => DB::table('air_import_hbls')->where('company_id', $companyId)->where('customer_id', $tradePartnerId)->pluck('air_import_id')->toArray(),
+                'air_export' => DB::table('air_export_hbls')->where('company_id', $companyId)->where('customer_id', $tradePartnerId)->pluck('air_export_id')->toArray(),
+                'truck' => DB::table('truck_shipments')->where('company_id', $companyId)->where('customer_id', $tradePartnerId)->pluck('id')->toArray(),
             ];
         }
 
@@ -994,7 +996,7 @@ class ReportController extends Controller
         $loadTruck = empty($shipType) || $shipType === 'truck';
 
         if ($loadOcean) {
-            $q = DB::table('ocean_imports')->whereNull('deleted_at');
+            $q = DB::table('ocean_imports')->where('company_id', $companyId)->whereNull('deleted_at');
             if ($officeId) $q->where('office_id', $officeId);
             if ($tradePartnerId && isset($tpShipIds['ocean_import'])) {
                 $q->whereIn('id', $tpShipIds['ocean_import'] ?: [0]);
@@ -1035,7 +1037,7 @@ class ReportController extends Controller
         }
 
         if ($loadExport) {
-            $q = DB::table('ocean_exports')->whereNull('deleted_at');
+            $q = DB::table('ocean_exports')->where('company_id', $companyId)->whereNull('deleted_at');
             if ($officeId) $q->where('office_id', $officeId);
             if ($tradePartnerId && isset($tpShipIds['ocean_export'])) {
                 $q->whereIn('id', $tpShipIds['ocean_export'] ?: [0]);
@@ -1076,7 +1078,7 @@ class ReportController extends Controller
         }
 
         if ($loadAirImp) {
-            $q = DB::table('air_imports')->whereNull('deleted_at');
+            $q = DB::table('air_imports')->where('company_id', $companyId)->whereNull('deleted_at');
             if ($officeId) $q->where('office_id', $officeId);
             if ($tradePartnerId && isset($tpShipIds['air_import'])) {
                 $q->whereIn('id', $tpShipIds['air_import'] ?: [0]);
@@ -1117,7 +1119,7 @@ class ReportController extends Controller
         }
 
         if ($loadAirExp) {
-            $q = DB::table('air_exports')->whereNull('deleted_at');
+            $q = DB::table('air_exports')->where('company_id', $companyId)->whereNull('deleted_at');
             if ($officeId) $q->where('office_id', $officeId);
             if ($tradePartnerId && isset($tpShipIds['air_export'])) {
                 $q->whereIn('id', $tpShipIds['air_export'] ?: [0]);
@@ -1158,7 +1160,7 @@ class ReportController extends Controller
         }
 
         if ($loadTruck) {
-            $q = DB::table('truck_shipments')->whereNull('deleted_at');
+            $q = DB::table('truck_shipments')->where('company_id', $companyId)->whereNull('deleted_at');
             if ($officeId) $q->where('office_id', $officeId);
             if ($tradePartnerId && isset($tpShipIds['truck'])) {
                 $q->whereIn('id', $tpShipIds['truck'] ?: [0]);

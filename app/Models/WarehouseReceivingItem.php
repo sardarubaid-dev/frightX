@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 class WarehouseReceivingItem extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $table = 'warehouse_receiving_items';
 
     protected $fillable = [
+        'company_id',
         'warehouse_receiving_id',
         'sku_no',
         'customer_po',

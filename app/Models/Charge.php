@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class Charge extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
-        'chargeable_type', 'chargeable_id', 'type', 'charge_code', 
+        'company_id', 'chargeable_type', 'chargeable_id', 'type', 'charge_code', 
         'charge_name', 'party', 'sal', 'bill_to_id', 'vendor_id', 'pc', 'qty', 'unit', 
         'currency_id', 'rate', 'amount', 'tax_percent', 'tax_amount', 
         'total_amount', 'is_invoiced', 'invoice_no', 'invoice_date', 'remark',

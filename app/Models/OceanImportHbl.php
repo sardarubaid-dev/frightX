@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OceanImportHbl extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
+        'company_id',
         'ocean_import_id', 'hbl_no', 'quotation_no', 'customer_id', 
         'sales_person_id', 'shipper_id', 'consignee_id', 'notify_party_id', 
         'customs_broker_id', 'delivery_location_id', 'referred_by_id',

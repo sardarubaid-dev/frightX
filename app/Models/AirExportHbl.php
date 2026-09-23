@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AirExportHbl extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
+        'company_id',
         'air_export_id', 'hawb_no', 'booking_no', 'booking_date', 'quotation_no',
         'customer_id', 'shipper_id', 'consignee_id',
         'notify_party_id', 'sales_person_id', 'oversea_agent_id',

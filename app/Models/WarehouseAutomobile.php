@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WarehouseAutomobile extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $table = 'warehouse_automobiles';
 
     protected $fillable = [
+        'company_id',
         'vin_no',
         'wh_receipt_no',
         'received_by',

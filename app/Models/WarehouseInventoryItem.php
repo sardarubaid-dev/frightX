@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WarehouseInventoryItem extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $table = 'warehouse_inventory_items';
 
     protected $fillable = [
+        'company_id',
         'warehouse_id',
         'customer_id',
         'vendor_id',

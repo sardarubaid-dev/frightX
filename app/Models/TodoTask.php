@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TodoTask extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $table = 'todo_tasks';
 
     protected $fillable = [
+        'company_id',
         'module',
         'title',
         'description',

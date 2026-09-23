@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OceanBooking extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToTenant;
 
     protected $table = 'ocean_bookings';
 
     protected $fillable = [
+        'company_id',
         'booking_no',
         'booking_date',
         'quotation_no',

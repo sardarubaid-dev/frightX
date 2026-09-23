@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkOrder extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToTenant;
 
     protected $table = 'work_orders';
 
     protected $fillable = [
+        'company_id',
         'work_order_no',
         'workable_type',
         'workable_id',

@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BelongsToTenant;
+
 class OceanImportCharge extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
 
     protected $fillable = [
-        'ocean_import_id', 'ocean_import_hbl_id', 'type', 'charge_code', 
+        'company_id', 'ocean_import_id', 'ocean_import_hbl_id', 'type', 'charge_code', 
         'charge_name', 'bill_to_id', 'vendor_id', 'pc', 'qty', 'unit', 
         'currency_id', 'rate', 'amount', 'tax_percent', 'tax_amount', 
         'total_amount', 'roe', 'vat', 'is_invoiced', 'invoice_no', 'invoice_date', 'remark'
