@@ -16,237 +16,633 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    public function volumeProfitChart(Request $request)
-    {
-        $offices = Office::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']);
-        $salesPersons = User::orderBy('name')->get(['id', 'name']);
+   public function volumeProfitChartData(Request $request)
+{
+    $dateFrom = $request->input(
+        'date_from',
+        Carbon::now()->subMonths(6)->startOfMonth()->format('Y-m-d')
+    );
 
-        $shippingTypes = ['Ocean Export', 'Ocean Import', 'Air Export', 'Air Import', 'Trucking', 'Misc', 'Warehouse'];
-        $statuses = ['All', 'Open', 'Blocked'];
-        $volumeUnits = [
-            ['value' => 'cbm', 'label' => 'CBM'],
-            ['value' => 'cft', 'label' => 'CFT'],
-            ['value' => 'bl', 'label' => '#B/L(AWB)'],
-            ['value' => 'teu', 'label' => 'TEU'],
-        ];
-        $chartTypes = [
-            ['value' => 'month', 'label' => 'Month'],
-            ['value' => 'quarter', 'label' => 'Quarter'],
-            ['value' => 'year', 'label' => 'Year'],
-            ['value' => 'shipping_type', 'label' => 'Shipping Type'],
-            ['value' => 'office', 'label' => 'Office'],
-        ];
-        $barSegments = [
-            ['value' => 'shipping_type', 'label' => 'Shipping Type'],
-            ['value' => 'office', 'label' => 'Office'],
-            ['value' => 'status', 'label' => 'Status'],
-            ['value' => 'customer', 'label' => 'Customer'],
-        ];
+    $dateTo = $request->input(
+        'date_to',
+        Carbon::now()->endOfMonth()->format('Y-m-d')
+    );
 
-        return view('report.volume-profit-chart', compact(
-            'offices', 'salesPersons', 'shippingTypes', 'statuses',
-            'volumeUnits', 'chartTypes', 'barSegments'
-        ));
-    }
+    $shippingTypes = $request->input('shipping_types', []);
+    $officeId = $request->input('office_id');
+    $salesPersonId = $request->input('sales_person_id');
+    $volumeUnit = $request->input('volume_unit', 'cbm');
+    $periodType = $request->input('period_type', 'post_date');
+    $chartType = $request->input('chart_type', 'month');
+    $barSegment = $request->input('bar_segment', 'shipping_type');
+    $statusFilter = $request->input('status_filter', 'all');
 
-    public function volumeProfitChartData(Request $request)
-    {
-        $dateFrom = $request->input('date_from', Carbon::now()->subMonths(6)->startOfMonth()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        $shippingTypes = $request->input('shipping_types', []);
-        $officeId = $request->input('office_id');
-        $salesPersonId = $request->input('sales_person_id');
-        $volumeUnit = $request->input('volume_unit', 'cbm');
-        $periodType = $request->input('period_type', 'post_date');
-        $chartType = $request->input('chart_type', 'month');
-        $barSegment = $request->input('bar_segment', 'shipping_type');
-        $statusFilter = $request->input('status_filter', 'all');
+    /*
+    |--------------------------------------------------------------------------
+    | Base Quotation Query
+    |--------------------------------------------------------------------------
+    */
 
-        $query = Quotation::query()
-            ->with(['items', 'customer', 'office', 'salesPerson', 'pol', 'pod'])
-            ->whereNull('deleted_at');
+    $query = Quotation::query()
+        ->with([
+            'items',
+            'customer',
+            'office',
+            'salesPerson',
+            'pol',
+            'pod'
+        ])
+        ->whereNull('deleted_at');
 
-        $dateCol = match($periodType) {
-            'etd' => 'departure',
-            'eta' => 'destination',
-            'post_date' => 'quote_date',
-            default => 'created_at',
-        };
+    /*
+    |--------------------------------------------------------------------------
+    | Date Column
+    |--------------------------------------------------------------------------
+    */
 
-        if ($dateFrom && $dateTo) {
-            $query->whereRaw("COALESCE({$dateCol}, created_at) BETWEEN ? AND ?", [
+    $dateCol = match ($periodType) {
+        'etd' => 'departure',
+        'eta' => 'destination',
+        'post_date' => 'quote_date',
+        default => 'created_at',
+    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | Date Filter
+    |--------------------------------------------------------------------------
+    */
+
+    if ($dateFrom && $dateTo) {
+        $query->whereRaw(
+            "COALESCE({$dateCol}, created_at) BETWEEN ? AND ?",
+            [
                 $dateFrom . ' 00:00:00',
                 $dateTo . ' 23:59:59'
-            ]);
-        }
+            ]
+        );
+    }
 
-        if (!empty($shippingTypes)) {
-            $query->whereIn('shipping_type', $shippingTypes);
-        }
-        if ($officeId) {
-            $query->where('office_id', $officeId);
-        }
-        if ($salesPersonId) {
-            $query->where('sales_person_id', $salesPersonId);
-        }
-        if ($statusFilter === 'open') {
-            $query->whereIn('status', ['Draft', 'Sent', 'Pending']);
-        } elseif ($statusFilter === 'blocked') {
-            $query->whereIn('status', ['Lost', 'Expired', 'Cancelled', 'Ghosted']);
-        }
+    /*
+    |--------------------------------------------------------------------------
+    | Other Filters
+    |--------------------------------------------------------------------------
+    */
 
-        $quotations = $query->get();
+    if (!empty($shippingTypes)) {
+        $query->whereIn('shipping_type', $shippingTypes);
+    }
 
-        $totalAr = 0;
-        $totalAp = 0;
-        $totalVolume = 0;
-        $totalWeight = 0;
-        $shipmentCount = $quotations->count();
+    if ($officeId) {
+        $query->where('office_id', $officeId);
+    }
 
-        foreach ($quotations as $q) {
-            foreach ($q->items as $item) {
-                if ($item->type === 'AR') {
-                    $totalAr += (float) $item->total_amount;
-                } elseif ($item->type === 'AP') {
-                    $totalAp += (float) $item->total_amount;
-                }
-            }
-            if ($volumeUnit === 'cft') {
-                $totalVolume += (float) ($q->volume_cft ?? 0);
-            } else {
-                $totalVolume += (float) ($q->volume_cbm ?? 0);
-            }
-            $totalWeight += (float) ($q->weight_kg ?? 0);
-        }
+    if ($salesPersonId) {
+        $query->where('sales_person_id', $salesPersonId);
+    }
 
-        $grossProfit = $totalAr - $totalAp;
-        $profitPerUnit = $totalVolume > 0 ? $grossProfit / $totalVolume : 0;
-
-        $monthlyData = collect();
-        $start = Carbon::parse($dateFrom)->startOfMonth();
-        $end = Carbon::parse($dateTo)->startOfMonth();
-        $current = $start->copy();
-
-        while ($current->lte($end)) {
-            $monthLabel = $current->format('M Y');
-            $monthQ = $quotations->filter(function ($q) use ($current, $dateCol) {
-                $rawVal = $q->$dateCol ?? $q->created_at;
-                return $rawVal && Carbon::parse($rawVal)->format('Y-m') === $current->format('Y-m');
-            });
-
-            $monthAr = 0;
-            $monthAp = 0;
-            $monthVol = 0;
-
-            foreach ($monthQ as $q) {
-                foreach ($q->items as $item) {
-                    if ($item->type === 'AR') $monthAr += (float) $item->total_amount;
-                    elseif ($item->type === 'AP') $monthAp += (float) $item->total_amount;
-                }
-                $monthVol += $volumeUnit === 'cft' ? (float) ($q->volume_cft ?? 0) : (float) ($q->volume_cbm ?? 0);
-            }
-
-            $monthlyData->push([
-                'month' => $monthLabel,
-                'revenue' => round($monthAr, 2),
-                'cost' => round($monthAp, 2),
-                'profit' => round($monthAr - $monthAp, 2),
-                'volume' => round($monthVol, 2),
-                'count' => $monthQ->count(),
-            ]);
-
-            $current->addMonth();
-        }
-
-        $byShippingType = $quotations->groupBy(function ($q) {
-            return $q->shipping_type ?: 'Unspecified';
-        })->map(function ($qs) {
-            $ar = 0;
-            $ap = 0;
-            foreach ($qs as $q) {
-                foreach ($q->items as $item) {
-                    if ($item->type === 'AR') $ar += (float) $item->total_amount;
-                    elseif ($item->type === 'AP') $ap += (float) $item->total_amount;
-                }
-            }
-            return [
-                'label' => $qs->first()->shipping_type ?: 'Unspecified',
-                'revenue' => round($ar, 2),
-                'cost' => round($ap, 2),
-                'profit' => round($ar - $ap, 2),
-                'count' => $qs->count(),
-            ];
-        })->values();
-
-        $byOffice = $quotations->groupBy(function ($q) {
-            return $q->office ? $q->office->code : 'N/A';
-        })->map(function ($qs, $key) {
-            $ar = 0;
-            $ap = 0;
-            foreach ($qs as $q) {
-                foreach ($q->items as $item) {
-                    if ($item->type === 'AR') $ar += (float) $item->total_amount;
-                    elseif ($item->type === 'AP') $ap += (float) $item->total_amount;
-                }
-            }
-            return [
-                'label' => $key,
-                'profit' => round($ar - $ap, 2),
-                'count' => $qs->count(),
-            ];
-        })->values();
-
-        $byStatus = $quotations->groupBy('status')->map(function ($qs, $status) {
-            return [
-                'label' => $status ?: 'Unknown',
-                'count' => $qs->count(),
-            ];
-        })->values();
-
-        $topLanes = $quotations->groupBy(function ($q) {
-            $pol = $q->pol ? $q->pol->name : 'N/A';
-            $pod = $q->pod ? $q->pod->name : 'N/A';
-            return $pol . ' → ' . $pod;
-        })->map(function ($qs) {
-            $ar = 0;
-            $ap = 0;
-            $vol = 0;
-            foreach ($qs as $q) {
-                foreach ($q->items as $item) {
-                    if ($item->type === 'AR') $ar += (float) $item->total_amount;
-                    elseif ($item->type === 'AP') $ap += (float) $item->total_amount;
-                }
-                $vol += (float) ($q->volume_cbm ?? 0);
-            }
-            $pol = $qs->first()->pol ? $qs->first()->pol->name : 'N/A';
-            $pod = $qs->first()->pod ? $qs->first()->pod->name : 'N/A';
-            return [
-                'label' => $pol . ' → ' . $pod,
-                'profit' => round($ar - $ap, 2),
-                'volume' => round($vol, 2),
-                'count' => $qs->count(),
-            ];
-        })->values()->sortByDesc('profit')->take(10)->values();
-
-        return response()->json([
-            'summary' => [
-                'gross_profit' => round($grossProfit, 2),
-                'total_volume' => round($totalVolume, 2),
-                'profit_per_unit' => round($profitPerUnit, 2),
-                'shipment_count' => $shipmentCount,
-                'total_revenue' => round($totalAr, 2),
-                'total_cost' => round($totalAp, 2),
-                'total_weight_kg' => round($totalWeight, 2),
-            ],
-            'monthly' => $monthlyData,
-            'by_shipping_type' => $byShippingType,
-            'by_office' => $byOffice,
-            'by_status' => $byStatus,
-            'top_lanes' => $topLanes,
-            'volume_unit' => $volumeUnit === 'cft' ? 'CFT' : 'CBM',
+    if ($statusFilter === 'open') {
+        $query->whereIn('status', [
+            'Draft',
+            'Sent',
+            'Pending'
+        ]);
+    } elseif ($statusFilter === 'blocked') {
+        $query->whereIn('status', [
+            'Lost',
+            'Expired',
+            'Cancelled',
+            'Ghosted'
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Get Quotations
+    |--------------------------------------------------------------------------
+    */
+
+    $quotations = $query->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTALS
+    |--------------------------------------------------------------------------
+    */
+
+    $totalAr = 0;
+    $totalAp = 0;
+    $totalVolume = 0;
+    $totalWeight = 0;
+
+    $shipmentCount = $quotations->count();
+
+    foreach ($quotations as $q) {
+
+        foreach ($q->items as $item) {
+
+            $amount = (float) ($item->total_amount ?? 0);
+
+            if ($item->type === 'AR') {
+                $totalAr += $amount;
+            }
+
+            if ($item->type === 'AP') {
+                $totalAp += $amount;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Volume
+        |--------------------------------------------------------------------------
+        */
+
+        if ($volumeUnit === 'cft') {
+            $totalVolume += (float) ($q->volume_cft ?? 0);
+        } elseif ($volumeUnit === 'bl') {
+            $totalVolume += 1;
+        } elseif ($volumeUnit === 'teu') {
+            $totalVolume += (float) ($q->teu ?? 0);
+        } else {
+            $totalVolume += (float) ($q->volume_cbm ?? 0);
+        }
+
+        $totalWeight += (float) ($q->weight_kg ?? 0);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROFIT
+    |--------------------------------------------------------------------------
+    */
+
+    $grossProfit = $totalAr - $totalAp;
+
+    $profitPerUnit = $totalVolume > 0
+        ? $grossProfit / $totalVolume
+        : 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROFIT AVERAGES
+    |--------------------------------------------------------------------------
+    */
+
+    $periodStart = Carbon::parse($dateFrom)->startOfDay();
+    $periodEnd = Carbon::parse($dateTo)->endOfDay();
+
+    $totalDays = $periodStart->diffInDays($periodEnd) + 1;
+
+    $totalWeeks = $totalDays / 7;
+
+    $totalMonths = $periodStart
+        ->copy()
+        ->startOfMonth()
+        ->diffInMonths(
+            $periodEnd->copy()->startOfMonth()
+        ) + 1;
+
+    $totalYears = $totalDays / 365.25;
+
+    $dailyAverage = $totalDays > 0
+        ? $grossProfit / $totalDays
+        : 0;
+
+    $weeklyAverage = $totalWeeks > 0
+        ? $grossProfit / $totalWeeks
+        : 0;
+
+    $monthlyAverage = $totalMonths > 0
+        ? $grossProfit / $totalMonths
+        : 0;
+
+    $yearlyAverage = $totalYears > 0
+        ? $grossProfit / $totalYears
+        : 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MONTHLY DATA
+    |--------------------------------------------------------------------------
+    */
+
+    $monthlyData = collect();
+
+    $start = Carbon::parse($dateFrom)->startOfMonth();
+    $end = Carbon::parse($dateTo)->startOfMonth();
+
+    $current = $start->copy();
+
+    while ($current->lte($end)) {
+
+        $monthLabel = $current->format('M Y');
+
+        $monthQ = $quotations->filter(function ($q) use (
+            $current,
+            $dateCol
+        ) {
+
+            $rawVal = $q->$dateCol ?? $q->created_at;
+
+            if (!$rawVal) {
+                return false;
+            }
+
+            return Carbon::parse($rawVal)->format('Y-m')
+                === $current->format('Y-m');
+        });
+
+
+        $monthAr = 0;
+        $monthAp = 0;
+        $monthVol = 0;
+
+
+        foreach ($monthQ as $q) {
+
+            foreach ($q->items as $item) {
+
+                $amount = (float) ($item->total_amount ?? 0);
+
+                if ($item->type === 'AR') {
+                    $monthAr += $amount;
+                }
+
+                if ($item->type === 'AP') {
+                    $monthAp += $amount;
+                }
+            }
+
+
+            if ($volumeUnit === 'cft') {
+
+                $monthVol += (float) (
+                    $q->volume_cft ?? 0
+                );
+
+            } elseif ($volumeUnit === 'bl') {
+
+                $monthVol += 1;
+
+            } elseif ($volumeUnit === 'teu') {
+
+                $monthVol += (float) (
+                    $q->teu ?? 0
+                );
+
+            } else {
+
+                $monthVol += (float) (
+                    $q->volume_cbm ?? 0
+                );
+            }
+        }
+
+
+        $monthProfit = $monthAr - $monthAp;
+
+
+        $monthlyData->push([
+
+            'month' => $monthLabel,
+
+            'revenue' => round(
+                $monthAr,
+                2
+            ),
+
+            'cost' => round(
+                $monthAp,
+                2
+            ),
+
+            'profit' => round(
+                $monthProfit,
+                2
+            ),
+
+            'volume' => round(
+                $monthVol,
+                2
+            ),
+
+            'count' => $monthQ->count(),
+
+        ]);
+
+
+        $current->addMonth();
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BY SHIPPING TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    $byShippingType = $quotations
+        ->groupBy(function ($q) {
+
+            return $q->shipping_type
+                ?: 'Unspecified';
+
+        })
+        ->map(function ($qs) {
+
+            $ar = 0;
+            $ap = 0;
+
+
+            foreach ($qs as $q) {
+
+                foreach ($q->items as $item) {
+
+                    $amount = (float) (
+                        $item->total_amount ?? 0
+                    );
+
+                    if ($item->type === 'AR') {
+                        $ar += $amount;
+                    }
+
+                    if ($item->type === 'AP') {
+                        $ap += $amount;
+                    }
+                }
+            }
+
+
+            return [
+
+                'label' => $qs->first()->shipping_type
+                    ?: 'Unspecified',
+
+                'revenue' => round(
+                    $ar,
+                    2
+                ),
+
+                'cost' => round(
+                    $ap,
+                    2
+                ),
+
+                'profit' => round(
+                    $ar - $ap,
+                    2
+                ),
+
+                'count' => $qs->count(),
+
+            ];
+        })
+        ->values();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BY OFFICE
+    |--------------------------------------------------------------------------
+    */
+
+    $byOffice = $quotations
+        ->groupBy(function ($q) {
+
+            return $q->office
+                ? $q->office->code
+                : 'N/A';
+
+        })
+        ->map(function ($qs, $key) {
+
+            $ar = 0;
+            $ap = 0;
+
+
+            foreach ($qs as $q) {
+
+                foreach ($q->items as $item) {
+
+                    $amount = (float) (
+                        $item->total_amount ?? 0
+                    );
+
+                    if ($item->type === 'AR') {
+                        $ar += $amount;
+                    }
+
+                    if ($item->type === 'AP') {
+                        $ap += $amount;
+                    }
+                }
+            }
+
+
+            return [
+
+                'label' => $key,
+
+                'profit' => round(
+                    $ar - $ap,
+                    2
+                ),
+
+                'count' => $qs->count(),
+
+            ];
+        })
+        ->values();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BY STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    $byStatus = $quotations
+        ->groupBy('status')
+        ->map(function ($qs, $status) {
+
+            return [
+
+                'label' => $status ?: 'Unknown',
+
+                'count' => $qs->count(),
+
+            ];
+        })
+        ->values();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOP LANES
+    |--------------------------------------------------------------------------
+    */
+
+    $topLanes = $quotations
+        ->groupBy(function ($q) {
+
+            $pol = $q->pol
+                ? $q->pol->name
+                : 'N/A';
+
+            $pod = $q->pod
+                ? $q->pod->name
+                : 'N/A';
+
+            return $pol . ' → ' . $pod;
+
+        })
+        ->map(function ($qs) {
+
+            $ar = 0;
+            $ap = 0;
+            $vol = 0;
+
+
+            foreach ($qs as $q) {
+
+                foreach ($q->items as $item) {
+
+                    $amount = (float) (
+                        $item->total_amount ?? 0
+                    );
+
+                    if ($item->type === 'AR') {
+                        $ar += $amount;
+                    }
+
+                    if ($item->type === 'AP') {
+                        $ap += $amount;
+                    }
+                }
+
+                $vol += (float) (
+                    $q->volume_cbm ?? 0
+                );
+            }
+
+
+            $pol = $qs->first()->pol
+                ? $qs->first()->pol->name
+                : 'N/A';
+
+            $pod = $qs->first()->pod
+                ? $qs->first()->pod->name
+                : 'N/A';
+
+
+            return [
+
+                'label' => $pol . ' → ' . $pod,
+
+                'profit' => round(
+                    $ar - $ap,
+                    2
+                ),
+
+                'volume' => round(
+                    $vol,
+                    2
+                ),
+
+                'count' => $qs->count(),
+
+            ];
+        })
+        ->values()
+        ->sortByDesc('profit')
+        ->take(10)
+        ->values();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | JSON RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+
+        'summary' => [
+
+            'gross_profit' => round(
+                $grossProfit,
+                2
+            ),
+
+            'daily_average' => round(
+                $dailyAverage,
+                2
+            ),
+
+            'weekly_average' => round(
+                $weeklyAverage,
+                2
+            ),
+
+            'monthly_average' => round(
+                $monthlyAverage,
+                2
+            ),
+
+            'yearly_average' => round(
+                $yearlyAverage,
+                2
+            ),
+
+            'total_volume' => round(
+                $totalVolume,
+                2
+            ),
+
+            'profit_per_unit' => round(
+                $profitPerUnit,
+                2
+            ),
+
+            'shipment_count' => $shipmentCount,
+
+            'total_revenue' => round(
+                $totalAr,
+                2
+            ),
+
+            'total_cost' => round(
+                $totalAp,
+                2
+            ),
+
+            'total_weight_kg' => round(
+                $totalWeight,
+                2
+            ),
+        ],
+
+        'monthly' => $monthlyData,
+
+        'by_shipping_type' => $byShippingType,
+
+        'by_office' => $byOffice,
+
+        'by_status' => $byStatus,
+
+        'top_lanes' => $topLanes,
+
+        'volume_unit' => $volumeUnit === 'cft'
+            ? 'CFT'
+            : 'CBM',
+
+    ]);
+}
+
+   
     public function volumeProfit(Request $request)
     {
         $offices = Office::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']);
@@ -541,20 +937,72 @@ class ReportController extends Controller
             ];
         })->values()->sortByDesc('revenue')->values();
 
-        return response()->json([
-            'summary' => [
-                'total_revenue' => round($totalAr, 2),
-                'total_cost' => round($totalAp, 2),
-                'gross_profit' => round($grossProfit, 2),
-                'margin' => $margin,
-                'total_volume' => round($totalVolume, 2),
-                'total_count' => $totalCount,
-            ],
-            'by_shipping_type' => $byShippingType,
-            'by_office' => $byOffice,
-            'by_partner' => $byPartner,
-            'by_sales_person' => $bySalesPerson,
-        ]);
+        $periodStart = \Carbon\Carbon::parse($request->date_from)->startOfDay();
+$periodEnd = \Carbon\Carbon::parse($request->date_to)->endOfDay();
+
+$totalDays = $periodStart->diffInDays($periodEnd) + 1;
+
+$totalWeeks = $totalDays / 7;
+
+$totalMonths = $periodStart->copy()
+    ->startOfMonth()
+    ->diffInMonths(
+        $periodEnd->copy()->startOfMonth()
+    ) + 1;
+
+$totalYears = $totalDays / 365.25;
+
+$dailyAverage = $totalDays > 0
+    ? $grossProfit / $totalDays
+    : 0;
+
+$weeklyAverage = $totalWeeks > 0
+    ? $grossProfit / $totalWeeks
+    : 0;
+
+$monthlyAverage = $totalMonths > 0
+    ? $grossProfit / $totalMonths
+    : 0;
+
+$yearlyAverage = $totalYears > 0
+    ? $grossProfit / $totalYears
+    : 0;
+        
+    return response()->json([
+
+    'summary' => [
+
+        'total_revenue' => round($totalAr, 2),
+
+        'total_cost' => round($totalAp, 2),
+
+        'gross_profit' => round($grossProfit, 2),
+
+        'margin' => $margin,
+
+        'total_volume' => round($totalVolume, 2),
+
+        'total_count' => $totalCount,
+
+        'daily_average' => round($dailyAverage, 2),
+
+        'weekly_average' => round($weeklyAverage, 2),
+
+        'monthly_average' => round($monthlyAverage, 2),
+
+        'yearly_average' => round($yearlyAverage, 2),
+
+    ],
+
+    'by_shipping_type' => $byShippingType,
+
+    'by_office' => $byOffice,
+
+    'by_partner' => $byPartner,
+
+    'by_sales_person' => $bySalesPerson,
+
+]);
     }
 
     public function employeePerformance(Request $request)

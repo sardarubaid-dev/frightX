@@ -25,7 +25,10 @@
         .kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
         .kpi-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
         .kpi-icon { font-size: 20px; opacity: 0.2; }
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+        .chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; min-width: 0; }
+        .chart-title { font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .chart-empty { display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; }
         .table-custom { width: 100%; border-collapse: collapse; font-size: 11px; }
         .table-custom thead th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; cursor: pointer; user-select: none; }
         .table-custom thead th:hover { background: #e2e8f0; }
@@ -55,7 +58,6 @@
         @media (max-width: 992px) {
             .rpt-grid-2 { grid-template-columns: 1fr; gap: 8px; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-            .charts-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 640px) {
@@ -101,15 +103,15 @@
                                 <div class="rpt-label">Period</div>
                                 <div class="rpt-input-wrap" style="flex-direction:column; align-items:stretch; gap:4px; padding:4px 6px;">
                                     <div class="rpt-radio-group">
-                                        <label><input type="radio" name="period_type" value="post_date" x-model="filters.period_type" @change="fetchData()"> Post Date</label>
-                                        <label><input type="radio" name="period_type" value="etd" x-model="filters.period_type" @change="fetchData()"> ETD</label>
-                                        <label><input type="radio" name="period_type" value="eta" x-model="filters.period_type" @change="fetchData()"> ETA</label>
-                                        <label><input type="radio" name="period_type" value="create_date" x-model="filters.period_type" @change="fetchData()"> Create Date</label>
+                                        <label><input type="radio" name="period_type" value="post_date" x-model="filters.period_type"> Post Date</label>
+                                        <label><input type="radio" name="period_type" value="etd" x-model="filters.period_type"> ETD</label>
+                                        <label><input type="radio" name="period_type" value="eta" x-model="filters.period_type"> ETA</label>
+                                        <label><input type="radio" name="period_type" value="create_date" x-model="filters.period_type"> Create Date</label>
                                     </div>
                                     <div style="display:flex; gap:4px; align-items:center;">
-                                        <input type="date" x-model="filters.date_from" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_from" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                         <span style="font-size:10px; color:#64748b;">~</span>
-                                        <input type="date" x-model="filters.date_to" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_to" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                     </div>
                                 </div>
                             </div>
@@ -118,7 +120,7 @@
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-chk-group">
                                         @foreach($shippingTypes as $st)
-                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types" @change="fetchData()"> {{ $st }}</label>
+                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types"> {{ $st }}</label>
                                         @endforeach
                                     </div>
                                 </div>
@@ -128,7 +130,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Office</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.office_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.office_id" class="form-control-gf" style="width:100%;">
                                         <option value="">All Offices</option>
                                         @foreach($offices as $o)
                                         <option value="{{ $o->id }}">{{ $o->code }} - {{ $o->name }}</option>
@@ -139,7 +141,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Sales Person</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.sales_person_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.sales_person_id" class="form-control-gf" style="width:100%;">
                                         <option value="">All Sales Persons</option>
                                         @foreach($salesPersons as $sp)
                                         <option value="{{ $sp->id }}">{{ $sp->name }}</option>
@@ -150,7 +152,7 @@
                         </div>
                     </div>
                     <div style="text-align:center; margin-top:6px;">
-                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Results</button>
+                        <button class="rpt-view-btn" @click="fetchData()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Results</button>
                     </div>
                 </div>
             </div>
@@ -188,18 +190,18 @@
             </div>
 
             <!-- Charts Section -->
-            <div class="charts-grid">
-                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-                        <span><i class="fa fa-bar-chart" style="margin-right: 4px;"></i> Profit by Employee</span>
+            <div class="charts-grid" style="display: flex; width: 100%;">
+                <div class="chart-card" style="width: 50%;">
+                    <div class="chart-title">
+                        <span><i class="fa fa-bar-chart" style="margin-right: 4px;"></i> Profit by Employee (Top 10)</span>
                     </div>
-                    <div id="profitChart" style="height: 300px;"></div>
+                    <div id="profitChart" style="min-height: 380px;"></div>
                 </div>
-                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px;">
-                    <div style="font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9;">
-                        <i class="fa fa-pie-chart" style="margin-right: 4px;"></i> Revenue by Shipping Type
+                <div class="chart-card" style="width: 50%;">
+                    <div class="chart-title">
+                        <span><i class="fa fa-bar-chart" style="margin-right: 4px;"></i> Revenue &amp; Profit by Shipping Type</span>
                     </div>
-                    <div id="shippingTypeChart" style="height: 300px;"></div>
+                    <div id="shippingTypeChart" style="min-height: 420px;"></div>
                 </div>
             </div>
 
@@ -212,7 +214,7 @@
                         </span>
                         <span style="font-size: 10px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 2px; font-weight: 600;" x-text="data.rows.length + ' employees'"></span>
                     </div>
-                    <input type="text" class="search-box" placeholder="Search employee name..." x-model="filters.search" @input.debounce.300ms="fetchData()">
+                    <input type="text" class="search-box" placeholder="Search employee name..." x-model="filters.search">
                 </div>
 
                 <div style="overflow-x: auto;">
@@ -311,11 +313,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
-    function employeePerformanceReport() {
+function employeePerformanceReport() {
         return {
             loading: false,
             profitChart: null,
             shippingTypeChart: null,
+            _reqId: 0,
+            _timer: null,
             filters: {
                 date_from: '2025-01-01',
                 date_to: '{{ now()->endOfMonth()->format("Y-m-d") }}',
@@ -334,14 +338,28 @@
             },
 
             init() {
+                // Har filter change par data reload (x-model update hone ke BAAD chalta hai,
+                // isliye pichli selection wali galti nahi hogi)
+                ['period_type', 'date_from', 'date_to', 'shipping_types', 'office_id', 'sales_person_id', 'search']
+                    .forEach(key => {
+                        this.$watch('filters.' + key, () => this.fetchDataDebounced(key === 'search' ? 300 : 120));
+                    });
+
                 this.fetchData();
+
                 window.addEventListener('resize', () => {
                     if (this.profitChart) this.profitChart.resize();
                     if (this.shippingTypeChart) this.shippingTypeChart.resize();
                 });
             },
 
+            fetchDataDebounced(delay = 120) {
+                clearTimeout(this._timer);
+                this._timer = setTimeout(() => this.fetchData(), delay);
+            },
+
             async fetchData() {
+                const reqId = ++this._reqId;
                 this.loading = true;
                 try {
                     const params = new URLSearchParams();
@@ -353,21 +371,23 @@
                     params.append('sort_dir', this.filters.sort_dir);
                     if (this.filters.office_id) params.append('office_id', this.filters.office_id);
                     if (this.filters.sales_person_id) params.append('sales_person_id', this.filters.sales_person_id);
-                    this.filters.shipping_types.forEach(t => params.append('shipping_types[]', t));
+                    [...this.filters.shipping_types].forEach(t => params.append('shipping_types[]', t));
 
-                    const resp = await fetch('{{ route("report.employee-performance.data") }}?' + params.toString());
+                    const resp = await fetch('{{ route("report.employee-performance.data") }}?' + params.toString(), {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    });
                     const json = await resp.json();
+
+                    // Purana response ignore karo agar naya request chal chuka hai
+                    if (reqId !== this._reqId) return;
+
                     this.data = json;
                     this.$nextTick(() => this.renderCharts());
                 } catch (e) {
                     console.error('Fetch error:', e);
                 } finally {
-                    this.loading = false;
+                    if (reqId === this._reqId) this.loading = false;
                 }
-            },
-
-            applyFilters() {
-                this.fetchData();
             },
 
             sort(field) {
@@ -389,49 +409,257 @@
                 this.renderProfitChart();
                 this.renderShippingTypeChart();
             },
+renderProfitChart() {
+    const el = document.getElementById('profitChart');
+    if (!el) return;
 
-            renderProfitChart() {
-                const el = document.getElementById('profitChart');
-                if (!el) return;
-                if (this.profitChart) this.profitChart.destroy();
+    if (this.profitChart) {
+        this.profitChart.destroy();
+        this.profitChart = null;
+    }
 
-                const rows = this.data.rows.slice(0, 10);
-                const labels = rows.map(r => r.employee_name);
-                const profits = rows.map(r => r.profit);
+    const rows = (this.data.rows || []).slice(0, 10);
 
-                this.profitChart = new ApexCharts(el, {
-                    series: [{ name: 'Net Profit', data: profits }],
-                    chart: { height: 300, type: 'bar', toolbar: { show: false }, animations: { enabled: true } },
-                    plotOptions: { bar: { columnWidth: '55%', borderRadius: 3, colors: { ranges: [{ from: -999999, to: 0, color: '#ef4444' }, { from: 0, to: 999999, color: '#3b82f6' }] } } },
-                    xaxis: { categories: labels, labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 600 } } },
-                    yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 600 }, formatter: v => '$' + this.formatNum(v) } },
-                    grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
-                    tooltip: { y: { formatter: v => '$' + this.formatNum(v) } },
-                    dataLabels: { enabled: true, formatter: v => '$' + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'K' : this.formatNum(v)), style: { fontSize: '10px' } },
-                });
-                this.profitChart.render();
+    if (rows.length === 0) {
+        el.innerHTML = '<div class="chart-empty" style="height:380px;">No data for selected filters</div>';
+        return;
+    }
+
+    el.innerHTML = '';
+
+    const labels = rows.map(r => r.employee_name);
+    const profits = rows.map(r => parseFloat(r.profit || 0));
+
+    // Profit ke hisaab se colors
+    const minProfit = Math.min(...profits);
+    const maxProfit = Math.max(...profits);
+
+    const profitRange = maxProfit - minProfit;
+
+    const barColors = profits.map(profit => {
+
+        // Agar sab ki value same ho
+        if (profitRange === 0) {
+            return '#f59e0b';
+        }
+
+        // 33% se neeche = Red
+        if (profit <= minProfit + (profitRange * 0.33)) {
+            return '#ef4444';
+        }
+
+        // 33% - 66% = Orange
+        if (profit <= minProfit + (profitRange * 0.66)) {
+            return '#f59e0b';
+        }
+
+        // 66% se upar = Green
+        return '#10b981';
+    });
+
+    this.profitChart = new ApexCharts(el, {
+
+        series: [
+            {
+                name: 'Net Profit',
+                data: profits
+            }
+        ],
+
+        chart: {
+            height: 380,
+            type: 'bar',
+            toolbar: {
+                show: false
             },
+            animations: {
+                enabled: true
+            }
+        },
 
-            renderShippingTypeChart() {
-                const el = document.getElementById('shippingTypeChart');
-                if (!el) return;
-                if (this.shippingTypeChart) this.shippingTypeChart.destroy();
+        // Har bar ka apna color
+        colors: barColors,
 
-                const labels = this.data.by_shipping_type.map(t => t.label);
-                const revenues = this.data.by_shipping_type.map(t => t.revenue);
+        plotOptions: {
+            bar: {
+                columnWidth: '50%',
+                borderRadius: 5,
+                distributed: true
+            }
+        },
 
-                this.shippingTypeChart = new ApexCharts(el, {
-                    series: revenues.length > 0 ? revenues : [1],
-                    chart: { height: 300, type: 'donut' },
-                    labels: labels.length > 0 ? labels : ['No Data'],
-                    colors: ['#3b82f6', '#0ea5e9', '#8b5cf6', '#a855f7', '#f59e0b', '#10b981', '#64748b'],
-                    plotOptions: { pie: { donut: { size: '55%' } } },
-                    legend: { position: 'bottom', fontSize: '10px', fontWeight: 600 },
-                    dataLabels: { enabled: true, formatter: (val, opts) => '$' + this.formatNum(opts.w.config.series[opts.seriesIndex]) },
-                });
-                this.shippingTypeChart.render();
+        xaxis: {
+            categories: labels,
+            labels: {
+                rotate: -30,
+                trim: true,
+                style: {
+                    colors: '#64748b',
+                    fontSize: '10px',
+                    fontWeight: 600
+                }
+            }
+        },
+
+        yaxis: {
+            labels: {
+                style: {
+                    colors: '#64748b',
+                    fontSize: '10px',
+                    fontWeight: 600
+                },
+                formatter: v => '$' + this.formatNum(v)
+            }
+        },
+
+        grid: {
+            borderColor: '#f1f5f9',
+            strokeDashArray: 4
+        },
+
+        tooltip: {
+            y: {
+                formatter: v => '$' + this.formatNum(v)
+            }
+        },
+
+        dataLabels: {
+            enabled: true,
+            formatter: v =>
+                '$' +
+                (
+                    Math.abs(v) >= 1000
+                        ? (v / 1000).toFixed(1) + 'K'
+                        : this.formatNum(v)
+                ),
+            style: {
+                fontSize: '10px'
+            }
+        },
+
+    });
+
+    this.profitChart.render();
+},
+
+           renderShippingTypeChart() {
+    const el = document.getElementById('shippingTypeChart');
+    if (!el) return;
+
+    if (this.shippingTypeChart) {
+        this.shippingTypeChart.destroy();
+        this.shippingTypeChart = null;
+    }
+
+    const items = this.data.by_shipping_type || [];
+
+    if (items.length === 0) {
+        el.innerHTML = '<div class="chart-empty" style="height:420px;">No data for selected filters</div>';
+        return;
+    }
+
+    el.innerHTML = '';
+
+    const labels = items.map(t => t.label || 'Unknown');
+    const revenues = items.map(t => parseFloat(t.revenue || 0));
+    const profits = items.map(t => parseFloat(t.profit || 0));
+
+    this.shippingTypeChart = new ApexCharts(el, {
+        series: [
+            {
+                name: 'Total Revenue',
+                data: revenues
             },
+            {
+                name: 'Net Profit',
+                data: profits
+            }
+        ],
 
+        chart: {
+            height: 420,
+            type: 'line',
+            toolbar: {
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            },
+            animations: {
+                enabled: true
+            }
+        },
+
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+
+        markers: {
+            size: 5,
+            strokeWidth: 2,
+            hover: {
+                size: 7
+            }
+        },
+
+        colors: ['#3b82f6', '#10b981'],
+
+        xaxis: {
+            categories: labels,
+            labels: {
+                style: {
+                    colors: '#64748b',
+                    fontSize: '11px',
+                    fontWeight: 600
+                }
+            }
+        },
+
+        yaxis: {
+            labels: {
+                style: {
+                    colors: '#64748b',
+                    fontSize: '10px',
+                    fontWeight: 600
+                },
+                formatter: v => '$' + this.formatNum(v)
+            }
+        },
+
+        grid: {
+            borderColor: '#f1f5f9',
+            strokeDashArray: 4
+        },
+
+        legend: {
+            show: true,
+            position: 'top',
+            horizontalAlign: 'center',
+            fontSize: '12px',
+            fontWeight: 500,
+            labels: {
+                colors: '#334155'
+            }
+        },
+
+        tooltip: {
+            shared: true,
+            intersect: false,
+            y: {
+                formatter: v => '$' + this.formatNum(v)
+            }
+        }
+    });
+
+    this.shippingTypeChart.render();
+},
             getMarginColor(m) {
                 if (m >= 30) return '#10b981';
                 if (m >= 15) return '#3b82f6';

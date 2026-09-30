@@ -923,8 +923,8 @@
         }
     </script>
 
-    <div class="page-content" x-data="airImportModule()" x-init="init()">
-        <form action="{{ isset($airImport) ? route('air-import.update', $airImport->id) : route('air-import.store') }}" method="POST" id="air-import-form">
+    <div class="page-content" x-data="airImportModule()" x-init="init()" style="display: flex; width: 100%;">
+        <form action="{{ isset($airImport) ? route('air-import.update', $airImport->id) : route('air-import.store') }}" method="POST" id="air-import-form" style="width: 100%;">
             @csrf
             @if(isset($airImport)) @method('PUT') @endif
 
@@ -967,7 +967,7 @@
             </div>
         </div>
 
-        <div style="padding-bottom: 50px;">
+        <div style="padding-bottom: 50px; width: 100%;">
             <!-- BASIC TAB -->
             <div x-show="activeTab === 'basic'" class="main-grid" x-cloak>
                 <div class="portlet light">

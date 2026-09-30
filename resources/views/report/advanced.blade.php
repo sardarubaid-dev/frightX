@@ -24,7 +24,10 @@
         .kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; }
         .kpi-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 2px; }
         .kpi-icon { font-size: 20px; opacity: 0.2; }
-        .chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; }
+        .chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 14px; min-width: 0; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .chart-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9; }
+        .chart-empty { display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; }
         .tab-nav { display: flex; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; gap: 2px; }
         .tab-btn { background: none; border: none; padding: 8px 16px; font-size: 11px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .tab-btn:hover { color: #0f172a; background: #f1f5f9; }
@@ -47,6 +50,7 @@
         @media (max-width: 992px) {
             .rpt-grid-2 { grid-template-columns: 1fr; gap: 8px; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 640px) {
@@ -130,6 +134,7 @@
                 border: none !important;
                 padding: 0 !important;
                 box-shadow: none !important;
+                page-break-inside: avoid !important;
             }
 
             .table-custom {
@@ -167,8 +172,8 @@
                     <div>
                         <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase;">FreightX - Advanced Analytical Report</h2>
                         <div style="font-size: 10px; color: #475569; margin-top: 4px;">
-                            <strong>Analysis Period:</strong> <span x-text="filters.date_from + ' ~ ' + filters.date_to"></span> | 
-                            <strong>Office:</strong> <span x-text="getOfficeName(filters.office_id)"></span> | 
+                            <strong>Analysis Period:</strong> <span x-text="filters.date_from + ' ~ ' + filters.date_to"></span> |
+                            <strong>Office:</strong> <span x-text="getOfficeName(filters.office_id)"></span> |
                             <strong>Currency:</strong> Report Currency: USD
                         </div>
                     </div>
@@ -206,7 +211,7 @@
                                 <div class="rpt-input-wrap">
                                     <div class="rpt-chk-group">
                                         @foreach($shippingTypes as $st)
-                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types" @change="fetchData()"> {{ $st }}</label>
+                                        <label><input type="checkbox" value="{{ $st }}" x-model="filters.shipping_types"> {{ $st }}</label>
                                         @endforeach
                                     </div>
                                 </div>
@@ -215,9 +220,9 @@
                                 <div class="rpt-label">Analysis Period</div>
                                 <div class="rpt-input-wrap" style="flex-direction:column; align-items:stretch; gap:4px; padding:4px 6px;">
                                     <div style="display:flex; gap:4px; align-items:center;">
-                                        <input type="date" x-model="filters.date_from" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_from" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                         <span style="font-size:10px; color:#64748b;">~</span>
-                                        <input type="date" x-model="filters.date_to" @change="fetchData()" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
+                                        <input type="date" x-model="filters.date_to" class="form-control-gf" style="flex:1; border:1px solid #d1d5db; border-radius:2px; height:22px; padding:0 4px; font-size:10px;">
                                     </div>
                                 </div>
                             </div>
@@ -226,7 +231,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Office</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.office_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.office_id" class="form-control-gf" style="width:100%;">
                                         <option value="">All Offices</option>
                                         @foreach($offices as $o)
                                         <option value="{{ $o->id }}">{{ $o->code }} - {{ $o->name }}</option>
@@ -237,7 +242,7 @@
                             <div class="rpt-row">
                                 <div class="rpt-label">Currency</div>
                                 <div class="rpt-input-wrap">
-                                    <select x-model="filters.currency_id" @change="fetchData()" class="form-control-gf" style="width:100%;">
+                                    <select x-model="filters.currency_id" class="form-control-gf" style="width:100%;">
                                         <option value="">Report Currency: USD</option>
                                         @foreach($currencies as $c)
                                         <option value="{{ $c->id }}">{{ $c->code }} - {{ $c->name }}</option>
@@ -249,14 +254,14 @@
                                 <div class="rpt-label">&nbsp;</div>
                                 <div class="rpt-input-wrap">
                                     <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer; color:#334155; user-select:none;">
-                                        <input type="checkbox" x-model="filters.include_internal" @change="fetchData()" style="width:13px !important; height:13px !important; accent-color: #3b82f6;"> Include Internal Profit
+                                        <input type="checkbox" x-model="filters.include_internal" style="width:13px !important; height:13px !important; accent-color: #3b82f6;"> Include Internal Profit
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div style="text-align:center; margin-top:6px;">
-                        <button class="rpt-view-btn" @click="applyFilters()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Analysis</button>
+                        <button class="rpt-view-btn" @click="fetchData()"><i class="fa fa-search" style="margin-right:4px;"></i> Refresh Analysis</button>
                     </div>
                 </div>
             </div>
@@ -290,6 +295,26 @@
                         <div class="kpi-value" x-text="fmtInt(data.summary.total_count)"></div>
                     </div>
                     <i class="fa fa-ship kpi-icon" style="color: #f59e0b;"></i>
+                </div>
+            </div>
+
+            <!-- Charts Section (4 charts) -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title" style="color:#f97316;"><i class="fa fa-line-chart" style="margin-right:4px;"></i> Net Profit Average Trend</div>
+                    <div id="avgLineChart" style="min-height: 340px;"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title" style="color:#3b82f6;"><i class="fa fa-pie-chart" style="margin-right:4px;"></i> Shipping Type Comparison (Radar, score 0-100)</div>
+                    <div id="shippingRadarChart" style="min-height: 340px;"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title" style="color:#10b981;"><i class="fa fa-bar-chart" style="margin-right:4px;"></i> Top 10 Trade Partners by Profit</div>
+                    <div id="partnerBarChart" style="min-height: 340px;"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title" style="color:#ef4444;"><i class="fa fa-building" style="margin-right:4px;"></i> Office-wise Revenue, Cost &amp; Profit</div>
+                    <div id="officeColumnChart" style="min-height: 340px;"></div>
                 </div>
             </div>
 
@@ -478,11 +503,17 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
     function advancedReport() {
+        const COLORS = { orange: '#f97316', red: '#ef4444', green: '#10b981', blue: '#3b82f6' };
+
         return {
             loading: false,
             activeTab: 'shipping',
+            _reqId: 0,
+            _timer: null,
+            charts: {},
             filters: {
                 date_from: '2025-01-01',
                 date_to: '{{ now()->endOfMonth()->format("Y-m-d") }}',
@@ -501,7 +532,22 @@
                 by_sales_person: [],
             },
 
-            init() { this.fetchData(); },
+            init() {
+                // Filter badalte hi (x-model update hone ke BAAD) data reload hoga
+                ['shipping_types', 'date_from', 'date_to', 'office_id', 'currency_id', 'include_internal']
+                    .forEach(key => this.$watch('filters.' + key, () => this.fetchDataDebounced()));
+
+                this.fetchData();
+
+                window.addEventListener('resize', () => {
+                    Object.values(this.charts).forEach(c => c && c.resize && c.resize());
+                });
+            },
+
+            fetchDataDebounced() {
+                clearTimeout(this._timer);
+                this._timer = setTimeout(() => this.fetchData(), 120);
+            },
 
             getOfficeName(officeId) {
                 if (!officeId) return 'All Offices';
@@ -510,6 +556,7 @@
             },
 
             async fetchData() {
+                const reqId = ++this._reqId;
                 this.loading = true;
                 try {
                     const p = new URLSearchParams();
@@ -518,20 +565,188 @@
                     p.append('currency_id', this.filters.currency_id);
                     p.append('include_internal', this.filters.include_internal ? '1' : '');
                     if (this.filters.office_id) p.append('office_id', this.filters.office_id);
-                    this.filters.shipping_types.forEach(t => p.append('shipping_types[]', t));
+                    [...this.filters.shipping_types].forEach(t => p.append('shipping_types[]', t));
 
-                    const resp = await fetch('{{ route("report.advanced.data") }}?' + p.toString());
-                    this.data = await resp.json();
+                    const resp = await fetch('{{ route("report.advanced.data") }}?' + p.toString(), {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const json = await resp.json();
+
+                    // Purana response ignore karo agar naya request chal chuka hai
+                    if (reqId !== this._reqId) return;
+
+                    this.data = {
+                        summary: json.summary || this.data.summary,
+                        by_shipping_type: json.by_shipping_type || [],
+                        by_office: json.by_office || [],
+                        by_partner: json.by_partner || [],
+                        by_sales_person: json.by_sales_person || [],
+                    };
+                    this.$nextTick(() => this.renderCharts());
                 } catch (e) {
                     console.error('Fetch error:', e);
                 } finally {
-                    this.loading = false;
+                    if (reqId === this._reqId) this.loading = false;
                 }
             },
 
-            applyFilters() { this.fetchData(); },
-
             switchTab(tab) { this.activeTab = tab; },
+
+            /* ---------------- Charts ---------------- */
+
+            renderCharts() {
+                this.renderAvgLine();
+                this.renderShippingRadar();
+                this.renderPartnerBar();
+                this.renderOfficeColumn();
+            },
+
+            mount(key, elId, options, hasData) {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                if (this.charts[key]) { this.charts[key].destroy(); this.charts[key] = null; }
+                if (!hasData) {
+                    el.innerHTML = '<div class="chart-empty" style="height:340px;">No data for selected filters</div>';
+                    return;
+                }
+                el.innerHTML = '';
+                this.charts[key] = new ApexCharts(el, options);
+                this.charts[key].render();
+            },
+
+            money(v) { return '$' + this.fmt(v); },
+
+            moneyShort(v) {
+                v = parseFloat(v || 0);
+                const a = Math.abs(v);
+                if (a >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M';
+                if (a >= 1000) return '$' + (v / 1000).toFixed(1) + 'K';
+                return '$' + v.toFixed(0);
+            },
+
+            // 1) Smooth line (area) - Net Profit Average
+            renderAvgLine() {
+                const s = this.data.summary || {};
+                const vals = [
+                    Number(s.daily_average ?? 0),
+                    Number(s.weekly_average ?? 0),
+                    Number(s.monthly_average ?? 0),
+                    Number(s.yearly_average ?? 0),
+                ];
+                const hasData = vals.some(v => v !== 0);
+
+                this.mount('avg', 'avgLineChart', {
+                    series: [{ name: 'Average Net Profit', data: vals }],
+                    chart: { type: 'area', height: 340, toolbar: { show: false }, zoom: { enabled: false } },
+                    colors: [COLORS.orange],
+                    stroke: { curve: 'smooth', width: 4, lineCap: 'round' },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 95, 100] } },
+                    markers: { size: 6, colors: ['#fff'], strokeColors: COLORS.orange, strokeWidth: 3, hover: { size: 8 } },
+                    dataLabels: { enabled: true, offsetY: -8, formatter: v => this.moneyShort(v), style: { fontSize: '10px', colors: ['#c2410c'] }, background: { enabled: false } },
+                    xaxis: { categories: ['Daily', 'Weekly', 'Monthly', 'Yearly'], labels: { style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 } } },
+                    yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px' }, formatter: v => this.moneyShort(v) } },
+                    grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+                    tooltip: { y: { formatter: v => this.money(v) } },
+                }, hasData);
+            },
+
+            // 2) Radar - Shipping types compared on 5 metrics (0-100 score)
+            renderShippingRadar() {
+                const items = [...(this.data.by_shipping_type || [])]
+                    .sort((a, b) => parseFloat(b.revenue || 0) - parseFloat(a.revenue || 0))
+                    .slice(0, 4);
+
+                const metrics = [
+                    { label: 'Revenue',   key: 'revenue', fmt: v => this.money(v) },
+                    { label: 'Profit',    key: 'profit',  fmt: v => this.money(v) },
+                    { label: 'Margin',    key: 'margin',  fmt: v => this.fmt(v) + '%' },
+                    { label: 'Volume',    key: 'volume',  fmt: v => this.fmt(v) + ' CBM' },
+                    { label: 'Shipments', key: 'count',   fmt: v => this.fmtInt(v) },
+                ];
+
+                // Har metric ko 0-100 score mein badlo (us metric ki sabse badi value = 100)
+                const maxes = metrics.map(m => Math.max(0, ...items.map(i => parseFloat(i[m.key] || 0))));
+                const series = items.map(i => ({
+                    name: i.shipping_type || 'Unknown',
+                    data: metrics.map((m, idx) => {
+                        const v = Math.max(0, parseFloat(i[m.key] || 0));
+                        return maxes[idx] > 0 ? Math.round((v / maxes[idx]) * 100) : 0;
+                    })
+                }));
+
+                this.mount('radar', 'shippingRadarChart', {
+                    series: series,
+                    chart: { type: 'radar', height: 340, toolbar: { show: false }, dropShadow: { enabled: false } },
+                    colors: [COLORS.orange, COLORS.blue, COLORS.green, COLORS.red],
+                    labels: metrics.map(m => m.label),
+                    stroke: { width: 3 },
+                    fill: { opacity: 0.22 },
+                    markers: { size: 5, strokeWidth: 1, hover: { size: 8 } },
+                    dataLabels: { enabled: false },
+                    plotOptions: { radar: { size: 125, polygons: { strokeColors: '#e5e7eb', connectorColors: '#e5e7eb', fill: { colors: ['#ffffff', '#f8fafc'] } } } },
+                    xaxis: { labels: { style: { colors: Array(metrics.length).fill('#475569'), fontSize: '11px', fontWeight: 700 } } },
+                    yaxis: { min: 0, max: 100, tickAmount: 5, labels: { style: { colors: ['#94a3b8'], fontSize: '9px' }, formatter: v => Math.round(v) } },
+                    legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '12px', markers: { width: 22, height: 10, radius: 2 }, labels: { colors: '#475569' } },
+                    tooltip: {
+                        y: {
+                            // Hover par asli value dikhao, score nahi
+                            formatter: (val, opts) => {
+                                const m = metrics[opts.dataPointIndex];
+                                const it = items[opts.seriesIndex];
+                                return m.fmt(it ? it[m.key] : 0) + '  (score ' + val + ')';
+                            }
+                        }
+                    },
+                }, items.length > 0);
+            },
+
+            // 3) Horizontal colorful bars - Top 10 trade partners by profit
+            renderPartnerBar() {
+                const rows = [...(this.data.by_partner || [])]
+                    .sort((a, b) => parseFloat(b.profit || 0) - parseFloat(a.profit || 0))
+                    .slice(0, 10);
+
+                const cycle = [COLORS.blue, COLORS.green, COLORS.orange];
+                const colors = rows.map((r, i) => parseFloat(r.profit || 0) < 0 ? COLORS.red : cycle[i % cycle.length]);
+
+                this.mount('partner', 'partnerBarChart', {
+                    series: [{ name: 'Profit', data: rows.map(r => parseFloat(r.profit || 0)) }],
+                    chart: { type: 'bar', height: 340, toolbar: { show: false } },
+                    colors: colors,
+                    plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 5, barHeight: '65%' } },
+                    dataLabels: { enabled: true, formatter: v => this.moneyShort(v), style: { fontSize: '10px' } },
+                    legend: { show: false },
+                    xaxis: { categories: rows.map(r => r.partner || 'Unknown'), labels: { style: { colors: '#64748b', fontSize: '10px' }, formatter: v => this.moneyShort(v) } },
+                    yaxis: { labels: { maxWidth: 140, style: { colors: '#334155', fontSize: '10px', fontWeight: 600 } } },
+                    grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+                    tooltip: { y: { formatter: v => this.money(v) } },
+                }, rows.length > 0);
+            },
+
+            // 4) Grouped columns - Office wise revenue / cost / profit
+            renderOfficeColumn() {
+                const rows = this.data.by_office || [];
+
+                this.mount('office', 'officeColumnChart', {
+                    series: [
+                        { name: 'Revenue', data: rows.map(r => parseFloat(r.revenue || 0)) },
+                        { name: 'Cost',    data: rows.map(r => parseFloat(r.cost || 0)) },
+                        { name: 'Profit',  data: rows.map(r => parseFloat(r.profit || 0)) },
+                    ],
+                    chart: { type: 'bar', height: 340, toolbar: { show: false } },
+                    colors: [COLORS.blue, COLORS.orange, COLORS.green],
+                    plotOptions: { bar: { columnWidth: '60%', borderRadius: 5 } },
+                    stroke: { show: true, width: 2, colors: ['transparent'] },
+                    dataLabels: { enabled: false },
+                    xaxis: { categories: rows.map(r => r.office || 'Unknown'), labels: { trim: true, style: { colors: '#64748b', fontSize: '10px', fontWeight: 600 } } },
+                    yaxis: { labels: { style: { colors: '#64748b', fontSize: '10px' }, formatter: v => this.moneyShort(v) } },
+                    grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+                    legend: { position: 'top', horizontalAlign: 'center', fontSize: '12px', markers: { width: 12, height: 12, radius: 3 } },
+                    tooltip: { shared: true, intersect: false, y: { formatter: v => this.money(v) } },
+                }, rows.length > 0);
+            },
+
+            /* ---------------- Helpers ---------------- */
 
             fmt(v) {
                 if (v === null || v === undefined) return '0.00';

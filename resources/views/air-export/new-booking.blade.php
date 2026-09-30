@@ -414,37 +414,57 @@
         textarea.custom-text:focus { border-color: #32c5d2; box-shadow: none; }
     </style>
 
+
     <div class="booking-container" x-cloak x-data="bookingModule()" x-init="init()">
         <!-- Stepper Modal -->
-        <template x-if="showQuoteModal">
-            <div class="modal-overlay">
-                <div class="modal-card" @click.away="closeModal()">
-                    <div class="modal-header-premium">
-                        <span class="modal-title-premium">Load Quotation Data</span>
-                        <button @click="closeModal()" class="text-muted hover:text-dark border-none bg-transparent cursor-pointer"><i class="fa fa-times text-lg"></i></button>
-                    </div>
-                    
-                    <!-- Stepper -->
-                    <div class="stepper-container">
-                        <div class="step-item" :class="step >= 1 ? 'active' : ''">
-                            <div class="step-circle" x-text="step > 1 ? '✓' : '1'"></div>
-                            <span class="step-label">Select Quotation</span>
-                        </div>
-                        <div class="step-line"></div>
-                        <div class="step-item" :class="step >= 2 ? 'active' : ''">
-                            <div class="step-circle" x-text="step > 2 ? '✓' : '2'"></div>
-                            <span class="step-label">Fill Shipment Data</span>
-                        </div>
-                        <div class="step-line"></div>
-                        <div class="step-item" :class="step >= 3 ? 'active' : ''">
-                            <div class="step-circle" x-text="step > 3 ? '✓' : '3'"></div>
-                            <span class="step-label">Select Invoice Items</span>
-                        </div>
-                    </div>
+       <template x-teleport="body">
+    <!-- QUOTE MODAL (Restyled to match the reference "perfect" form exactly) -->
+    <div x-show="showQuoteModal" class="modal-overlay" style="display:none; z-index: 999999;" x-cloak>
+        <div class="modal-container" style="max-width: 950px; display: flex; flex-direction: column;" @click.away="closeModal()">
 
-                    <div class="modal-content-area">
-                        <!-- Step 1 Content -->
-                        <div x-show="step === 1">
+            <!-- Header -->
+            <div class="modal-header">
+                <span><i class="fa fa-file-text-o text-blue-500"></i> Load Quotation Data</span>
+                <i class="fa fa-times cursor-pointer text-gray-500 hover:text-gray-700" @click="closeModal()"></i>
+            </div>
+
+            <div class="modal-body hide-scrollbar">
+                <style>
+                    .hide-scrollbar::-webkit-scrollbar { display: none; }
+                    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                    .wizard-circle { width: 18px; height: 18px; min-width: 18px; min-height: 18px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; }
+                </style>
+
+                <!-- Wizard Steps Header -->
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div class="wizard-circle" :style="step >= 1 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
+                            <template x-if="step > 1"><i class="fa fa-check"></i></template>
+                            <template x-if="step === 1"><span>1</span></template>
+                        </div>
+                        <span :style="step >= 1 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select Quotation</span>
+                    </div>
+                    <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
+
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div class="wizard-circle" :style="step >= 2 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
+                            <template x-if="step > 2"><i class="fa fa-check"></i></template>
+                            <template x-if="step <= 2"><span>2</span></template>
+                        </div>
+                        <span :style="step >= 2 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Fill Shipment Data</span>
+                    </div>
+                    <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
+
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div class="wizard-circle" :style="step >= 3 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
+                            <span>3</span>
+                        </div>
+                        <span :style="step >= 3 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select Invoice Items</span>
+                    </div>
+                </div>
+
+                <!-- Step 1 Content -->
+               <div x-show="step === 1">
                             <div class="search-grid-lite">
                                 <div class="form-group-custom">
                                     <label class="label-custom">Customer</label>
@@ -494,65 +514,57 @@
                             </table>
                         </div>
 
-                        <!-- Step 2 Content -->
-                        <div x-show="step === 2">
-                            <h4 class="form-section-title">Verify Booking Information</h4>
-                            <div class="form-grid" style="padding: 0; gap: 15px;">
-                                <div class="form-group-custom">
-                                    <label class="label-custom">Quote No.</label>
-                                    <input type="text" class="input-custom" :value="quoteForm.quote_no" disabled style="background:#f5f5f5; border:1px solid #ddd; width:100%;">
-                                </div>
-                                <div class="form-group-custom">
-                                    <label class="label-custom">Quote Date</label>
-                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" :value="quoteForm.quote_date">
-                                </div>
-                                <div class="form-group-custom">
-                                    <label class="label-custom">Valid Date</label>
-                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" :value="quoteForm.valid_date">
-                                </div>
-                            </div>
-                        </div>
+                <!-- Step 2 Content -->
+               <div x-show="step === 2">  
+                                          <h4 class="form-section-title">Verify Booking Information</h4>                            <div class="form-grid" style="padding: 0; gap: 15px;">                                <div class="form-group-custom">                                    <label class="label-custom">Quote No.</label>                                    <input type="text" class="input-custom" :value="quoteForm.quote_no" disabled style="background:#f5f5f5; border:1px solid #ddd; width:100%;">                                </div>                                <div class="form-group-custom">                                    <label class="label-custom">Quote Date</label>                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" :value="quoteForm.quote_date">                                </div>                                <div class="form-group-custom">                                    <label class="label-custom">Valid Date</label>                                    <input type="date" class="input-custom" style="border:1px solid #ddd; width:100%;" :value="quoteForm.valid_date">                                </div>                            </div>                        </div>
+                <!-- Step 3 Content -->
+                <div x-show="step === 3" x-cloak>
+                    <div class="hbl-header">Select Charge Items</div>
+                    <p style="font-size: 10px; color: #64748b; margin-bottom: 10px;">Select which items from the quotation should be converted to invoice items.</p>
 
-                        <!-- Step 3 Content -->
-                        <div x-show="step === 3">
-                            <h4 class="form-section-title">Select Charge Items</h4>
-                            <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Select which items from the quotation should be converted to invoice items.</p>
-                            <table class="premium-mini-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 40px;"><input type="checkbox" checked></th>
-                                        <th>Freight Code</th>
-                                        <th>Description</th>
-                                        <th>Rate</th>
-                                        <th>Amount</th>
+                    <div class="table-responsive" style="margin-bottom: 10px;">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center; width: 40px;"><input type="checkbox" checked></th>
+                                    <th>Freight Code</th>
+                                    <th>Description</th>
+                                    <th style="text-align: right;">Rate</th>
+                                    <th style="text-align: right;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="item in (selectedQuote ? selectedQuote.items : [])" :key="item.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td style="text-align: center;"><input type="checkbox" checked></td>
+                                        <td x-text="item.freight_code"></td>
+                                        <td x-text="item.description"></td>
+                                        <td style="text-align: right;" x-text="item.rate"></td>
+                                        <td style="text-align: right; font-weight: 600; color: #3b82f6;" x-text="item.amount"></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="item in (selectedQuote ? selectedQuote.items : [])" :key="item.id">
-                                        <tr>
-                                            <td style="text-align: center;"><input type="checkbox" checked></td>
-                                            <td x-text="item.freight_code"></td>
-                                            <td x-text="item.description"></td>
-                                            <td x-text="item.rate"></td>
-                                            <td x-text="item.amount"></td>
-                                        </tr>
-                                    </template>
-                                    <tr x-show="!selectedQuote || !selectedQuote.items || selectedQuote.items.length === 0">
-                                        <td colspan="5" style="text-align: center; padding: 40px; color: #999;">No charge items found in this quotation.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer-premium">
-                        <button type="button" @click="closeModal()" class="btn-premium">Cancel</button>
-                        <button type="button" x-show="step > 1" @click="step--" class="btn-premium">Previous</button>
-                        <button type="button" @click="step < 3 ? step++ : confirmQuote()" class="btn-premium success" x-text="step === 3 ? 'Convert to Booking' : 'Next Step'"></button>
+                                </template>
+                                <tr x-show="!selectedQuote || !selectedQuote.items || selectedQuote.items.length === 0">
+                                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;">No charge items found in this quotation.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </template>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn-default-gf" @click="closeModal()">Cancel</button>
+                <button type="button" x-show="step > 1" class="btn-default-gf" @click="step--">Previous</button>
+                <button type="button" class="btn-freightx" @click="step < 3 ? step++ : confirmQuote()">
+                    <span x-text="step === 3 ? 'Convert to Booking' : 'Next Step'"></span>
+                    <i class="fa fa-arrow-right" x-show="step < 3"></i>
+                    <i class="fa fa-check" x-show="step === 3"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
         <!-- Breadcrumb & Toolbar -->
         <div style="font-size: 11px; margin-bottom: 10px;">
             <a href="/air-export/list" style="color: #8e9eae; text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='#337ab7';" onmouseout="this.style.color='#8e9eae';">Air Export</a> <i class="fa fa-angle-right" style="margin: 0 5px;"></i> 
