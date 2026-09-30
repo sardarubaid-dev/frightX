@@ -1280,136 +1280,33 @@
                 <li :class="activeTab === 'status' ? 'active' : ''" @if(isset($airExport) && $airExport->id) @click="activeTab = 'status'" @else style="opacity: 0.5; cursor: not-allowed;" title="Save Basic tab first" @endif><a>Status</a></li>
             </ul>
 
-            <!-- Tools Dropdown -->
-            <div style="position:relative; display:flex; align-items:center; padding:0 8px;" @click.away="showToolsMenu = false">
-                <button type="button" @click="showToolsMenu = !showToolsMenu" style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #d1d5db; border-radius:4px; padding:4px 12px; font-size:12px; color:#374151; cursor:pointer; white-space:nowrap; height:26px;">
-                    <i class="fa fa-cogs" style="color:#6b7280;"></i> Tools
-                    <i class="fa fa-angle-down" style="font-size:10px; color:#9ca3af; transition: transform 0.2s;" :style="showToolsMenu ? 'transform: rotate(180deg)' : ''"></i>
-                </button>
+            <!-- Divider -->
+            <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;">
+                <span style="border-left:2px solid #e5e7eb;height:20px;display:inline-block;"></span>
+            </div>
 
-                <!-- Tools Dropdown Menu -->
-                <div x-show="showToolsMenu" x-cloak x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="position: absolute; right: 8px; top: calc(100% + 4px); background: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); min-width: 240px; padding: 6px 0; z-index: 99999; text-align: left; color: #374151;">
-                    
-                    <!-- Block / Unblock -->
-                    <button type="button" @click="toggleBlock(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa" :class="isBlocked ? 'fa-unlock' : 'fa-lock'" :style="isBlocked ? 'color: #22c55e' : 'color: #ef4444'" style="width: 16px; text-align: center;"></i>
-                        <span x-text="isBlocked ? 'Unblock' : 'Block'"></span>
-                    </button>
-
-                    <!-- Copy -->
-                    <button type="button" @click="copyShipment(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-files-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Copy</span>
-                    </button>
-
-                    <!-- Copy to AI (Disabled) -->
-                    <button type="button" disabled class="tools-menu-item disabled" style="opacity: 0.5; cursor: not-allowed; color: #9ca3af;" @click="copyToAirImport(); showToolsMenu = false;">
-                        <i class="fa fa-exchange" style="color: #9ca3af; width: 16px; text-align: center;"></i>
-                        <span>Copy to AI</span>
-                    </button>
-
-                    <!-- Delete -->
-                    <button type="button" @click="deleteShipment(); showToolsMenu = false;" class="tools-menu-item" style="color: #dc2626;">
-                        <i class="fa fa-trash-o" style="color: #dc2626; width: 16px; text-align: center;"></i>
-                        <span>Delete</span>
-                    </button>
-
-                    <!-- FreightX EDI (disabled) -->
-                    <button type="button" disabled class="tools-menu-item disabled">
-                        <i class="fa fa-paper-plane" style="color: #9ca3af; width: 16px; text-align: center;"></i>
-                        <span>FreightX EDI</span>
-                    </button>
-
-                    <div class="tools-menu-divider"></div>
-
-                    <!-- Document Package -->
-                    <button type="button" @click="openDocPackage(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-file-text-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Document Package</span>
-                    </button>
-
-                    <!-- MAWB Print -->
-                    <button type="button" @click="printMawb(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-print" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>MAWB Print</span>
-                    </button>
-
-                    <!-- Consolidated Manifest -->
-                    <button type="button" @click="openConsolidatedManifest(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-list-alt" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Consolidated Manifest</span>
-                    </button>
-
-                    <!-- Manifest by Agent (disabled) -->
-                    <button type="button" disabled class="tools-menu-item disabled">
-                        <i class="fa fa-file-text-o" style="color: #9ca3af; width: 16px; text-align: center;"></i>
-                        <span>Manifest by Agent</span>
-                    </button>
-
-                    <!-- Booking Confirmation -->
-                    <button type="button" @click="openBookingConfirmation(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-file-text-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Booking Confirmation</span>
-                    </button>
-
-                    <!-- MAWB Package Label -->
-                    <button type="button" @click="openMawbPackageLabel(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-tag" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>MAWB Package Label</span>
-                    </button>
-
-                    <!-- Package Label List -->
-                    <button type="button" @click="openPackageLabelList(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-list" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Package Label List</span>
-                    </button>
-
-                    <!-- Pickup / Delivery Order -->
-                    <button type="button" @click="openPickupDeliveryOrder(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-truck" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Pickup / Delivery Order</span>
-                    </button>
-
-                    <!-- Security Endorsement -->
-                    <button type="button" @click="openSecurityEndorsement(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-shield" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Security Endorsement</span>
-                    </button>
-
-                    <!-- On Hand Report -->
-                    <button type="button" @click="openOnHandReport(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-clipboard" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>On Hand Report</span>
-                    </button>
-
-                    <!-- Screened Cargo Statement (K9) -->
-                    <button type="button" @click="openScreenedCargoStatement(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-file-pdf-o" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Screened Cargo Statement (K9)</span>
-                    </button>
-
-                    <div class="tools-menu-divider"></div>
-
-                    <!-- Profit Report - Summary -->
-                    <button type="button" @click="openProfitSummary(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-bar-chart" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Profit Report - Summary</span>
-                    </button>
-
-                    <!-- Profit Report - Detail -->
-                    <button type="button" @click="openProfitDetail(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-line-chart" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Profit Report - Detail</span>
-                    </button>
-
-                    <div class="tools-menu-divider"></div>
-
-                    <!-- Open in Track-Trace -->
-                    <button type="button" @click="openTrackTrace(); showToolsMenu = false;" class="tools-menu-item">
-                        <i class="fa fa-external-link" style="color: #4b5563; width: 16px; text-align: center;"></i>
-                        <span>Open in Track-Trace</span>
-                    </button>
-                </div>
+            <!-- Tools Options (Scrollable) -->
+            <div style="flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;-ms-overflow-style:none;">
+                <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;display:flex;white-space:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? toggleBlock() : null">
+                        <a><span x-text="isBlocked ? 'Unblock' : 'Block'"></span></a>
+                    </li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? copyShipment() : null"><a>Copy</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? deleteShipment() : null"><a style="color:#ef4444;">Delete</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openDocPackage() : null"><a>Document Package</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? printMawb() : null"><a>MAWB Print</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openConsolidatedManifest() : null"><a>Consolidated Manifest</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openBookingConfirmation() : null"><a>Booking Confirmation</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openMawbPackageLabel() : null"><a>MAWB Package Label</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openPackageLabelList() : null"><a>Package Label List</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openPickupDeliveryOrder() : null"><a>Pickup / Delivery Order</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openSecurityEndorsement() : null"><a>Security Endorsement</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openOnHandReport() : null"><a>On Hand Report</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openScreenedCargoStatement() : null"><a>Screened Cargo Statement (K9)</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openProfitSummary() : null"><a>Profit Summary</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openProfitDetail() : null"><a>Profit Detail</a></li>
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openTrackTrace() : null"><a>Track-Trace</a></li>
+                </ul>
             </div>
         </div>
 
@@ -1442,72 +1339,68 @@
                         </div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">File No.</label><div class="form-input-container"><input type="text" name="file_no" class="form-control-gf" value="{{ isset($airExport) ? $airExport->file_no : 'MAE-' . date('YmdHis') }}" required></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Carrier</label><div class="form-input-container"><x-inline-select name="carrier_id" :options="$agents" module="trade-partner" x-model="form.carrier" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Issuing Carrier</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.issuing_carrier"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Type</label><div class="form-input-container"><x-inline-select name="awb_type" :options="$agents" module="trade-partner" x-model="form.awb_type" class="form-control-gf" /></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*MAWB No.</label><div class="form-input-container"><input type="text" name="mawb_no" class="form-control-gf" x-model="form.mawb_no" required></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="form.awb_date"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.shipper"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.consignee"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.notify"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Post Date</label><div class="form-input-container"><input type="date" name="post_date" class="form-control-gf" x-model="form.post_date"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*Office</label><div class="form-input-container">
-                                    <select name="office_id" class="form-control-gf" required x-model="form.office">
-                                        <option value="">Select Office...</option>
-                                        @foreach($offices as $office)
-                                            <option value="{{ $office->id }}">{{ $office->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Acct. Carrier</label><div class="form-input-container"><x-inline-select name="acct_carrier_id" :options="$agents" module="trade-partner" x-model="form.awb_acct_carrier" class="form-control-gf" /></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Co-loader</label><div class="form-input-container"><x-inline-select name="forwarding_agent_id" :options="$agents" module="trade-partner" x-model="form.co_loader" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Actual Shipper</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.actual_shipper"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container">
-                                    <select name="op_id" class="form-control-gf" x-model="form.op">
-                                        <option value="">Select Operator...</option>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ITN No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.itn_no"></div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">File No.</label><div class="form-input-container"><input type="text" name="file_no" class="form-control-gf" value="{{ isset($airExport) ? $airExport->file_no : 'MAE-' . date('YmdHis') }}" required></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*MAWB No.</label><div class="form-input-container"><input type="text" name="mawb_no" class="form-control-gf" x-model="form.mawb_no" required></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.notify"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Co-loader</label><div class="form-input-container"><x-inline-select name="forwarding_agent_id" :options="$agents" module="trade-partner" x-model="form.co_loader" class="form-control-gf" /></div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Carrier</label><div class="form-input-container"><x-inline-select name="carrier_id" :options="$agents" module="trade-partner" x-model="form.carrier" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="form.awb_date"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Post Date</label><div class="form-input-container"><input type="date" name="post_date" class="form-control-gf" x-model="form.post_date"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Actual Shipper</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.actual_shipper"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Issuing Carrier</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.issuing_carrier"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.shipper"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*Office</label><div class="form-input-container">
+                                <select name="office_id" class="form-control-gf" required x-model="form.office">
+                                    <option value="">Select Office...</option>
+                                    @foreach($offices as $office)
+                                        <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container">
+                                <select name="op_id" class="form-control-gf" x-model="form.op">
+                                    <option value="">Select Operator...</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div></div>
+
+                            <!-- Row 4 -->
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Type</label><div class="form-input-container"><x-inline-select name="awb_type" :options="$agents" module="trade-partner" x-model="form.awb_type" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.consignee"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Acct. Carrier</label><div class="form-input-container"><x-inline-select name="acct_carrier_id" :options="$agents" module="trade-partner" x-model="form.awb_acct_carrier" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ITN No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.itn_no"></div></div>
                         </div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col"><div class="form-group-gf"><label class="form-label-gf">CERS No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.cers_no"></div></div></div>
-                            <div class="flex flex-col"><div class="form-group-gf"><label class="form-label-gf">Reference No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.reference_no"></div></div></div>
-                            <div class="flex flex-col"><div class="form-group-gf"><label class="form-label-gf">Direct Master</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" x-model="isDirectMaster"></div></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">CERS No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.cers_no"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Reference No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.reference_no"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Direct Master</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" x-model="isDirectMaster"></div></div>
                         </div>
 
                         <div style="height: 15px;"></div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container"><x-inline-select name="dep_port_id" :options="$ports" module="port" x-model="form.departure" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*ETD</label><div class="form-input-container"><input type="date" name="etd" class="form-control-gf" x-model="form.etd" required></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Cargo Ready Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="form.cargo_ready_date"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container"><x-inline-select name="dst_port_id" :options="$ports" module="port" x-model="form.destination" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ATD</label><div class="form-input-container"><input type="date" name="atd" class="form-control-gf" x-model="form.atd"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Flight No.</label><div class="form-input-container"><input type="text" name="flight_no" class="form-control-gf" x-model="form.flight_no"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ETA</label><div class="form-input-container"><input type="date" name="eta" class="form-control-gf" x-model="form.eta" style="background:#fff8e1;"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Connecting Flight</label><div class="form-input-container"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="showConnectingFlight = !showConnectingFlight">Expand <i class="fa" :class="showConnectingFlight ? 'fa-minus-square-o' : 'fa-plus-square-o'"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ATA</label><div class="form-input-container"><input type="date" name="ata" class="form-control-gf" x-model="form.ata"></div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container"><x-inline-select name="dep_port_id" :options="$ports" module="port" x-model="form.departure" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container"><x-inline-select name="dst_port_id" :options="$ports" module="port" x-model="form.destination" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Flight No.</label><div class="form-input-container"><input type="text" name="flight_no" class="form-control-gf" x-model="form.flight_no"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Connecting Flight</label><div class="form-input-container"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="showConnectingFlight = !showConnectingFlight">Expand <i class="fa" :class="showConnectingFlight ? 'fa-minus-square-o' : 'fa-plus-square-o'"></i></button></div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*ETD</label><div class="form-input-container"><input type="date" name="etd" class="form-control-gf" x-model="form.etd" required></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ATD</label><div class="form-input-container"><input type="date" name="atd" class="form-control-gf" x-model="form.atd"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ETA</label><div class="form-input-container"><input type="date" name="eta" class="form-control-gf" x-model="form.eta" style="background:#fff8e1;"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ATA</label><div class="form-input-container"><input type="date" name="ata" class="form-control-gf" x-model="form.ata"></div></div>
+
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Cargo Ready Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="form.cargo_ready_date"></div></div>
                         </div>
 
                         <!-- Connecting Flight Route Table -->
@@ -1701,67 +1594,66 @@
                         <!-- Weight Row -->
                         <div style="height: 15px;"></div>
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Package</label>
-                                    <div class="form-input-container" style="gap:2px;">
-                                        <input type="number" step="any" name="pkg_qty" class="form-control-gf" style="width:40%;" x-model="form.pkg_qty">
-                                        <select name="pkg_unit_id" class="form-control-gf" style="width:60%;" x-model="form.pkg_unit_id">
-                                            <option value="">Select...</option>
-                                            @foreach($packageUnits as $unit)
-                                                <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf">
+                                <label class="form-label-gf">Package</label>
+                                <div class="form-input-container" style="gap:2px;">
+                                    <input type="number" step="any" name="pkg_qty" class="form-control-gf" style="width:40%;" x-model="form.pkg_qty">
+                                    <select name="pkg_unit_id" class="form-control-gf" style="width:60%;" x-model="form.pkg_unit_id">
+                                        <option value="">Select...</option>
+                                        @foreach($packageUnits as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="form-group-gf"><label class="form-label-gf">Buying Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" name="buying_rate" class="form-control-gf" style="flex:1;" x-model="form.buying_rate"> per <x-inline-select name="buying_rate_unit" :options="$agents" module="trade-partner" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Selling Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" name="selling_rate" class="form-control-gf" style="flex:1;" x-model="form.selling_rate"> per <x-inline-select name="selling_rate_unit" :options="$agents" module="trade-partner" class="form-control-gf" /></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Volume</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="number" step="any" name="volume" class="form-control-gf" style="flex:1;" x-model="form.volume"> <span style="font-size:10px;">CBM</span></div></div>
                             </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Gross Weight</label>
-                                    <div class="form-input-container" style="gap:4px; align-items:center;">
-                                        <input type="number" step="any" name="gross_weight" class="form-control-gf" style="flex:1;" x-model="form.gross_weight"> <span style="font-size:10px;">KG</span>
-                                    </div>
+                            <div class="form-group-gf">
+                                <label class="form-label-gf">Gross Weight</label>
+                                <div class="form-input-container" style="gap:4px; align-items:center;">
+                                    <input type="number" step="any" name="gross_weight" class="form-control-gf" style="flex:1;" x-model="form.gross_weight"> <span style="font-size:10px;">KG</span>
                                 </div>
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Gross Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">LB</span></div></div>
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Chargeable Weight</label>
-                                    <div class="form-input-container" style="gap:4px; align-items:center;">
-                                        <input type="number" step="any" name="chargeable_weight" class="form-control-gf" style="flex:1;" x-model="form.chargeable_weight"> <span style="font-size:10px;">KG</span>
-                                    </div>
+                            </div>
+                            <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf"></label><div class="form-input-container"><button type="button" class="btn-default-gf" style="width:100%;">Set Dimensions</button></div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Buying Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" name="buying_rate" class="form-control-gf" style="flex:1;" x-model="form.buying_rate"> per <x-inline-select name="buying_rate_unit" :options="$agents" module="trade-partner" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Gross Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">LB</span></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf"></label><div class="form-input-container"><button type="button" class="btn-default-gf" style="width:100%;">Sum Package & Weight</button></div></div>
+
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Selling Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" name="selling_rate" class="form-control-gf" style="flex:1;" x-model="form.selling_rate"> per <x-inline-select name="selling_rate_unit" :options="$agents" module="trade-partner" class="form-control-gf" /></div></div>
+                            <div class="form-group-gf">
+                                <label class="form-label-gf">Chargeable Weight</label>
+                                <div class="form-input-container" style="gap:4px; align-items:center;">
+                                    <input type="number" step="any" name="chargeable_weight" class="form-control-gf" style="flex:1;" x-model="form.chargeable_weight"> <span style="font-size:10px;">KG</span>
                                 </div>
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Chargeable Wt</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">LB</span></div></div>
                             </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <button class="btn-default-gf" style="margin-bottom:5px;">Set Dimensions</button>
-                                <button class="btn-default-gf">Sum Package & Weight</button>
-                            </div>
+                            <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                            <div></div>
+
+                            <!-- Row 4 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Volume</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="number" step="any" name="volume" class="form-control-gf" style="flex:1;" x-model="form.volume"> <span style="font-size:10px;">CBM</span></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Chargeable Wt</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">LB</span></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                            <div></div>
                         </div>
 
                         <div style="height: 15px;"></div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">D.V. Carriage</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.dv_carriage"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Insurance</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.insurance"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">D.V. Customs</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.dv_customs"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">WT/VAL</label><div class="form-input-container" style="font-size:10px; gap:4px; justify-content: flex-start; align-items:center;"><input type="radio" value="P" x-model="form.wt_val"> PPD <input type="radio" value="C" x-model="form.wt_val"> COLL</div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Other</label><div class="form-input-container" style="font-size:10px; gap:4px; justify-content: flex-start; align-items:center;"><input type="radio" value="P" x-model="form.other_term"> PPD <input type="radio" value="C" x-model="form.other_term"> COLL</div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">D.V. Carriage</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.dv_carriage"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">D.V. Customs</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.dv_customs"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">WT/VAL</label><div class="form-input-container" style="font-size:10px; gap:4px; justify-content: flex-start; align-items:center;"><input type="radio" value="P" x-model="form.wt_val"> PPD <input type="radio" value="C" x-model="form.wt_val"> COLL</div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Other</label><div class="form-input-container" style="font-size:10px; gap:4px; justify-content: flex-start; align-items:center;"><input type="radio" value="P" x-model="form.other_term"> PPD <input type="radio" value="C" x-model="form.other_term"> COLL</div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Insurance</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="form.insurance"></div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
                         </div>
 
                         <div style="height: 15px;"></div>
@@ -1865,19 +1757,12 @@
                         <div class="portlet-title" style="background: #f2bc00; color: #fff; cursor: pointer; min-height: 24px; padding: 2px 10px;" @click="hawb.show = !hawb.show">
                             <span class="caption-subject" style="color: #fff; font-size: 11px;"><i class="fa fa-user"></i> HAWB Information <small style="color:rgba(255,255,255,0.8); margin-left: 10px; font-weight: normal;" x-text="'OP: ' + hawb.op"></small></span>
                             <div class="actions" style="display: flex; gap: 8px; align-items: center;">
-                                <!-- HAWB Tools Dropdown -->
-                                <div style="position: relative;" @click.away="hawb.showTools = false">
-                                    <button type="button" @click.stop="hawb.showTools = !hawb.showTools"
+                                <!-- HAWB Tools -->
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" @click.stop="printHawb(index)"
                                         style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; border-radius: 3px; padding: 2px 8px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                        <i class="fa fa-cogs" style="color: #4b5563; font-size: 10px;"></i> Tools
-                                        <i class="fa fa-angle-down" style="font-size: 9px; color: #6b7280;" :style="hawb.showTools ? 'transform:rotate(180deg)' : ''"></i>
+                                        <i class="fa fa-print" style="color: #4b5563;"></i> HAWB Print
                                     </button>
-                                    <div x-show="hawb.showTools" x-cloak x-transition 
-                                        style="position: absolute; right: 0; top: calc(100% + 2px); background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 140px; padding: 4px 0; z-index: 999; text-align: left;">
-                                        <button type="button" class="tools-menu-item" @click.stop="printHawb(index); hawb.showTools = false" style="width: 100%; display: flex; align-items: center; gap: 8px; padding: 5px 12px; border: none; background: transparent; font-size: 11px; color: #374151; cursor: pointer; text-align: left;">
-                                            <i class="fa fa-print" style="color: #3b82f6;"></i> HAWB Print
-                                        </button>
-                                    </div>
                                 </div>
                                 <i @click.stop="removeHawb(index)" class="fa fa-times" style="font-size: 12px; opacity: 0.8; cursor: pointer;" title="Delete HAWB"></i>
                                 <i class="fa fa-angle-down transition-transform" :class="hawb.show ? 'rotate-180' : ''" style="font-size: 12px;"></i>
@@ -1903,110 +1788,97 @@
 
                             <div style="padding: 5px 0;">
                                 <input type="hidden" :name="'hbls[' + index + '][id]'" :value="hawb.id">
-                                <div class="form-grid-4">
-                                    <!-- Column 1 -->
-                                    <div class="flex flex-col">
-                                        <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*HAWB No.</label><div class="form-input-container"><input type="text" :name="'hbls[' + index + '][hawb_no]'" class="form-control-gf" x-model="hawb.hawb_no" required></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Booking No.</label><div class="form-input-container"><input type="text" :name="'hbls[' + index + '][booking_no]'" class="form-control-gf" x-model="hawb.booking_no"></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Quotation No.</label><div class="form-input-container"><x-inline-select name="quotation_no" :options="$agents" module="trade-partner" x-model="hawb.quotation_no" class="form-control-gf" /></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">ITN No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.itn_no"></div></div>
-                                    </div>
-                                    
-                                    <!-- Column 2 -->
-                                    <div class="flex flex-col">
-                                        <div class="form-group-gf"><label class="form-label-gf">Actual Shipper</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][shipper_id]'" :options="$agents" module="trade-partner" x-model="hawb.shipper" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][customer_id]'" :options="$agents" module="trade-partner" x-model="hawb.customer" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container">
-                                            <select :name="'hbls[' + index + '][sales_person_id]'" x-model="hawb.sales" class="form-control-gf">
-                                                <option value="">Select...</option>
-                                                @foreach($users as $user)
-                                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.op" disabled style="background:#eee;"></div></div>
-                                    </div>
+                            <div class="form-grid-4">
+                                <!-- Row 1 -->
+                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*HAWB No.</label><div class="form-input-container"><input type="text" :name="'hbls[' + index + '][hawb_no]'" class="form-control-gf" x-model="hawb.hawb_no" required></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Actual Shipper</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][shipper_id]'" :options="$agents" module="trade-partner" x-model="hawb.shipper" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><x-inline-select name="bill_to" :options="$agents" module="trade-partner" x-model="hawb.bill_to" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][notify_party_id]'" :options="$agents" module="trade-partner" x-model="hawb.notify" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Booking No.</label><div class="form-input-container"><input type="text" :name="'hbls[' + index + '][booking_no]'" class="form-control-gf" x-model="hawb.booking_no"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][customer_id]'" :options="$agents" module="trade-partner" x-model="hawb.customer" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][consignee_id]'" :options="$agents" module="trade-partner" x-model="hawb.consignee" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][oversea_agent_id]'" :options="$agents" module="trade-partner" x-model="hawb.oversea_agent" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
+                                
+                                <!-- Row 3 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Quotation No.</label><div class="form-input-container"><x-inline-select name="quotation_no" :options="$agents" module="trade-partner" x-model="hawb.quotation_no" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container">
+                                    <select :name="'hbls[' + index + '][sales_person_id]'" x-model="hawb.sales" class="form-control-gf">
+                                        <option value="">Select...</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Booking Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="hawb.booking_date"></div></div>
+                                <div></div> <!-- Empty cell for grid alignment -->
 
-                                    <!-- Column 3 -->
-                                    <div class="flex flex-col">
-                                        <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><x-inline-select name="bill_to" :options="$agents" module="trade-partner" x-model="hawb.bill_to" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][consignee_id]'" :options="$agents" module="trade-partner" x-model="hawb.consignee" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Booking Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="hawb.booking_date"></div></div>
-                                    </div>
-
-                                    <!-- Column 4 -->
-                                    <div class="flex flex-col">
-                                        <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][notify_party_id]'" :options="$agents" module="trade-partner" x-model="hawb.notify" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                        <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><x-inline-select name="" x-bind:name="'hbls[' + index + '][oversea_agent_id]'" :options="$agents" module="trade-partner" x-model="hawb.oversea_agent" class="form-control-gf" /><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;"><i class="fa fa-external-link" style="font-size:9px;"></i></button></div></div>
-                                    </div>
-                                </div>
+                                <!-- Row 4 -->
+                                <div class="form-group-gf"><label class="form-label-gf">ITN No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.itn_no"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.op" disabled style="background:#eee;"></div></div>
+                                <div></div>
+                                <div></div>
+                            </div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
 
                             <div class="form-grid-4">
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.departure"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Cargo Pickup</label><div class="form-input-container"><x-inline-select name="cargo_pickup" :options="$agents" module="trade-partner" x-model="hawb.cargo_pickup" class="form-control-gf" /></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.destination"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Delivery To/Pier</label><div class="form-input-container"><x-inline-select name="delivery_to" :options="$agents" module="trade-partner" x-model="hawb.delivery_to" class="form-control-gf" /></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="hawb.feta"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><x-inline-select name="sales_type" :options="$agents" module="trade-partner" x-model="hawb.sales_type" class="form-control-gf" /></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Cargo Type</label><div class="form-input-container"><select class="form-control-gf" x-model="hawb.cargo_type"><option value="GENERAL CARGO">GENERAL CARGO</option></select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Ship Type</label><div class="form-input-container"><select class="form-control-gf" x-model="hawb.ship_type"><option value="NORMAL">NORMAL</option></select></div></div>
-                                </div>
+                                <!-- Row 1 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.departure"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="hawb.destination"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="hawb.feta"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Cargo Type</label><div class="form-input-container"><select class="form-control-gf" x-model="hawb.cargo_type"><option value="GENERAL CARGO">GENERAL CARGO</option></select></div></div>
+
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Cargo Pickup</label><div class="form-input-container"><x-inline-select name="cargo_pickup" :options="$agents" module="trade-partner" x-model="hawb.cargo_pickup" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Delivery To/Pier</label><div class="form-input-container"><x-inline-select name="delivery_to" :options="$agents" module="trade-partner" x-model="hawb.delivery_to" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><x-inline-select name="sales_type" :options="$agents" module="trade-partner" x-model="hawb.sales_type" class="form-control-gf" /></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Ship Type</label><div class="form-input-container"><select class="form-control-gf" x-model="hawb.ship_type"><option value="NORMAL">NORMAL</option></select></div></div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
                             
                             <div class="form-grid-4">
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf">
-                                        <label class="form-label-gf">Package</label>
-                                        <div class="form-input-container" style="gap:2px;">
-                                            <input type="number" step="any" :name="'hbls[' + index + '][pkg_qty]'" class="form-control-gf" style="width:40%;" x-model="hawb.pkg_qty">
-                                            <select :name="'hbls[' + index + '][pkg_unit_id]'" class="form-control-gf" style="width:60%;" x-model="hawb.pkg_unit_id">
-                                                <option value="">Select...</option>
-                                                @foreach($packageUnits as $unit)
-                                                    <option value="{{ $unit->id }}">{{ $unit->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Buying Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" :name="'hbls[' + index + '][buying_rate]'" class="form-control-gf" style="flex:1;" x-model="hawb.buying_rate"> per <select class="form-control-gf" style="width:50px;"><option>KG</option></select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Selling Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" :name="'hbls[' + index + '][selling_rate]'" class="form-control-gf" style="flex:1;" x-model="hawb.selling_rate"> per <select class="form-control-gf" style="width:50px;"><option>KG</option></select></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf">
-                                        <label class="form-label-gf">Gross Weight (SHPR)</label>
-                                        <div class="form-input-container" style="gap:4px; align-items:center;">
-                                            <input type="number" step="any" :name="'hbls[' + index + '][gross_weight]'" class="form-control-gf" style="flex:1;" x-model="hawb.gross_weight"> <span style="font-size:10px;">KG</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Gross Weight (CNEE)</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">LB</span></div></div>
-                                    <div class="form-group-gf">
-                                        <label class="form-label-gf">Chargeable Weight</label>
-                                        <div class="form-input-container" style="gap:4px; align-items:center;">
-                                            <input type="number" step="any" :name="'hbls[' + index + '][chargeable_weight]'" class="form-control-gf" style="flex:1;" x-model="hawb.chargeable_weight"> <span style="font-size:10px;">KG</span>
-                                        </div>
+                                <!-- Row 1 -->
+                                <div class="form-group-gf">
+                                    <label class="form-label-gf">Package</label>
+                                    <div class="form-input-container" style="gap:2px;">
+                                        <input type="number" step="any" :name="'hbls[' + index + '][pkg_qty]'" class="form-control-gf" style="width:40%;" x-model="hawb.pkg_qty">
+                                        <select :name="'hbls[' + index + '][pkg_unit_id]'" class="form-control-gf" style="width:60%;" x-model="hawb.pkg_unit_id">
+                                            <option value="">Select...</option>
+                                            @foreach($packageUnits as $unit)
+                                                <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                                <div class="form-group-gf">
+                                    <label class="form-label-gf">Gross Weight (SHPR)</label>
+                                    <div class="form-input-container" style="gap:4px; align-items:center;">
+                                        <input type="number" step="any" :name="'hbls[' + index + '][gross_weight]'" class="form-control-gf" style="flex:1;" x-model="hawb.gross_weight"> <span style="font-size:10px;">KG</span>
+                                    </div>
                                 </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Volume Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="number" step="any" :name="'hbls[' + index + '][volume]'" class="form-control-gf" style="flex:1;" x-model="hawb.volume"> <span style="font-size:10px;">CBM</span></div></div>
-                                    <button type="button" class="btn-default-gf" style="margin-bottom:5px;">Set Dimensions</button>
-                                    <button type="button" class="btn-default-gf">Sum Package & Weight</button>
+                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Volume Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="number" step="any" :name="'hbls[' + index + '][volume]'" class="form-control-gf" style="flex:1;" x-model="hawb.volume"> <span style="font-size:10px;">CBM</span></div></div>
+
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Buying Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" :name="'hbls[' + index + '][buying_rate]'" class="form-control-gf" style="flex:1;" x-model="hawb.buying_rate"> per <select class="form-control-gf" style="width:50px;"><option>KG</option></select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Gross Weight (CNEE)</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;"> <span style="font-size:10px;">LB</span></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf"></label><div class="form-input-container"><button type="button" class="btn-default-gf" style="width:100%;">Set Dimensions</button></div></div>
+
+                                <!-- Row 3 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Selling Rate</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" :name="'hbls[' + index + '][selling_rate]'" class="form-control-gf" style="flex:1;" x-model="hawb.selling_rate"> per <select class="form-control-gf" style="width:50px;"><option>KG</option></select></div></div>
+                                <div class="form-group-gf">
+                                    <label class="form-label-gf">Chargeable Weight</label>
+                                    <div class="form-input-container" style="gap:4px; align-items:center;">
+                                        <input type="number" step="any" :name="'hbls[' + index + '][chargeable_weight]'" class="form-control-gf" style="flex:1;" x-model="hawb.chargeable_weight"> <span style="font-size:10px;">KG</span>
+                                    </div>
                                 </div>
+                                <div class="form-group-gf"><label class="form-label-gf">Amount</label><div class="form-input-container"><input type="text" class="form-control-gf" style="text-align:right;"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf"></label><div class="form-input-container"><button type="button" class="btn-default-gf" style="width:100%;">Sum Package & Weight</button></div></div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
@@ -2048,11 +1920,11 @@
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
 
                             <div class="form-grid-4" style="grid-template-columns: repeat(2, 1fr);">
-                                <div class="flex flex-col">
+                                <div>
                                     <h4 style="font-size: 11px; font-weight: 600; margin: 0 0 5px 0; color: #333;">Mark</h4>
                                     <textarea class="form-control-gf" style="height: 60px !important; resize: vertical; padding:5px;" x-model="hawb.mark"></textarea>
                                 </div>
-                                <div class="flex flex-col">
+                                <div>
                                     <h4 style="font-size: 11px; font-weight: 600; margin: 0 0 5px 0; color: #333;">Description</h4>
                                     <textarea class="form-control-gf" style="height: 60px !important; resize: vertical; padding:5px;" x-model="hawb.description"></textarea>
                                 </div>

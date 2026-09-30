@@ -946,24 +946,26 @@
             </div>
         </div>
 
-        <!-- Main Tabs + Tools Dropdown -->
-        <div style="display:flex;align-items:stretch;border-bottom:2px solid #e2e8f0;margin-bottom:12px;">
-            <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;flex:1;display:flex;">
+        <!-- Main Tabs + Tools Tabs -->
+        <div style="display:flex;align-items:stretch;border-bottom:2px solid #e5e7eb;margin-bottom:12px;width:100%;">
+            <!-- Sticky Main Tabs (Fixed on left) -->
+            <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;display:flex;flex-shrink:0;">
                 <li :class="activeTab === 'basic' ? 'active' : ''" @click="activeTab = 'basic'"><a>Main</a></li>
                 <li :class="[activeTab === 'charges' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'charges' : null"><a>Charges</a></li>
                 <li :class="[activeTab === 'history' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'history' : null"><a>History</a></li>
                 <li :class="[activeTab === 'filing' ? 'active' : '', !saved ? 'disabled-tab' : '']" @click="saved ? activeTab = 'filing' : null"><a>Filing</a></li>
             </ul>
-            <!-- Tools Dropdown -->
-            <div x-data="{ toolsOpen: false }" style="position:relative;display:flex;align-items:center;padding:0 8px;" @click.away="toolsOpen = false">
-                <button type="button" @click="toolsOpen = !toolsOpen" class="btn-default-gf" style="height:26px;">
-                    <i class="fa fa-cogs" style="color:#6b7280;"></i> Tools <i class="fa fa-angle-down" style="font-size:10px;color:#9ca3af;" :style="toolsOpen ? 'transform:rotate(180deg)' : ''"></i>
-                </button>
-                <div x-show="toolsOpen" x-cloak style="position:absolute;right:8px;top:calc(100% + 4px);background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:9999;min-width:200px;padding:6px 0;">
-                    <button type="button" class="oi-tools-item" @click="toolsOpen = false; openTrackTrace()">
-                        <i class="fa fa-map-marker" style="color:#6366f1;width:16px;"></i> Open in Track-Trace
-                    </button>
-                </div>
+
+            <!-- Divider -->
+            <div style="display:flex;align-items:center;padding:0 4px;flex-shrink:0;">
+                <span style="border-left:2px solid #e5e7eb;height:20px;display:inline-block;"></span>
+            </div>
+
+            <!-- Tools Options (Scrollable) -->
+            <div style="flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none;-ms-overflow-style:none;">
+                <ul class="gf-tabs" style="border-bottom:none;margin-bottom:0;display:flex;white-space:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;">
+                    <li :class="!saved ? 'disabled-tab' : ''" @click="saved ? openTrackTrace() : null"><a>Track-Trace</a></li>
+                </ul>
             </div>
         </div>
 
@@ -1014,60 +1016,57 @@
                             </div>
                         </div>
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">File No.</label><div class="form-input-container"><input type="text" name="file_no" class="form-control-gf" value="{{ $airImport->file_no ?? 'MAI-'.date('ymd').'-'.str_pad((\App\Models\AirImport::max('id') ?? 0) + 1, 4, '0', STR_PAD_LEFT) }}" readonly style="background:#f5f5f5;"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Post Date</label><div class="form-input-container"><input type="date" name="post_date" class="form-control-gf" value="{{ $airImport->post_date ?? date('Y-m-d') }}" readonly style="background:#f5f5f5;"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Co-loader</label><div class="form-input-container"><select name="coloader_id" class="form-control-gf"><option value="">Select...</option>@foreach($coloaders as $cl)<option value="{{ $cl->id }}" {{ (isset($airImport) && $airImport->coloader_id == $cl->id) ? 'selected' : '' }}>{{ $cl->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Direct Master</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" name="is_direct_master" value="1" {{ (isset($airImport) && $airImport->is_direct_master) ? 'checked' : '' }} x-model="isDirectMaster"></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Customer</label><div class="form-input-container"><select name="dm_customer_id" class="form-control-gf"><option value="">Select...</option>@foreach($customers as $customer)<option value="{{ $customer->id }}" {{ (isset($airImport) && $airImport->dm_customer_id == $customer->id) ? 'selected' : '' }}>{{ $customer->name }}</option>@endforeach</select></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*MAWB No.</label><div class="form-input-container"><input type="text" name="mawb_no" class="form-control-gf" value="{{ $airImport->mawb_no ?? '' }}" required></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><select name="oversea_agent_id" class="form-control-gf"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->oversea_agent_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" name="op_name" class="form-control-gf" value="{{ isset($airImport) ? ($airImport->operator->name ?? auth()->user()->name) : auth()->user()->name }}" readonly style="background:#f5f5f5;"><input type="hidden" name="op_id" value="{{ isset($airImport) ? ($airImport->op_id ?? auth()->id()) : auth()->id() }}"></div></div>
-                                <div class="form-group-gf" x-show="!isDirectMaster" x-cloak style="height: 19px;"></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Shipper</label><div class="form-input-container"><select name="dm_shipper_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_shipper_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*Office</label><div class="form-input-container"><select name="office_id" class="form-control-gf" required><option value="">Select Office...</option>@foreach($offices as $office)<option value="{{ $office->id }}" {{ (isset($airImport) && $airImport->office_id == $office->id) ? 'selected' : '' }}>{{ $office->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Carrier</label><div class="form-input-container"><select name="carrier_id" class="form-control-gf"><option value="">Select...</option>@foreach($carriers as $carrier)<option value="{{ $carrier->id }}" {{ (isset($airImport) && $airImport->carrier_id == $carrier->id) ? 'selected' : '' }}>{{ $carrier->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf" x-show="!isDirectMaster" x-cloak style="height: 19px;"></div>
-                                <div class="form-group-gf" x-show="!isDirectMaster" x-cloak style="height: 19px;"></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Consignee</label><div class="form-input-container"><select name="dm_consignee_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_consignee_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Notify</label><div class="form-input-container"><select name="dm_notify_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_notify_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Type</label><div class="form-input-container"><select name="awb_type" class="form-control-gf"><option value="NORMAL" {{ (isset($airImport) && $airImport->awb_type == 'NORMAL') ? 'selected' : 'selected' }}>NORMAL</option><option value="DIRECT" {{ (isset($airImport) && $airImport->awb_type == 'DIRECT') ? 'selected' : '' }}>DIRECT</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">AWB Acct. Carrier</label><div class="form-input-container"><select name="acct_carrier_id" class="form-control-gf"><option value="">Select...</option>@foreach($carriers as $carrier)<option value="{{ $carrier->id }}" {{ (isset($airImport) && $airImport->acct_carrier_id == $carrier->id) ? 'selected' : '' }}>{{ $carrier->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf" x-show="!isDirectMaster" x-cloak style="height: 19px;"></div>
-                                <div class="form-group-gf" x-show="!isDirectMaster" x-cloak style="height: 19px;"></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Bill To</label><div class="form-input-container"><select name="dm_bill_to_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_bill_to_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Sales</label><div class="form-input-container"><select name="dm_sales_person_id" class="form-control-gf"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}" {{ (isset($airImport) && $airImport->dm_sales_person_id == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select name="dm_sales_type" class="form-control-gf"><option value="">Select...</option><option value="NOMINATED" {{ (isset($airImport) && $airImport->dm_sales_type == 'NOMINATED') ? 'selected' : '' }}>NOMINATED</option><option value="FREE HAND" {{ (isset($airImport) && $airImport->dm_sales_type == 'FREE HAND') ? 'selected' : '' }}>FREE HAND</option><option value="DIRECT" {{ (isset($airImport) && $airImport->dm_sales_type == 'DIRECT') ? 'selected' : '' }}>DIRECT</option></select></div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">File No.</label><div class="form-input-container"><input type="text" name="file_no" class="form-control-gf" value="{{ $airImport->file_no ?? 'MAI-'.date('ymd').'-'.str_pad((\App\Models\AirImport::max('id') ?? 0) + 1, 4, '0', STR_PAD_LEFT) }}" readonly style="background:#f5f5f5;"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*MAWB No.</label><div class="form-input-container"><input type="text" name="mawb_no" class="form-control-gf" value="{{ $airImport->mawb_no ?? '' }}" required></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*Office</label><div class="form-input-container"><select name="office_id" class="form-control-gf" required><option value="">Select Office...</option>@foreach($offices as $office)<option value="{{ $office->id }}" {{ (isset($airImport) && $airImport->office_id == $office->id) ? 'selected' : '' }}>{{ $office->code }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Type</label><div class="form-input-container"><select name="awb_type" class="form-control-gf"><option value="NORMAL" {{ (isset($airImport) && $airImport->awb_type == 'NORMAL') ? 'selected' : 'selected' }}>NORMAL</option><option value="DIRECT" {{ (isset($airImport) && $airImport->awb_type == 'DIRECT') ? 'selected' : '' }}>DIRECT</option></select></div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Post Date</label><div class="form-input-container"><input type="date" name="post_date" class="form-control-gf" value="{{ $airImport->post_date ?? date('Y-m-d') }}" readonly style="background:#f5f5f5;"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><select name="oversea_agent_id" class="form-control-gf"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->oversea_agent_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Carrier</label><div class="form-input-container"><select name="carrier_id" class="form-control-gf"><option value="">Select...</option>@foreach($carriers as $carrier)<option value="{{ $carrier->id }}" {{ (isset($airImport) && $airImport->carrier_id == $carrier->id) ? 'selected' : '' }}>{{ $carrier->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AWB Acct. Carrier</label><div class="form-input-container"><select name="acct_carrier_id" class="form-control-gf"><option value="">Select...</option>@foreach($carriers as $carrier)<option value="{{ $carrier->id }}" {{ (isset($airImport) && $airImport->acct_carrier_id == $carrier->id) ? 'selected' : '' }}>{{ $carrier->name }}</option>@endforeach</select></div></div>
+
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Co-loader</label><div class="form-input-container"><select name="coloader_id" class="form-control-gf"><option value="">Select...</option>@foreach($coloaders as $cl)<option value="{{ $cl->id }}" {{ (isset($airImport) && $airImport->coloader_id == $cl->id) ? 'selected' : '' }}>{{ $cl->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" name="op_name" class="form-control-gf" value="{{ isset($airImport) ? ($airImport->operator->name ?? auth()->user()->name) : auth()->user()->name }}" readonly style="background:#f5f5f5;"><input type="hidden" name="op_id" value="{{ isset($airImport) ? ($airImport->op_id ?? auth()->id()) : auth()->id() }}"></div></div>
+                            <div></div>
+                            <div></div>
+
+                            <!-- Row 4 (Direct Master) -->
+                            <div class="form-group-gf"><label class="form-label-gf">Direct Master</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" name="is_direct_master" value="1" {{ (isset($airImport) && $airImport->is_direct_master) ? 'checked' : '' }} x-model="isDirectMaster"></div></div>
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Customer</label><div class="form-input-container"><select name="dm_customer_id" class="form-control-gf"><option value="">Select...</option>@foreach($customers as $customer)<option value="{{ $customer->id }}" {{ (isset($airImport) && $airImport->dm_customer_id == $customer->id) ? 'selected' : '' }}>{{ $customer->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Shipper</label><div class="form-input-container"><select name="dm_shipper_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_shipper_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Consignee</label><div class="form-input-container"><select name="dm_consignee_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_consignee_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+
+                            <!-- Row 5 (Direct Master) -->
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Notify</label><div class="form-input-container"><select name="dm_notify_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_notify_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Bill To</label><div class="form-input-container"><select name="dm_bill_to_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->dm_bill_to_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Sales</label><div class="form-input-container"><select name="dm_sales_person_id" class="form-control-gf"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}" {{ (isset($airImport) && $airImport->dm_sales_person_id == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf" x-show="isDirectMaster" x-cloak><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select name="dm_sales_type" class="form-control-gf"><option value="">Select...</option><option value="NOMINATED" {{ (isset($airImport) && $airImport->dm_sales_type == 'NOMINATED') ? 'selected' : '' }}>NOMINATED</option><option value="FREE HAND" {{ (isset($airImport) && $airImport->dm_sales_type == 'FREE HAND') ? 'selected' : '' }}>FREE HAND</option><option value="DIRECT" {{ (isset($airImport) && $airImport->dm_sales_type == 'DIRECT') ? 'selected' : '' }}>DIRECT</option></select></div></div>
                         </div>
 
                         <div style="height: 15px;"></div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container"><select name="dep_port_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->dep_port_id == $port->id) ? 'selected' : '' }}>{{ $port->code }} - {{ $port->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ETD</label><div class="form-input-container"><input type="datetime-local" name="etd" class="form-control-gf" value="{{ isset($airImport) && $airImport->etd ? $airImport->etd->format('Y-m-d\TH:i') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Freight Location</label><div class="form-input-container"><select name="freight_location_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->freight_location_id == $port->id) ? 'selected' : '' }}>{{ $port->name }}</option>@endforeach</select></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container"><select name="dst_port_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->dst_port_id == $port->id) ? 'selected' : '' }}>{{ $port->code }} - {{ $port->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ATD</label><div class="form-input-container"><input type="datetime-local" name="atd" class="form-control-gf" value="{{ isset($airImport) && $airImport->atd ? $airImport->atd->format('Y-m-d\TH:i') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Storage Start Date</label><div class="form-input-container"><input type="date" name="storage_start_date" class="form-control-gf" value="{{ $airImport->storage_start_date ?? '' }}"></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Flight No.</label><div class="form-input-container"><input type="text" name="flight_no" class="form-control-gf" value="{{ $airImport->flight_no ?? '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*ETA</label><div class="form-input-container"><input type="datetime-local" name="eta" class="form-control-gf" value="{{ isset($airImport) && $airImport->eta ? $airImport->eta->format('Y-m-d\TH:i') : '' }}" required></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Connecting Flight</label><div class="form-input-container"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="showConnectingFlight = !showConnectingFlight">Expand <i class="fa" :class="showConnectingFlight ? 'fa-minus-square-o' : 'fa-plus-square-o'"></i></button></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ATA</label><div class="form-input-container"><input type="datetime-local" name="ata" class="form-control-gf" value="{{ isset($airImport) && $airImport->ata ? $airImport->ata->format('Y-m-d\TH:i') : '' }}"></div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container"><select name="dep_port_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->dep_port_id == $port->id) ? 'selected' : '' }}>{{ $port->code }} - {{ $port->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container"><select name="dst_port_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->dst_port_id == $port->id) ? 'selected' : '' }}>{{ $port->code }} - {{ $port->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Flight No.</label><div class="form-input-container"><input type="text" name="flight_no" class="form-control-gf" value="{{ $airImport->flight_no ?? '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Connecting Flight</label><div class="form-input-container"><button type="button" class="btn-default-gf" style="height:18px; padding:0 4px;" @click="showConnectingFlight = !showConnectingFlight">Expand <i class="fa" :class="showConnectingFlight ? 'fa-minus-square-o' : 'fa-plus-square-o'"></i></button></div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">ETD</label><div class="form-input-container"><input type="datetime-local" name="etd" class="form-control-gf" value="{{ isset($airImport) && $airImport->etd ? $airImport->etd->format('Y-m-d\TH:i') : '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ATD</label><div class="form-input-container"><input type="datetime-local" name="atd" class="form-control-gf" value="{{ isset($airImport) && $airImport->atd ? $airImport->atd->format('Y-m-d\TH:i') : '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*ETA</label><div class="form-input-container"><input type="datetime-local" name="eta" class="form-control-gf" value="{{ isset($airImport) && $airImport->eta ? $airImport->eta->format('Y-m-d\TH:i') : '' }}" required></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ATA</label><div class="form-input-container"><input type="datetime-local" name="ata" class="form-control-gf" value="{{ isset($airImport) && $airImport->ata ? $airImport->ata->format('Y-m-d\TH:i') : '' }}"></div></div>
+
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Freight Location</label><div class="form-input-container"><select name="freight_location_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->freight_location_id == $port->id) ? 'selected' : '' }}>{{ $port->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Storage Start Date</label><div class="form-input-container"><input type="date" name="storage_start_date" class="form-control-gf" value="{{ $airImport->storage_start_date ?? '' }}"></div></div>
+                            <div></div>
+                            <div></div>
                         </div>
 
                         <!-- Connecting Flight Route Table -->
@@ -1261,60 +1260,57 @@
                         <div style="height: 15px;"></div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Package</label>
-                                    <div class="form-input-container" style="gap: 2px;">
-                                        <input type="number" name="pkg_qty" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->pkg_qty ?? '' }}" step="1" min="0">
-                                        <select name="pkg_unit_id" class="form-control-gf" style="flex:1; min-width:0;"><option value="">Select...</option>@foreach($packageUnits as $unit)<option value="{{ $unit->id }}" {{ (isset($airImport) && $airImport->pkg_unit_id == $unit->id) ? 'selected' : '' }}>{{ $unit->name }}</option>@endforeach</select>
-                                    </div>
-                                </div>
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Gross Weight</label>
-                                    <div class="form-input-container" style="gap: 4px; align-items:center;">
-                                        <input type="number" name="gross_weight_kg" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->gross_weight_kg ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">KG</span>
-                                        <input type="number" name="gross_weight_lb" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->gross_weight_lb ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">LB</span>
-                                    </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf">
+                                <label class="form-label-gf">Package</label>
+                                <div class="form-input-container" style="gap: 2px;">
+                                    <input type="number" name="pkg_qty" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->pkg_qty ?? '' }}" step="1" min="0">
+                                    <select name="pkg_unit_id" class="form-control-gf" style="flex:1; min-width:0;"><option value="">Select...</option>@foreach($packageUnits as $unit)<option value="{{ $unit->id }}" {{ (isset($airImport) && $airImport->pkg_unit_id == $unit->id) ? 'selected' : '' }}>{{ $unit->name }}</option>@endforeach</select>
                                 </div>
                             </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Chargeable Weight</label>
-                                    <div class="form-input-container" style="gap: 4px; align-items:center;">
-                                        <input type="number" name="chargeable_weight_kg" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->chargeable_weight_kg ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">KG</span>
-                                        <input type="number" name="chargeable_weight_lb" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->chargeable_weight_lb ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">LB</span>
-                                    </div>
+                            <div class="form-group-gf">
+                                <label class="form-label-gf">Chargeable Weight</label>
+                                <div class="form-input-container" style="gap: 4px; align-items:center;">
+                                    <input type="number" name="chargeable_weight_kg" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->chargeable_weight_kg ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">KG</span>
+                                    <input type="number" name="chargeable_weight_lb" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->chargeable_weight_lb ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">LB</span>
                                 </div>
                             </div>
-                            <div class="flex flex-col" style="grid-column: span 2;">
-                                <div style="height: 20px; margin-bottom: 1px;"></div>
-                                <div class="form-group-gf">
-                                    <label class="form-label-gf">Volume Weight</label>
-                                    <div class="form-input-container" style="gap: 8px; align-items:center;">
-                                        <button type="button" @click="console.log('🔴 Button clicked!'); openDimensionsModal()" class="btn-tool" style="background:#5c9bd1; border:none; padding:2px 8px; flex-shrink:0;">Set Dimensions</button>
-                                        <input type="number" name="volume_weight_kg" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->volume_weight_kg ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">KG</span>
-                                        <input type="number" name="volume_cbm" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->volume_cbm ?? '' }}" step="0.001" min="0"> <span style="font-size:10px; color:#555;">CBM</span>
-                                    </div>
+                            <div class="form-group-gf" style="grid-column: span 2;">
+                                <label class="form-label-gf">Volume Weight</label>
+                                <div class="form-input-container" style="gap: 8px; align-items:center;">
+                                    <button type="button" @click="console.log('🔴 Button clicked!'); openDimensionsModal()" class="btn-tool" style="background:#5c9bd1; border:none; padding:2px 8px; flex-shrink:0;">Set Dimensions</button>
+                                    <input type="number" name="volume_weight_kg" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->volume_weight_kg ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">KG</span>
+                                    <input type="number" name="volume_cbm" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->volume_cbm ?? '' }}" step="0.001" min="0"> <span style="font-size:10px; color:#555;">CBM</span>
                                 </div>
                             </div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf">
+                                <label class="form-label-gf">Gross Weight</label>
+                                <div class="form-input-container" style="gap: 4px; align-items:center;">
+                                    <input type="number" name="gross_weight_kg" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->gross_weight_kg ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">KG</span>
+                                    <input type="number" name="gross_weight_lb" class="form-control-gf" style="flex:1; min-width:0;" value="{{ $airImport->gross_weight_lb ?? '' }}" step="0.01" min="0"> <span style="font-size:10px; color:#555;">LB</span>
+                                </div>
+                            </div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
                         </div>
 
                         <div style="height: 15px;"></div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select name="freight_term" class="form-control-gf"><option value="">Select...</option><option value="PREPAID" {{ (isset($airImport) && $airImport->freight_term == 'PREPAID') ? 'selected' : '' }}>PREPAID</option><option value="COLLECT" {{ (isset($airImport) && $airImport->freight_term == 'COLLECT') ? 'selected' : '' }}>COLLECT</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Business Referred By</label><div class="form-input-container"><select name="referred_by_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->referred_by_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><select name="incoterm_id" class="form-control-gf"><option value="">Select...</option>@foreach($incoterms as $inco)<option value="{{ $inco->id }}" {{ (isset($airImport) && $airImport->incoterm_id == $inco->id) ? 'selected' : '' }}>{{ $inco->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Stackable</label><div class="form-input-container" style="font-size:10px; gap:4px; justify-content: flex-start; align-items:center;"><input type="radio" name="stackable" value="1" {{ (isset($airImport) && $airImport->stackable == 1) ? 'checked' : 'checked' }}> Yes <input type="radio" name="stackable" value="0" {{ (isset($airImport) && $airImport->stackable == 0) ? 'checked' : '' }}> No</div></div>
-                            </div>
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select name="svc_term_from_id" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}" {{ (isset($airImport) && $airImport->svc_term_from_id == $term->id) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select><span class="mx-1">~</span><select name="svc_term_to_id" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}" {{ (isset($airImport) && $airImport->svc_term_to_id == $term->id) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Cargo Type</label><div class="form-input-container"><select name="cargo_type" class="form-control-gf"><option value="">Select...</option><option value="GENERAL CARGO" {{ (isset($airImport) && $airImport->cargo_type == 'GENERAL CARGO') ? 'selected' : '' }}>GENERAL CARGO</option><option value="DANGEROUS GOODS" {{ (isset($airImport) && $airImport->cargo_type == 'DANGEROUS GOODS') ? 'selected' : '' }}>DANGEROUS GOODS</option><option value="PERISHABLE" {{ (isset($airImport) && $airImport->cargo_type == 'PERISHABLE') ? 'selected' : '' }}>PERISHABLE</option></select></div></div>
-                            </div>
-                            <div class="flex flex-col"></div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select name="freight_term" class="form-control-gf"><option value="">Select...</option><option value="PREPAID" {{ (isset($airImport) && $airImport->freight_term == 'PREPAID') ? 'selected' : '' }}>PREPAID</option><option value="COLLECT" {{ (isset($airImport) && $airImport->freight_term == 'COLLECT') ? 'selected' : '' }}>COLLECT</option></select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><select name="incoterm_id" class="form-control-gf"><option value="">Select...</option>@foreach($incoterms as $inco)<option value="{{ $inco->id }}" {{ (isset($airImport) && $airImport->incoterm_id == $inco->id) ? 'selected' : '' }}>{{ $inco->code }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select name="svc_term_from_id" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}" {{ (isset($airImport) && $airImport->svc_term_from_id == $term->id) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select><span class="mx-1">~</span><select name="svc_term_to_id" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}" {{ (isset($airImport) && $airImport->svc_term_to_id == $term->id) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select></div></div>
+                            <div></div>
+
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Business Referred By</label><div class="form-input-container"><select name="referred_by_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->referred_by_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Stackable</label><div class="form-input-container" style="font-size:10px; gap:4px; justify-content: flex-start; align-items:center;"><input type="radio" name="stackable" value="1" {{ (isset($airImport) && $airImport->stackable == 1) ? 'checked' : 'checked' }}> Yes <input type="radio" name="stackable" value="0" {{ (isset($airImport) && $airImport->stackable == 0) ? 'checked' : '' }}> No</div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Cargo Type</label><div class="form-input-container"><select name="cargo_type" class="form-control-gf"><option value="">Select...</option><option value="GENERAL CARGO" {{ (isset($airImport) && $airImport->cargo_type == 'GENERAL CARGO') ? 'selected' : '' }}>GENERAL CARGO</option><option value="DANGEROUS GOODS" {{ (isset($airImport) && $airImport->cargo_type == 'DANGEROUS GOODS') ? 'selected' : '' }}>DANGEROUS GOODS</option><option value="PERISHABLE" {{ (isset($airImport) && $airImport->cargo_type == 'PERISHABLE') ? 'selected' : '' }}>PERISHABLE</option></select></div></div>
+                            <div></div>
                         </div>
 
                         <div style="height: 5px;"></div>
@@ -1325,12 +1321,11 @@
                         </div>
 
                         <div class="form-grid-4" x-show="showMore">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">E-Commerce</label><div class="form-input-container" style="justify-content: flex-start; align-items:center;"><input type="checkbox" name="is_ecommerce" value="1" {{ (isset($airImport) && $airImport->is_ecommerce) ? 'checked' : '' }} style="width: 14px; height: 14px;"></div></div>
-                            </div>
-                            <div class="flex flex-col"></div>
-                            <div class="flex flex-col"></div>
-                            <div class="flex flex-col"></div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">E-Commerce</label><div class="form-input-container" style="justify-content: flex-start; align-items:center;"><input type="checkbox" name="is_ecommerce" value="1" {{ (isset($airImport) && $airImport->is_ecommerce) ? 'checked' : '' }} style="width: 14px; height: 14px;"></div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
                         </div>
 
                         <div style="display: flex; justify-content: flex-end; margin-top: 15px; margin-bottom: 5px; align-items: center; gap: 10px;">
@@ -1389,92 +1384,82 @@
                             </div>
 
                             <div class="form-grid-4">
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*HAWB No.</label><div class="form-input-container"><input type="text" class="form-control-gf" name="hbl_no" x-model="hawb.hbl_no"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><select class="form-control-gf" name="shipper_id" x-model="hawb.shipper_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-edit"></i></button><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><select class="form-control-gf" name="bill_to_id" x-model="hawb.bill_to_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Quotation No.</label><div class="form-input-container"><select class="form-control-gf" disabled style="background:#eee;"><option value="">Select...</option></select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><select class="form-control-gf" name="consignee_id" x-model="hawb.consignee_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-edit"></i></button><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Customs Broker</label><div class="form-input-container"><select class="form-control-gf" name="customs_broker_id" x-model="hawb.customs_broker_id"><option value="">Select...</option>@foreach($brokers as $broker)<option value="{{ $broker->id }}">{{ $broker->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">HSN</label><div class="form-input-container"><input type="text" class="form-control-gf" name="hsn" x-model="hawb.hsn"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><select class="form-control-gf" name="notify_id" x-model="hawb.notify_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-edit"></i></button><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container"><select class="form-control-gf" name="sales_person_id" x-model="hawb.sales_person_id"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div style="height: 21px;"></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container"><select class="form-control-gf" name="customer_id" x-model="hawb.customer_id"><option value="">Select...</option>@foreach($customers as $customer)<option value="{{ $customer->id }}">{{ $customer->name }}</option>@endforeach</select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" value="{{ auth()->user()->name ?? 'DEMO_USER' }}" disabled style="background:#eee;"></div></div>
-                                </div>
+                                <!-- Row 1 -->
+                                <div class="form-group-gf"><label class="form-label-gf" style="color:red;">*HAWB No.</label><div class="form-input-container"><input type="text" class="form-control-gf" name="hbl_no" x-model="hawb.hbl_no"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Quotation No.</label><div class="form-input-container"><select class="form-control-gf" disabled style="background:#eee;"><option value="">Select...</option></select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">HSN</label><div class="form-input-container"><input type="text" class="form-control-gf" name="hsn" x-model="hawb.hsn"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container"><select class="form-control-gf" name="customer_id" x-model="hawb.customer_id"><option value="">Select...</option>@foreach($customers as $customer)<option value="{{ $customer->id }}">{{ $customer->name }}</option>@endforeach</select></div></div>
+
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><select class="form-control-gf" name="shipper_id" x-model="hawb.shipper_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-edit"></i></button><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><select class="form-control-gf" name="consignee_id" x-model="hawb.consignee_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-edit"></i></button><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><select class="form-control-gf" name="notify_id" x-model="hawb.notify_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-edit"></i></button><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" value="{{ auth()->user()->name ?? 'DEMO_USER' }}" disabled style="background:#eee;"></div></div>
+
+                                <!-- Row 3 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><select class="form-control-gf" name="bill_to_id" x-model="hawb.bill_to_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Customs Broker</label><div class="form-input-container"><select class="form-control-gf" name="customs_broker_id" x-model="hawb.customs_broker_id"><option value="">Select...</option>@foreach($brokers as $broker)<option value="{{ $broker->id }}">{{ $broker->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container"><select class="form-control-gf" name="sales_person_id" x-model="hawb.sales_person_id"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
+                                <div></div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
 
                             <div class="form-grid-4">
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Freight Location</label><div class="form-input-container"><select class="form-control-gf" name="freight_location_id" x-model="hawb.freight_location_id"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Trucker</label><div class="form-input-container"><select class="form-control-gf" name="trucker_id" x-model="hawb.trucker_id"><option value="">Select...</option>@foreach($truckers as $trucker)<option value="{{ $trucker->id }}">{{ $trucker->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Final Destination</label><div class="form-input-container"><select class="form-control-gf" name="final_destination_id" x-model="hawb.final_destination_id"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Last Free Day</label><div class="form-input-container"><input type="date" class="form-control-gf" name="last_free_day" x-model="hawb.last_free_day"></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" class="form-control-gf" name="final_eta" x-model="hawb.final_eta"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Storage Start Date</label><div class="form-input-container"><input type="date" class="form-control-gf" name="storage_start_date" x-model="hawb.storage_start_date"></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Delivery Location</label><div class="form-input-container"><select class="form-control-gf" name="delivery_location_id" x-model="hawb.delivery_location_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select class="form-control-gf" name="freight_term" x-model="hawb.freight_term"><option value="">Select...</option><option value="COLLECT">COLLECT</option><option value="PREPAID">PREPAID</option></select></div></div>
-                                </div>
+                                <!-- Row 1 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Freight Location</label><div class="form-input-container"><select class="form-control-gf" name="freight_location_id" x-model="hawb.freight_location_id"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Final Destination</label><div class="form-input-container"><select class="form-control-gf" name="final_destination_id" x-model="hawb.final_destination_id"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}">{{ $port->name }}</option>@endforeach</select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" class="form-control-gf" name="final_eta" x-model="hawb.final_eta"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Delivery Location</label><div class="form-input-container"><select class="form-control-gf" name="delivery_location_id" x-model="hawb.delivery_location_id"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}">{{ $agent->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Trucker</label><div class="form-input-container"><select class="form-control-gf" name="trucker_id" x-model="hawb.trucker_id"><option value="">Select...</option>@foreach($truckers as $trucker)<option value="{{ $trucker->id }}">{{ $trucker->name }}</option>@endforeach</select><button type="button" class="btn-default-gf" style="height:20px; padding:0 4px;"><i class="fa fa-external-link-square"></i></button></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Last Free Day</label><div class="form-input-container"><input type="date" class="form-control-gf" name="last_free_day" x-model="hawb.last_free_day"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Storage Start Date</label><div class="form-input-container"><input type="date" class="form-control-gf" name="storage_start_date" x-model="hawb.storage_start_date"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select class="form-control-gf" name="freight_term" x-model="hawb.freight_term"><option value="">Select...</option><option value="COLLECT">COLLECT</option><option value="PREPAID">PREPAID</option></select></div></div>
                             </div>
                             <div class="form-grid-4">
-                                <div class="flex flex-col"><div class="form-group-gf"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select class="form-control-gf" name="sales_type" x-model="hawb.sales_type"><option value="">Select...</option><option value="CO-LOAD">CO-LOAD</option><option value="FREE CARGO">FREE CARGO</option><option value="NOMI">NOMI</option></select></div></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select class="form-control-gf" name="sales_type" x-model="hawb.sales_type"><option value="">Select...</option><option value="CO-LOAD">CO-LOAD</option><option value="FREE CARGO">FREE CARGO</option><option value="NOMI">NOMI</option></select></div></div>
+                                <div></div>
+                                <div></div>
+                                <div></div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
 
                             <div class="form-grid-4">
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Package</label><div class="form-input-container" style="gap:2px;"><input type="text" class="form-control-gf" style="width:40%;" name="pkg_qty" x-model="hawb.pkg_qty"><select class="form-control-gf" style="width:60%;" name="pkg_unit_id" x-model="hawb.pkg_unit_id"><option value="">Select...</option>@foreach($packageUnits as $unit)<option value="{{ $unit->id }}">{{ $unit->name }}</option>@endforeach</select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Gross Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;" name="gross_weight_kg" x-model="hawb.gross_weight_kg"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;" name="gross_weight_lb" x-model="hawb.gross_weight_lb"> <span style="font-size:10px;">LB</span></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div style="height: 21px;"></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Chargeable Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;" name="chargeable_weight_kg" x-model="hawb.chargeable_weight_kg"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;" name="chargeable_weight_lb" x-model="hawb.chargeable_weight_lb"> <span style="font-size:10px;">LB</span></div></div>
-                                </div>
-                                <div class="flex flex-col" style="grid-column: span 2;">
-                                    <div style="height: 21px;"></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Volume Weight</label><div class="form-input-container" style="gap:8px; align-items:center;"><button type="button" class="btn-tool" style="background:#5c9bd1; border:none; padding:2px 8px; flex-shrink:0;" @click="openDimensionsModal()">Set Dimensions</button><input type="text" class="form-control-gf" style="flex:1;" name="volume_weight_kg" x-model="hawb.volume_weight_kg"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;" name="volume_cbm" x-model="hawb.volume_cbm"> <span style="font-size:10px;">CBM</span></div></div>
-                                </div>
+                                <!-- Row 1 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Package</label><div class="form-input-container" style="gap:2px;"><input type="text" class="form-control-gf" style="width:40%;" name="pkg_qty" x-model="hawb.pkg_qty"><select class="form-control-gf" style="width:60%;" name="pkg_unit_id" x-model="hawb.pkg_unit_id"><option value="">Select...</option>@foreach($packageUnits as $unit)<option value="{{ $unit->id }}">{{ $unit->name }}</option>@endforeach</select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Chargeable Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;" name="chargeable_weight_kg" x-model="hawb.chargeable_weight_kg"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;" name="chargeable_weight_lb" x-model="hawb.chargeable_weight_lb"> <span style="font-size:10px;">LB</span></div></div>
+                                <div class="form-group-gf" style="grid-column: span 2;"><label class="form-label-gf">Volume Weight</label><div class="form-input-container" style="gap:8px; align-items:center;"><button type="button" class="btn-tool" style="background:#5c9bd1; border:none; padding:2px 8px; flex-shrink:0;" @click="openDimensionsModal()">Set Dimensions</button><input type="text" class="form-control-gf" style="flex:1;" name="volume_weight_kg" x-model="hawb.volume_weight_kg"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;" name="volume_cbm" x-model="hawb.volume_cbm"> <span style="font-size:10px;">CBM</span></div></div>
+
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Gross Weight</label><div class="form-input-container" style="gap:4px; align-items:center;"><input type="text" class="form-control-gf" style="flex:1;" name="gross_weight_kg" x-model="hawb.gross_weight_kg"> <span style="font-size:10px;">KG</span> <input type="text" class="form-control-gf" style="flex:1;" name="gross_weight_lb" x-model="hawb.gross_weight_lb"> <span style="font-size:10px;">LB</span></div></div>
+                                <div></div>
+                                <div></div>
+                                <div></div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
 
                             <div class="form-grid-4">
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Entry No.</label><div class="form-input-container"><input type="text" class="form-control-gf" name="entry_no" x-model="hawb.entry_no"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Released By</label><div class="form-input-container"><select class="form-control-gf" disabled name="released_by_id" x-model="hawb.released_by_id"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Door Delivered</label><div class="form-input-container"><input type="date" class="form-control-gf" name="door_delivered_date" x-model="hawb.door_delivered_date"></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Class of Entry</label><div class="form-input-container"><input type="text" class="form-control-gf" name="class_of_entry" x-model="hawb.class_of_entry"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Cargo Released To</label><div class="form-input-container"><input type="text" class="form-control-gf" name="cargo_released_to" x-model="hawb.cargo_released_to"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Ship Type</label><div class="form-input-container"><select class="form-control-gf" name="ship_type" x-model="hawb.ship_type"><option value="">Select...</option><option value="NORMAL">NORMAL</option><option value="S/W">S/W</option><option value="T/S">T/S</option></select></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div class="form-group-gf"><label class="form-label-gf">Frt. Released</label><div class="form-input-container" style="gap:5px; align-items:center;"><input type="checkbox" name="frt_released" x-model="hawb.frt_released"> <input type="date" class="form-control-gf" disabled name="frt_released_date" x-model="hawb.frt_released_date"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">C. Released Date</label><div class="form-input-container"><input type="date" class="form-control-gf" name="c_released_date" x-model="hawb.c_released_date"></div></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><select class="form-control-gf" name="incoterm_id" x-model="hawb.incoterm_id"><option value="">Select...</option>@foreach($incoterms as $inco)<option value="{{ $inco->id }}">{{ $inco->code }}</option>@endforeach</select></div></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <div style="height: 21px;"></div>
-                                    <div style="height: 21px;"></div>
-                                    <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select class="form-control-gf" style="width:45%;" name="service_term_from_id" x-model="hawb.service_term_from_id"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}">{{ $term->code }}</option>@endforeach</select><span class="mx-1">~</span><select class="form-control-gf" style="width:45%;" name="service_term_to_id" x-model="hawb.service_term_to_id"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}">{{ $term->code }}</option>@endforeach</select></div></div>
-                                </div>
+                                <!-- Row 1 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Entry No.</label><div class="form-input-container"><input type="text" class="form-control-gf" name="entry_no" x-model="hawb.entry_no"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Class of Entry</label><div class="form-input-container"><input type="text" class="form-control-gf" name="class_of_entry" x-model="hawb.class_of_entry"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Frt. Released</label><div class="form-input-container" style="gap:5px; align-items:center;"><input type="checkbox" name="frt_released" x-model="hawb.frt_released"> <input type="date" class="form-control-gf" disabled name="frt_released_date" x-model="hawb.frt_released_date"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select class="form-control-gf" style="width:45%;" name="service_term_from_id" x-model="hawb.service_term_from_id"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}">{{ $term->code }}</option>@endforeach</select><span class="mx-1">~</span><select class="form-control-gf" style="width:45%;" name="service_term_to_id" x-model="hawb.service_term_to_id"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->id }}">{{ $term->code }}</option>@endforeach</select></div></div>
+
+                                <!-- Row 2 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Released By</label><div class="form-input-container"><select class="form-control-gf" disabled name="released_by_id" x-model="hawb.released_by_id"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->name }}</option>@endforeach</select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Cargo Released To</label><div class="form-input-container"><input type="text" class="form-control-gf" name="cargo_released_to" x-model="hawb.cargo_released_to"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">C. Released Date</label><div class="form-input-container"><input type="date" class="form-control-gf" name="c_released_date" x-model="hawb.c_released_date"></div></div>
+                                <div></div>
+
+                                <!-- Row 3 -->
+                                <div class="form-group-gf"><label class="form-label-gf">Door Delivered</label><div class="form-input-container"><input type="date" class="form-control-gf" name="door_delivered_date" x-model="hawb.door_delivered_date"></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Ship Type</label><div class="form-input-container"><select class="form-control-gf" name="ship_type" x-model="hawb.ship_type"><option value="">Select...</option><option value="NORMAL">NORMAL</option><option value="S/W">S/W</option><option value="T/S">T/S</option></select></div></div>
+                                <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><select class="form-control-gf" name="incoterm_id" x-model="hawb.incoterm_id"><option value="">Select...</option>@foreach($incoterms as $inco)<option value="{{ $inco->id }}">{{ $inco->code }}</option>@endforeach</select></div></div>
+                                <div></div>
                             </div>
 
                             <hr style="margin: 10px 0; border-top: 1px solid #ddd;">
@@ -2201,70 +2186,87 @@
                     </div>
                     <div class="portlet-body">
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><select name="shipper_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->shipper_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><select name="bill_to_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->bill_to_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><select name="oversea_agent_id" class="form-control-gf"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->oversea_agent_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div style="height: 5px;"></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Trucker</label><div class="form-input-container"><select name="trucker_id" class="form-control-gf"><option value="">Select...</option>@foreach($truckers as $trucker)<option value="{{ $trucker->id }}" {{ (isset($airImport) && $airImport->trucker_id == $trucker->id) ? 'selected' : '' }}>{{ $trucker->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">P.O.D ETA</label><div class="form-input-container"><input type="date" name="pod_eta" class="form-control-gf" value="{{ isset($airImport) && $airImport->pod_eta ? $airImport->pod_eta->format('Y-m-d') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Ship Mode</label><div class="form-input-container"><select name="ship_mode" class="form-control-gf"><option value="AIR" {{ (isset($airImport) && $airImport->ship_mode == 'AIR') ? 'selected' : 'selected' }}>AIR</option><option value="EXPRESS" {{ (isset($airImport) && $airImport->ship_mode == 'EXPRESS') ? 'selected' : '' }}>EXPRESS</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">G.O Date</label><div class="form-input-container"><input type="date" name="go_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->go_date ? $airImport->go_date->format('Y-m-d') : '' }}"></div></div>
-                            </div>
-                            
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><select name="consignee_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->consignee_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Sub B/L No.</label><div class="form-input-container"><input type="text" name="sub_bl_no" class="form-control-gf" value="{{ $airImport->sub_bl_no ?? '' }}"></div></div>
-                                <div style="height: 5px;"></div>
-                                <div class="form-group-gf"><label class="form-label-gf">CY/CFS Loc.</label><div class="form-input-container"><input type="text" name="cy_cfs_loc" class="form-control-gf" value="{{ $airImport->cy_cfs_loc ?? '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Final Dest.</label><div class="form-input-container"><select name="final_destination_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->final_destination_id == $port->id) ? 'selected' : '' }}>{{ $port->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select name="freight_term" class="form-control-gf"><option value="">Select...</option><option value="PREPAID" {{ (isset($airImport) && $airImport->freight_term == 'PREPAID') ? 'selected' : '' }}>PREPAID</option><option value="COLLECT" {{ (isset($airImport) && $airImport->freight_term == 'COLLECT') ? 'selected' : '' }}>COLLECT</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Expiry Date</label><div class="form-input-container"><input type="date" name="expiry_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->expiry_date ? $airImport->expiry_date->format('Y-m-d') : '' }}"></div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Shipper</label><div class="form-input-container"><select name="shipper_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->shipper_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Consignee</label><div class="form-input-container"><select name="consignee_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->consignee_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><select name="notify_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->notify_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">AMS No.</label><div class="form-input-container"><input type="text" name="ams_no" class="form-control-gf" value="{{ $airImport->ams_no ?? '' }}"></div></div>
 
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Notify</label><div class="form-input-container"><select name="notify_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->notify_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" value="{{ isset($airImport) ? ($airImport->operator->name ?? auth()->user()->name) : auth()->user()->name }}" disabled style="background:#f5f5f5;"></div></div>
-                                <div style="height: 19px;"></div>
-                                <div style="height: 5px;"></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Available</label><div class="form-input-container"><input type="date" name="last_free_day" class="form-control-gf" value="{{ isset($airImport) && $airImport->last_free_day ? $airImport->last_free_day->format('Y-m-d') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" name="final_eta" class="form-control-gf" value="{{ isset($airImport) && $airImport->final_eta ? $airImport->final_eta->format('Y-m-d') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">LFD</label><div class="form-input-container"><input type="date" name="last_free_day" class="form-control-gf" value="{{ isset($airImport) && $airImport->last_free_day ? $airImport->last_free_day->format('Y-m-d') : '' }}"></div></div>
-                            </div>
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Bill To</label><div class="form-input-container"><select name="bill_to_id" class="form-control-gf"><option value="">Select...</option>@foreach($allAgents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->bill_to_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Sub B/L No.</label><div class="form-input-container"><input type="text" name="sub_bl_no" class="form-control-gf" value="{{ $airImport->sub_bl_no ?? '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><input type="text" class="form-control-gf" value="{{ isset($airImport) ? ($airImport->operator->name ?? auth()->user()->name) : auth()->user()->name }}" disabled style="background:#f5f5f5;"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ISF No.</label><div class="form-input-container"><input type="text" name="isf_no" class="form-control-gf" value="{{ $airImport->isf_no ?? '' }}"></div></div>
 
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">AMS No.</label><div class="form-input-container"><input type="text" name="ams_no" class="form-control-gf" value="{{ $airImport->ams_no ?? '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ISF No.</label><div class="form-input-container"><input type="text" name="isf_no" class="form-control-gf" value="{{ $airImport->isf_no ?? '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ISF Matched</label><div class="form-input-container"><input type="date" name="isf_matched_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->isf_matched_date ? $airImport->isf_matched_date->format('Y-m-d') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ISF 3rd Party</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" name="isf_3rd_party" value="1" {{ (isset($airImport) && $airImport->isf_3rd_party) ? 'checked' : '' }}></div></div>
-                            </div>
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><select name="oversea_agent_id" class="form-control-gf"><option value="">Select...</option>@foreach($agents as $agent)<option value="{{ $agent->id }}" {{ (isset($airImport) && $airImport->oversea_agent_id == $agent->id) ? 'selected' : '' }}>{{ $agent->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">CY/CFS Loc.</label><div class="form-input-container"><input type="text" name="cy_cfs_loc" class="form-control-gf" value="{{ $airImport->cy_cfs_loc ?? '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Available</label><div class="form-input-container"><input type="date" name="last_free_day" class="form-control-gf" value="{{ isset($airImport) && $airImport->last_free_day ? $airImport->last_free_day->format('Y-m-d') : '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ISF Matched</label><div class="form-input-container"><input type="date" name="isf_matched_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->isf_matched_date ? $airImport->isf_matched_date->format('Y-m-d') : '' }}"></div></div>
+
+                            <!-- Row 4 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Trucker</label><div class="form-input-container"><select name="trucker_id" class="form-control-gf"><option value="">Select...</option>@foreach($truckers as $trucker)<option value="{{ $trucker->id }}" {{ (isset($airImport) && $airImport->trucker_id == $trucker->id) ? 'selected' : '' }}>{{ $trucker->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Final Dest.</label><div class="form-input-container"><select name="final_destination_id" class="form-control-gf"><option value="">Select...</option>@foreach($ports as $port)<option value="{{ $port->id }}" {{ (isset($airImport) && $airImport->final_destination_id == $port->id) ? 'selected' : '' }}>{{ $port->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Final ETA</label><div class="form-input-container"><input type="date" name="final_eta" class="form-control-gf" value="{{ isset($airImport) && $airImport->final_eta ? $airImport->final_eta->format('Y-m-d') : '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">ISF 3rd Party</label><div class="form-input-container" style="justify-content: flex-start;"><input type="checkbox" name="isf_3rd_party" value="1" {{ (isset($airImport) && $airImport->isf_3rd_party) ? 'checked' : '' }}></div></div>
+
+                            <!-- Row 5 -->
+                            <div class="form-group-gf"><label class="form-label-gf">P.O.D ETA</label><div class="form-input-container"><input type="date" name="pod_eta" class="form-control-gf" value="{{ isset($airImport) && $airImport->pod_eta ? $airImport->pod_eta->format('Y-m-d') : '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Freight</label><div class="form-input-container"><select name="freight_term" class="form-control-gf"><option value="">Select...</option><option value="PREPAID" {{ (isset($airImport) && $airImport->freight_term == 'PREPAID') ? 'selected' : '' }}>PREPAID</option><option value="COLLECT" {{ (isset($airImport) && $airImport->freight_term == 'COLLECT') ? 'selected' : '' }}>COLLECT</option></select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">LFD</label><div class="form-input-container"><input type="date" name="last_free_day" class="form-control-gf" value="{{ isset($airImport) && $airImport->last_free_day ? $airImport->last_free_day->format('Y-m-d') : '' }}"></div></div>
+                            <div></div>
+
+                            <!-- Row 6 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Ship Mode</label><div class="form-input-container"><select name="ship_mode" class="form-control-gf"><option value="AIR" {{ (isset($airImport) && $airImport->ship_mode == 'AIR') ? 'selected' : 'selected' }}>AIR</option><option value="EXPRESS" {{ (isset($airImport) && $airImport->ship_mode == 'EXPRESS') ? 'selected' : '' }}>EXPRESS</option></select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Expiry Date</label><div class="form-input-container"><input type="date" name="expiry_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->expiry_date ? $airImport->expiry_date->format('Y-m-d') : '' }}"></div></div>
+                            <div></div>
+                            <div></div>
+
+                            <!-- Row 7 -->
+                            <div class="form-group-gf"><label class="form-label-gf">G.O Date</label><div class="form-input-container"><input type="date" name="go_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->go_date ? $airImport->go_date->format('Y-m-d') : '' }}"></div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
                         </div>
 
                         <div style="height: 15px;"></div>
 
                         <div class="form-grid-4">
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select name="sales_type" class="form-control-gf"><option value="">Select...</option><option value="NOMINATED" {{ (isset($airImport) && $airImport->sales_type == 'NOMINATED') ? 'selected' : '' }}>NOMINATED</option><option value="FREE HAND" {{ (isset($airImport) && $airImport->sales_type == 'FREE HAND') ? 'selected' : '' }}>FREE HAND</option></select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">C. Released</label><div class="form-input-container"><input type="date" name="c_released_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->c_released_date ? $airImport->c_released_date->format('Y-m-d') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Entry No.</label><div class="form-input-container"><input type="text" name="entry_no" class="form-control-gf" value="{{ $airImport->entry_no ?? '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">ROR</label><div class="form-input-container"><input type="checkbox" name="ror" value="1" {{ (isset($airImport) && $airImport->ror) ? 'checked' : '' }}></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Released By</label><div class="form-input-container"><select name="released_by_id" class="form-control-gf"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}" {{ (isset($airImport) && $airImport->released_by_id == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">DO Sent</label><div class="form-input-container"><input type="checkbox" name="do_sent" value="1" {{ (isset($airImport) && $airImport->do_sent) ? 'checked' : '' }}> <input type="date" name="do_sent_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->do_sent_date ? $airImport->do_sent_date->format('Y-m-d') : '' }}"></div></div>
-                            </div>
+                            <!-- Row 1 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Sales Type</label><div class="form-input-container"><select name="sales_type" class="form-control-gf"><option value="">Select...</option><option value="NOMINATED" {{ (isset($airImport) && $airImport->sales_type == 'NOMINATED') ? 'selected' : '' }}>NOMINATED</option><option value="FREE HAND" {{ (isset($airImport) && $airImport->sales_type == 'FREE HAND') ? 'selected' : '' }}>FREE HAND</option></select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><select name="incoterm_id" class="form-control-gf"><option value="">Select...</option>@foreach($incoterms as $inco)<option value="{{ $inco->id }}" {{ (isset($airImport) && $airImport->incoterm_id == $inco->id) ? 'selected' : '' }}>{{ $inco->code }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Cargo Type</label><div class="form-input-container"><select name="cargo_type" class="form-control-gf"><option value="">Select...</option><option value="GENERAL CARGO" {{ (isset($airImport) && $airImport->cargo_type == 'GENERAL CARGO') ? 'selected' : '' }}>GENERAL CARGO</option><option value="DANGEROUS GOODS" {{ (isset($airImport) && $airImport->cargo_type == 'DANGEROUS GOODS') ? 'selected' : '' }}>DANGEROUS GOODS</option></select></div></div>
+                            <div></div>
 
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><select name="incoterm_id" class="form-control-gf"><option value="">Select...</option>@foreach($incoterms as $inco)<option value="{{ $inco->id }}" {{ (isset($airImport) && $airImport->incoterm_id == $inco->id) ? 'selected' : '' }}>{{ $inco->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select name="service_term_from" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->code }}" {{ (isset($airImport) && $airImport->service_term_from == $term->code) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select>~<select name="service_term_to" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->code }}" {{ (isset($airImport) && $airImport->service_term_to == $term->code) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Entry DOC Sent</label><div class="form-input-container"><input type="date" name="entry_doc_sent_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->entry_doc_sent_date ? $airImport->entry_doc_sent_date->format('Y-m-d') : '' }}"></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Hold</label><div class="form-input-container"><input type="checkbox" name="hold" value="1" {{ (isset($airImport) && $airImport->hold) ? 'checked' : '' }}></div></div>
-                                <div class="form-group-gf"><label class="form-label-gf">Door Deliv.</label><div class="form-input-container"><input type="date" name="door_delivered_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->door_delivered_date ? $airImport->door_delivered_date->format('Y-m-d') : '' }}"></div></div>
-                            </div>
+                            <!-- Row 2 -->
+                            <div class="form-group-gf"><label class="form-label-gf">C. Released</label><div class="form-input-container"><input type="date" name="c_released_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->c_released_date ? $airImport->c_released_date->format('Y-m-d') : '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><select name="service_term_from" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->code }}" {{ (isset($airImport) && $airImport->service_term_from == $term->code) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select>~<select name="service_term_to" class="form-control-gf" style="width:45%;"><option value="">Select...</option>@foreach($serviceTerms as $term)<option value="{{ $term->code }}" {{ (isset($airImport) && $airImport->service_term_to == $term->code) ? 'selected' : '' }}>{{ $term->code }}</option>@endforeach</select></div></div>
+                            <div></div>
+                            <div></div>
 
-                            <div class="flex flex-col">
-                                <div class="form-group-gf"><label class="form-label-gf">Cargo Type</label><div class="form-input-container"><select name="cargo_type" class="form-control-gf"><option value="">Select...</option><option value="GENERAL CARGO" {{ (isset($airImport) && $airImport->cargo_type == 'GENERAL CARGO') ? 'selected' : '' }}>GENERAL CARGO</option><option value="DANGEROUS GOODS" {{ (isset($airImport) && $airImport->cargo_type == 'DANGEROUS GOODS') ? 'selected' : '' }}>DANGEROUS GOODS</option></select></div></div>
-                            </div>
-                            
-                            <div class="flex flex-col"></div>
+                            <!-- Row 3 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Entry No.</label><div class="form-input-container"><input type="text" name="entry_no" class="form-control-gf" value="{{ $airImport->entry_no ?? '' }}"></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Entry DOC Sent</label><div class="form-input-container"><input type="date" name="entry_doc_sent_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->entry_doc_sent_date ? $airImport->entry_doc_sent_date->format('Y-m-d') : '' }}"></div></div>
+                            <div></div>
+                            <div></div>
+
+                            <!-- Row 4 -->
+                            <div class="form-group-gf"><label class="form-label-gf">ROR</label><div class="form-input-container"><input type="checkbox" name="ror" value="1" {{ (isset($airImport) && $airImport->ror) ? 'checked' : '' }}></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Hold</label><div class="form-input-container"><input type="checkbox" name="hold" value="1" {{ (isset($airImport) && $airImport->hold) ? 'checked' : '' }}></div></div>
+                            <div></div>
+                            <div></div>
+
+                            <!-- Row 5 -->
+                            <div class="form-group-gf"><label class="form-label-gf">Released By</label><div class="form-input-container"><select name="released_by_id" class="form-control-gf"><option value="">Select...</option>@foreach($users as $user)<option value="{{ $user->id }}" {{ (isset($airImport) && $airImport->released_by_id == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>@endforeach</select></div></div>
+                            <div class="form-group-gf"><label class="form-label-gf">Door Deliv.</label><div class="form-input-container"><input type="date" name="door_delivered_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->door_delivered_date ? $airImport->door_delivered_date->format('Y-m-d') : '' }}"></div></div>
+                            <div></div>
+                            <div></div>
+
+                            <!-- Row 6 -->
+                            <div class="form-group-gf"><label class="form-label-gf">DO Sent</label><div class="form-input-container"><input type="checkbox" name="do_sent" value="1" {{ (isset($airImport) && $airImport->do_sent) ? 'checked' : '' }}> <input type="date" name="do_sent_date" class="form-control-gf" value="{{ isset($airImport) && $airImport->do_sent_date ? $airImport->do_sent_date->format('Y-m-d') : '' }}"></div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
                         </div>
                     </div>
         </div>
@@ -2418,28 +2420,28 @@
                     </style>
                     <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="wizard-circle" :style="quoteStep >= 1 ? 'background: #36c6d3;' : 'background: #999;'">
+                            <div class="wizard-circle" :style="quoteStep >= 1 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
                                 <template x-if="quoteStep > 1"><i class="fa fa-check"></i></template>
                                 <template x-if="quoteStep === 1"><span>1</span></template>
                             </div>
-                            <span :style="quoteStep >= 1 ? 'color: #333; font-size: 12px;' : 'color: #999; font-size: 12px;'">Select Quotation</span>
+                            <span :style="quoteStep >= 1 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select Quotation</span>
                         </div>
                         <div style="height: 1px; width: 30px; background: #ddd;"></div>
                         
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="wizard-circle" :style="quoteStep >= 2 ? 'background: #36c6d3;' : 'background: #999;'">
+                            <div class="wizard-circle" :style="quoteStep >= 2 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
                                 <template x-if="quoteStep > 2"><i class="fa fa-check"></i></template>
                                 <template x-if="quoteStep <= 2"><span>2</span></template>
                             </div>
-                            <span :style="quoteStep >= 2 ? 'color: #333; font-size: 12px;' : 'color: #999; font-size: 12px;'">Fill in shipment data</span>
+                            <span :style="quoteStep >= 2 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Fill in shipment data</span>
                         </div>
                         <div style="height: 1px; width: 30px; background: #ddd;"></div>
                         
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="wizard-circle" :style="quoteStep >= 3 ? 'background: #36c6d3;' : 'background: #999;'">
+                            <div class="wizard-circle" :style="quoteStep >= 3 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
                                 <span>3</span>
                             </div>
-                            <span :style="quoteStep >= 3 ? 'color: #333; font-size: 12px;' : 'color: #999; font-size: 12px;'">Select invoice items</span>
+                            <span :style="quoteStep >= 3 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select invoice items</span>
                         </div>
                     </div>
 

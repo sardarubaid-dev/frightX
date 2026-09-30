@@ -2,22 +2,22 @@
     @push('styles')
     <x-list-styles />
     <style>
-        .grid-wrapper { height: calc(100vh - 210px); min-height: 300px; }
-        .sticky-col { position: sticky; left: 0; z-index: 5; background: #fff; border-right: 1px solid #cbd5e1 !important; }
-        .sticky-col-header { z-index: 15 !important; background: #f8fafc !important; }
-        .grid-table tr:hover .sticky-col { background-color: #f1f5f9 !important; }
-        .grid-table tr.row-selected .sticky-col { background-color: #eff6ff !important; }
-        .status-active { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 600; }
-        .status-inactive { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 600; }
-        .status-default { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 600; }
+        .tp-list-page .grid-wrapper { height: calc(100vh - 210px); min-height: 300px; }
+        .tp-list-page .sticky-col { position: sticky; left: 0; z-index: 5; background: #fff; border-right: 1px solid #cbd5e1 !important; }
+        .tp-list-page .sticky-col-header { z-index: 15 !important; background: #f8fafc !important; }
+        .tp-list-page .grid-table tr:hover .sticky-col { background-color: #f1f5f9 !important; }
+        .tp-list-page .grid-table tr.row-selected .sticky-col { background-color: #eff6ff !important; }
+        .tp-list-page .status-active { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 600; }
+        .tp-list-page .status-inactive { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 600; }
+        .tp-list-page .status-default { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; padding: 1px 5px; border-radius: 2px; font-size: 9px; font-weight: 600; }
 
         /* Pagination — Ocean Module theme */
-        .tp-pagination { display: flex; align-items: center; gap: 2px; }
-        .tp-page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; border: 1px solid #cbd5e1; background: #fff; color: #334155; font-size: 10px; font-weight: 400; text-decoration: none; border-radius: 2px; cursor: pointer; transition: all 0.15s; line-height: 1; font-family: inherit; }
-        .tp-page-btn:hover { background: #f1f5f9; border-color: #94a3b8; color: #1e293b; }
-        .tp-page-btn.active { background: #3b82f6; color: #fff; border-color: #2563eb; font-weight: 600; }
-        .tp-page-btn.disabled { opacity: 0.4; cursor: not-allowed; background: #f8fafc; color: #94a3b8; }
-        .tp-page-btn i { font-size: 8px; }
+        .tp-list-page .tp-pagination { display: flex; align-items: center; gap: 2px; }
+        .tp-list-page .tp-page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; border: 1px solid #cbd5e1; background: #fff; color: #334155; font-size: 10px; font-weight: 400; text-decoration: none; border-radius: 2px; cursor: pointer; transition: all 0.15s; line-height: 1; font-family: inherit; }
+        .tp-list-page .tp-page-btn:hover { background: #f1f5f9; border-color: #94a3b8; color: #1e293b; }
+        .tp-list-page .tp-page-btn.active { background: #3b82f6; color: #fff; border-color: #2563eb; font-weight: 600; }
+        .tp-list-page .tp-page-btn.disabled { opacity: 0.4; cursor: not-allowed; background: #f8fafc; color: #94a3b8; }
+        .tp-list-page .tp-page-btn i { font-size: 8px; }
     </style>
     @endpush
 
@@ -55,7 +55,7 @@
     </div>
 
     {{-- MAIN PAGE --}}
-    <div class="page-content">
+    <div class="page-content tp-list-page">
 
         <div class="page-bar">
             <ul class="page-breadcrumb">

@@ -1,3 +1,4 @@
+@props(['type' => 'admin'])
 <div class="page-header navbar navbar-fixed-top bg-white border-b border-gray-200 h-[50px] flex items-center justify-between px-3 sm:px-4 shadow-sm relative z-[1001] !overflow-visible">
     <!-- Left: Sidebar Toggler & Branch Selection -->
     <div class="flex items-center space-x-2">
@@ -5,6 +6,7 @@
             <i class="fa fa-bars text-base text-gray-500"></i>
         </button>
 
+        @if($type === 'admin')
         <!-- Branch Selection (Left Side) -->
         <div class="relative hidden sm:block" x-data="{ open: false }">
             <div @click="open = !open" class="flex items-center space-x-1.5 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded cursor-pointer hover:bg-gray-100 transition-colors h-[32px]">
@@ -26,10 +28,16 @@
                 </a>
             </div>
         </div>
+        @elseif($type === 'superadmin')
+            <span style="font-size: 13px; font-weight: 600; color: #405189; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 12px;">Super Admin Panel</span>
+        @elseif($type === 'customer')
+            <span style="font-size: 13px; font-weight: 600; color: #405189; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 12px;">Customer Portal</span>
+        @endif
     </div>
 
     <!-- Right: Search and Menus -->
     <div class="flex items-center space-x-2 sm:space-x-3 flex-1 justify-end">
+        @if($type === 'admin')
         <!-- Global Command Palette & Search Bar (Compact Fixed Width) -->
         <div class="relative flex items-center"
              x-data="{
@@ -94,10 +102,10 @@
                     { name: 'Sales - Quotation List', category: 'Sales', icon: 'fa-file-text', url: '/sales/quotations', keywords: 'sales quotation list quotes' },
                     { name: 'Sales - Create Quotation', category: 'Sales', icon: 'fa-plus', url: '/sales/quotations/create', keywords: 'create quotation new quote' },
 
-                    { name: 'Trade Partners - List', category: 'Trade Partners', icon: 'fa-users', url: '/trade-partners', keywords: 'trade partners customer vendor shipper consignee trucker' },
-                    { name: 'Trade Partners - Create', category: 'Trade Partners', icon: 'fa-user-plus', url: '/trade-partner/create', keywords: 'create trade partner new customer vendor' },
-                    { name: 'Trade Partners - Mapping List', category: 'Trade Partners', icon: 'fa-exchange', url: '/trade-partner/mapping-list', keywords: 'trade partner mapping' },
-                    { name: 'Trade Partners - Credit Entry', category: 'Trade Partners', icon: 'fa-shield', url: '/trade-partner/credit-entry', keywords: 'credit entry trade partner credit' },
+                    { name: 'Customers - List', category: 'Customers', icon: 'fa-users', url: '/trade-partner/list', keywords: 'customers trade partners vendor shipper consignee trucker' },
+                    { name: 'Customers - Create', category: 'Customers', icon: 'fa-user-plus', url: '/trade-partner/create', keywords: 'create customer new vendor trade partner' },
+                    { name: 'Customers - Mapping List', category: 'Customers', icon: 'fa-exchange', url: '/trade-partner/mapping-list', keywords: 'customer mapping' },
+                    { name: 'Customers - Credit Entry', category: 'Customers', icon: 'fa-shield', url: '/trade-partner/credit-entry', keywords: 'credit entry customer' },
 
                     { name: 'Reports - Profit Loss Report', category: 'Reports', icon: 'fa-line-chart', url: '/reports/profit-loss', keywords: 'profit loss report p&l' },
                     { name: 'Reports - Customer Intelligence', category: 'Reports', icon: 'fa-pie-chart', url: '/customers', keywords: 'customer intelligence report analytics' },
@@ -290,6 +298,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="flex items-center space-x-1">
             <button class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">

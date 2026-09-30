@@ -59,12 +59,16 @@ use App\Http\Controllers\GaExpenseController;
 use App\Http\Controllers\WorkOrderController;
 use App\Http\Controllers\GlobalSearchController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SuperAdmin\CompanyController as SuperAdminCompanyController;
 
 // Views routing - purely rendering blade templates.
 // All data fetching must be done on the client side via the /api routes.
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/global-search', [GlobalSearchController::class, 'search'])->name('api.global-search');
     Route::get('/', function () {
+        if (auth()->check() && auth()->user()->isSuperAdmin()) {
+            return redirect()->route('super-admin.dashboard');
+        }
         return redirect()->route('dashboard');
     });
 
@@ -1027,6 +1031,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/trade-partner/{trade_partner}/documents/{document}/email', [TradePartnerController::class, 'emailDocument']);
     Route::get('/trade-partner/{trade_partner}/activity-logs', [TradePartnerController::class, 'activityLogs']);
     Route::post('/trade-partner/{trade_partner}/check-bond', [TradePartnerController::class, 'checkBondStatus']);
+    Route::post('/trade-partner/{trade_partner}/grant-access', [TradePartnerController::class, 'grantAccess'])->name('trade-partner.grant-access');
 
     Route::post('/trade-partner/bulk-delete', [TradePartnerController::class, 'bulkDelete'])->name('trade-partner.bulk-delete');
     Route::post('/trade-partner/bulk-restore', [TradePartnerController::class, 'bulkRestore'])->name('trade-partner.bulk-restore');
@@ -1076,6 +1081,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/quotations/bulk-delete', [QuotationController::class, 'bulkDelete'])->name('quotations.bulk-delete');
     Route::post('/quotations/bulk-status', [QuotationController::class, 'bulkUpdateStatus'])->name('quotations.bulk-status');
     Route::patch('/quotations/{id}/status', [QuotationController::class, 'updateSingleStatus'])->name('quotations.update-status');
+});
+
+// ============================================
+// Super Admin Routes
+// ============================================
+Route::middleware(['auth', 'verified', 'super-admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('/', [SuperAdminCompanyController::class, 'dashboard'])->name('dashboard');
+    
+    // Company Management
+    Route::get('/companies', [SuperAdminCompanyController::class, 'index'])->name('companies.index');
+    Route::get('/companies/create', [SuperAdminCompanyController::class, 'create'])->name('companies.create');
+    Route::post('/companies', [SuperAdminCompanyController::class, 'store'])->name('companies.store');
+    Route::get('/companies/{company}/edit', [SuperAdminCompanyController::class, 'edit'])->name('companies.edit');
+    Route::put('/companies/{company}', [SuperAdminCompanyController::class, 'update'])->name('companies.update');
+    Route::patch('/companies/{company}/toggle-status', [SuperAdminCompanyController::class, 'toggleStatus'])->name('companies.toggle-status');
+    Route::post('/companies/{company}/reset-password', [SuperAdminCompanyController::class, 'resetPassword'])->name('companies.reset-password');
+    Route::get('/companies/export-csv', [SuperAdminCompanyController::class, 'exportCsv'])->name('companies.export-csv');
+    
+    // Audit Log
+    Route::get('/audit-log', [SuperAdminCompanyController::class, 'auditLog'])->name('audit-log');
+});
+
+// ============================================
+// Customer Portal Routes
+// ============================================
+Route::middleware(['auth', 'verified', 'check-status', 'customer-access'])->prefix('portal')->name('customer.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\CustomerPortal\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/shipments', [\App\Http\Controllers\CustomerPortal\ShipmentTrackingController::class, 'index'])->name('shipments.index');
+    Route::get('/shipments/{id}', [\App\Http\Controllers\CustomerPortal\ShipmentTrackingController::class, 'show'])->name('shipments.show');
 });
 
 require __DIR__.'/auth.php';

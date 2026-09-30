@@ -275,12 +275,43 @@ class TradePartnerController extends Controller
             
             // Auto generate code if not provided
             if (empty($data['code'])) {
-                $count = TradePartner::count() + 1;
+                $maxId = TradePartner::withTrashed()->max('id') ?? 0;
                 $prefix = strtoupper(substr($data['type'] ?? 'TP', 0, 2));
-                $data['code'] = $prefix . str_pad($count, 5, '0', STR_PAD_LEFT);
+                
+                $code = $prefix . str_pad($maxId + 1, 5, '0', STR_PAD_LEFT);
+                // Ensure absolute uniqueness just in case
+                while (TradePartner::withTrashed()->where('code', $code)->exists()) {
+                    $maxId++;
+                    $code = $prefix . str_pad($maxId + 1, 5, '0', STR_PAD_LEFT);
+                }
+                $data['code'] = $code;
             }
 
             $partner = TradePartner::create($data);
+
+            // Create portal access if provided
+            $portalEmail = request()->input('portal_email');
+            $portalPassword = request()->input('portal_password');
+            if (!empty($portalEmail) && !empty($portalPassword)) {
+                $existingUser = \App\Models\User::where('email', $portalEmail)->first();
+                if ($existingUser) {
+                    $existingUser->update([
+                        'password' => \Hash::make($portalPassword),
+                        'role' => 'Customer',
+                        'company_id' => auth()->user()->company_id,
+                        'trade_partner_id' => $partner->id
+                    ]);
+                } else {
+                    \App\Models\User::create([
+                        'name' => $partner->name,
+                        'email' => $portalEmail,
+                        'password' => \Hash::make($portalPassword),
+                        'role' => 'Customer',
+                        'company_id' => auth()->user()->company_id,
+                        'trade_partner_id' => $partner->id
+                    ]);
+                }
+            }
 
             // Filter out empty rows before saving sub-relationships
             $filterContacts = collect($request->contacts ?? [])
@@ -410,6 +441,33 @@ class TradePartnerController extends Controller
             }
 
             $tradePartner->update($data);
+
+            // Create or update portal access if provided
+            $portalEmail = request()->input('portal_email');
+            $portalPassword = request()->input('portal_password');
+            if (!empty($portalEmail)) {
+                $existingUser = \App\Models\User::where('email', $portalEmail)->first();
+                $updateData = [
+                    'role' => 'Customer',
+                    'company_id' => auth()->user()->company_id,
+                    'trade_partner_id' => $tradePartner->id
+                ];
+                if (!empty($portalPassword)) {
+                    $updateData['password'] = \Hash::make($portalPassword);
+                }
+                
+                if ($existingUser) {
+                    $existingUser->update($updateData);
+                } else {
+                    $updateData['name'] = $tradePartner->name;
+                    $updateData['email'] = $portalEmail;
+                    // If no password provided for new user, create a random one to secure the account
+                    if (empty($updateData['password'])) {
+                        $updateData['password'] = \Hash::make(\Illuminate\Support\Str::random(12));
+                    }
+                    \App\Models\User::create($updateData);
+                }
+            }
 
             // Filter out empty rows before updating sub-relationships
             $filterContacts = collect($request->contacts ?? [])
@@ -559,5 +617,36 @@ class TradePartnerController extends Controller
             'success' => true, 
             'message' => 'Bond status checked successfully. Status: Active'
         ]);
+    }
+
+    public function grantAccess(Request $request, TradePartner $tradePartner)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+        ]);
+
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        if ($user) {
+            $user->update([
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'role' => 'Customer',
+                'trade_partner_id' => $tradePartner->id,
+                'company_id' => auth()->user()->company_id,
+            ]);
+        } else {
+            \App\Models\User::create([
+                'name' => $tradePartner->name,
+                'email' => $request->email,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'role' => 'Customer',
+                'trade_partner_id' => $tradePartner->id,
+                'company_id' => auth()->user()->company_id,
+                'status' => 'Enable',
+            ]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

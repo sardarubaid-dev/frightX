@@ -34,11 +34,33 @@ class User extends Authenticatable
         'role',
         'status',
         'create_date',
+        'last_login_at',
+        'trade_partner_id',
     ];
+
+    public function tradePartner()
+    {
+        return $this->belongsTo(TradePartner::class);
+    }
 
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'SuperAdmin';
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->role === 'Customer';
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'Enable';
     }
 
     /**
@@ -62,6 +84,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'create_date' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 }
