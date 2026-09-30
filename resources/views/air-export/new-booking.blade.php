@@ -465,7 +465,7 @@
                                 </div>
                             </div>
                             <div style="text-align: center; margin-bottom: 25px;">
-                                <button type="button" class="btn-premium primary" style="padding: 8px 30px;">Search Quotations</button>
+                                <button type="button" class="btn-premium primary" style="padding: 8px 30px;">Search Quotations....</button>
                             </div>
                             <table class="premium-mini-table">
                                 <thead>
@@ -775,6 +775,8 @@
                 <div class="flex flex-col" style="grid-column: 3 / span 2;">
                     <div class="form-group-gf" style="align-items: flex-start;">
                         <label class="form-label-gf" style="padding-top: 5px;">Chargeable Weight Calculation</label>
+                    </div>
+                    
                         <div class="form-input-container">
                             <div style="background: #f8faff; padding: 15px; border-radius: 8px; border: 1px dashed #c0ccda; width: 100%;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -787,11 +789,11 @@
                                 </div>
                                 <input type="hidden" name="chargeable_weight" :value="form.chargeable_weight">
                             </div>
+                        </div>
+
                             <div style="margin-top: 10px; font-size: 10px; color: #999;">
                                 <i class="fa fa-info-circle"></i> Chargeable weight is calculated using Max(Gross Weight, Volume * 167)
                             </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div style="padding: 0 15px 15px 15px;">

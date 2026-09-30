@@ -2387,7 +2387,7 @@ C.Hold <input type="checkbox" :name="'hbls['+index+'][is_customs_hold]'" value="
                         <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
                            <button type="button" class="btn-tool-secondary" @click="showQuoteConfig = !showQuoteConfig"><i class="fa fa-cogs"></i> Config</button>
                         </div>
-
+                        <!-- config working -->
                         <div x-show="showQuoteConfig" style="margin-bottom: 10px; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 10px;">
                             <div class="form-grid-4" style="grid-template-columns: repeat(4, 1fr);">
                                 <template x-for="(label, key) in {select: 'Select', quote_no: 'Quote No.', valid_date: 'Valid Date', status: 'Status', creation_date: 'Creation Date', commodity: 'Commodity', pol: 'Port of Loading', pod: 'Port of Discharge', carrier: 'Carrier', sales: 'Sales'}" :key="key">

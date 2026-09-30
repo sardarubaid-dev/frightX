@@ -1248,8 +1248,7 @@
             };
         };
     </script>
-
-    <div x-data="window.airExportModule()" x-init="init()" x-cloak>
+<div x-data="window.airExportModule()" x-init="init()" x-cloak>
         <div class="page-content">
         <form id="airExportForm" action="{{ isset($airExport) && $airExport->id ? route('air-export.update', $airExport->id) : route('air-export.store') }}" method="POST">
             @csrf
@@ -2598,362 +2597,313 @@
         </div>
         <!-- QUOTE MODAL -->
         <template x-teleport="body">
-            <div x-show="showQuoteModal" class="modal-overlay" style="z-index: 999999;" x-cloak>
-                <div class="modal-container" style="width: 900px; max-width: 95vw;">
-                    <div style="padding: 15px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center;">
-                        <h4 style="margin: 0; font-size: 18px; color: #333; font-weight: 500;">Load Quotation Data</h4>
-                        <button type="button" @click="closeQuoteModal()" style="background: none; border: none; font-size: 21px; cursor: pointer; color: #000; opacity: .2;">&times;</button>
+            <!-- QUOTE MODAL (Ocean Export UI Style) -->
+<div x-show="showQuoteModal" class="modal-overlay" style="display:none; z-index: 999999;" x-cloak>
+    <div class="modal-container" style="max-width: 950px; display: flex; flex-direction: column;">
+        <!-- Ocean Style Header -->
+        <div class="modal-header">
+            <span><i class="fa fa-file-text-o text-blue-500"></i> Load Quotation Data</span>
+            <i class="fa fa-times cursor-pointer text-gray-500 hover:text-gray-700" @click="closeQuoteModal()"></i>
+        </div>
+
+        <div class="modal-body hide-scrollbar">
+            <style>
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                .wizard-circle { width: 18px; height: 18px; min-width: 18px; min-height: 18px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; }
+            </style>
+            
+            <!-- Wizard Steps Header -->
+            <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <div class="wizard-circle" :style="quoteStep >= 1 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
+                        <template x-if="quoteStep > 1"><i class="fa fa-check"></i></template>
+                        <template x-if="quoteStep === 1"><span>1</span></template>
                     </div>
-                
-                <div class="modal-body" style="padding: 20px;">
-                    <style>
-                        .wizard-circle { width: 18px; height: 18px; min-width: 18px; min-height: 18px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; }
-                    </style>
-                    <!-- Wizard Steps Header -->
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div class="wizard-circle" :style="quoteStep >= 1 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
-                                <template x-if="quoteStep > 1"><i class="fa fa-check"></i></template>
-                                <template x-if="quoteStep === 1"><span>1</span></template>
-                            </div>
-                            <span :style="quoteStep >= 1 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select Quotation</span>
-                        </div>
-                        <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
-
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div class="wizard-circle" :style="quoteStep >= 2 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
-                                <template x-if="quoteStep > 2"><i class="fa fa-check"></i></template>
-                                <template x-if="quoteStep <= 2"><span>2</span></template>
-                            </div>
-                            <span :style="quoteStep >= 2 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Fill in shipment data</span>
-                        </div>
-                        <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
-
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <div class="wizard-circle" :style="quoteStep >= 3 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
-                                <span>3</span>
-                            </div>
-                            <span :style="quoteStep >= 3 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select invoice items</span>
-                        </div>
-                    </div>
-
-                    <!-- Step 1 Content -->
-                    <div x-show="quoteStep === 1">
-                        <div class="row" style="display: flex; flex-wrap: wrap; margin: -5px;">
-                            @php
-                                $agents = \App\Models\TradePartner::orderBy('name')->get();
-                                $ports = \App\Models\Port::orderBy('name')->get();
-                                $users = \App\Models\User::orderBy('name')->get();
-                            @endphp
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Customer</label>
-                                    <x-inline-select name="customer" :options="$agents" module="trade-partner" x-model="filters.customer" class="form-control-gf" />
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Valid Date</label>
-                                    <div style="display: flex; width: 100%;">
-                                        <input type="date" class="form-control-gf" style="height: 24px;" x-model="filters.valid_date">
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Commodity</label>
-                                    <input type="text" class="form-control-gf" style="height: 24px;" x-model="filters.commodity">
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Departure</label>
-                                    <x-inline-select name="pol" :options="$agents" module="trade-partner" x-model="filters.pol" class="form-control-gf" />
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Destination</label>
-                                    <select class="form-control-gf" style="height: 24px;" x-model="filters.pod">
-                                        <option value="">Select...</option>
-                                        @foreach($ports as $port)
-                                            <option value="{{ $port->id }}">{{ $port->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Sales</label>
-                                    <select class="form-control-gf" style="height: 24px;" x-model="filters.sales">
-                                        <option value="">Select...</option>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Quote No.</label>
-                                    <input type="text" class="form-control-gf" style="height: 24px;" x-model="filters.quote_no">
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">Status</label>
-                                    <select class="form-control-gf" style="height: 24px;" x-model="filters.status">
-                                        <option value="">Select...</option>
-                                        <option value="Won">Won</option>
-                                        <option value="Draft">Draft</option>
-                                        <option value="Expired">Expired</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="width: 33.33%; padding: 5px;">
-                                <div class="form-group-gf" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                                    <label class="form-label-gf" style="text-align: left; width: auto;">OP</label>
-                                    <select class="form-control-gf" style="height: 24px;" x-model="filters.op">
-                                        <option value="">Select...</option>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="text-align: center; margin-top: 15px;">
-                            <button type="button" class="btn-default-gf" @click="clearSearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Clear</button>
-                            <button type="button" class="btn-freightx" @click="applySearch()" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;">Search</button>
-                        </div>
-                        
-                        <hr style="margin: 20px 0; border-top: 1px solid #eee;">
-                        
-                        <div style="text-align: right; margin-bottom: 5px;">
-                            <button type="button" class="btn-freightx" style="background: #67809f; padding: 2px 8px; border-radius: 12px !important;"><i class="fa fa-cogs"></i> Config</button>
-                        </div>
-                        
-                        <div style="border: 1px solid #e7ecf1; height: 310px; overflow-y: auto; display: flex; flex-direction: column;">
-                            <table class="table-custom" style="margin: 0; border: none;">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 50px; text-align: center; background: #888; color: #fff;">Select</th>
-                                        <th style="background: #888; color: #fff;">Quote No.</th>
-                                        <th style="background: #888; color: #fff;">Valid Date</th>
-                                        <th style="background: #888; color: #fff;">Status</th>
-                                        <th style="background: #888; color: #fff;">Creation Date</th>
-                                        <th style="background: #888; color: #fff;">Commodity</th>
-                                        <th style="background: #888; color: #fff;">Departure</th>
-                                        <th style="background: #888; color: #fff;">Destination</th>
-                                        <th style="background: #888; color: #fff;">Carrier</th>
-                                        <th style="background: #888; color: #fff;">Sales</th>
-                                        <th style="background: #888; color: #fff;">OP</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($quotations as $quote)
-                                    <tr x-show="matchFilters({quote_no: '{{ addslashes($quote->quote_no) }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}', op: '{{ $quote->op_id }}', commodity: '{{ addslashes($quote->commodity ?? '') }}'})" style="border-bottom: 1px solid #e7ecf1;">
-                                        <td style="text-align: center; padding: 6px;"><input type="radio" name="quote_sel" :checked="selectedQuote && selectedQuote.quote_no === '{{ $quote->quote_no }}'" 
-                                             @click="selectQuote({
-    quote_no: '{{ addslashes($quote->quote_no) }}',
-    mawb_no: 'MAWB-{{ addslashes($quote->quote_no) }}',
-    hawb_no: 'HAWB-{{ addslashes($quote->quote_no) }}',
-    eta: '{{ $quote->expiry_date ? $quote->expiry_date->format('Y-m-d') : '' }}',
-    etd: '{{ $quote->quote_date ? $quote->quote_date->format('Y-m-d') : '' }}',
-    customer: '{{ addslashes($quote->customer->name ?? '') }}',
-    customer_id: '{{ $quote->customer_id }}',
-    sales: '{{ addslashes($quote->salesPerson->name ?? '') }}',
-    sales_person_id: '{{ $quote->sales_person_id }}',
-    op: '{{ addslashes($quote->op->name ?? '') }}',
-    op_id: '{{ $quote->op_id }}',
-    pol_name: '{{ addslashes($quote->pol->name ?? '') }}',
-    pod_name: '{{ addslashes($quote->pod->name ?? '') }}',
-    pol_id: '{{ $quote->pol_id }}',
-    pod_id: '{{ $quote->pod_id }}',
-    carrier_name: '{{ addslashes($quote->carrier->name ?? '') }}',
-    carrier_id: '{{ $quote->carrier_id }}',
-    oversea_agent_id: '{{ $quote->agent_id }}',
-    service_term: '{{ addslashes($quote->service_term ?? '') }}',
-    incoterms_id: '{{ $quote->incoterms_id }}',
-    commodity: '{{ addslashes($quote->commodity ?? '') }}',
-    gross_weight_kg: '{{ $quote->weight_kg ?? '' }}',
-    gross_weight_lb: '{{ $quote->weight_lb ?? '' }}',
-    volume_cbm: '{{ $quote->volume_cbm ?? '' }}',
-    chargeable_weight_kg: '{{ $quote->chargeable_weight ?? '' }}',
-    ship_mode: '{{ addslashes($quote->ship_mode ?? '') }}',
-    items: (quoteItems && quoteItems['{{ $quote->quote_no }}']) ? quoteItems['{{ $quote->quote_no }}'].map(i => ({...i, selected: true})) : []
-})"></td>
-                                        <td style="padding: 6px;"><a href="#" style="color: #337ab7; text-decoration: none;">{{ $quote->quote_no }}</a></td>
-                                        <td style="padding: 6px;">{{ $quote->quote_date ? $quote->quote_date->format('m-d-Y') : '' }} ~ {{ $quote->expiry_date ? $quote->expiry_date->format('m-d-Y') : '' }}</td>
-                                        <td style="padding: 6px;"><span style="background: {{ in_array(strtoupper($quote->status), ['WON', 'ACCEPTED']) ? '#26c281' : '#888' }}; color: #fff; padding: 2px 5px; border-radius: 2px; font-size: 10px;">{{ $quote->status }}</span></td>
-                                        <td style="padding: 6px;">{{ $quote->created_at ? $quote->created_at->format('Y-m-d') : '' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->commodity ?: '-' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->pol->name ?? '-' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->pod->name ?? '-' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->carrier->name ?? '-' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->salesPerson->name ?? '-' }}</td>
-                                        <td style="padding: 6px;">{{ $quote->op->name ?? '-' }}</td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Step 2 Content -->
-                    <div x-show="quoteStep === 2" x-cloak>
-                        <h5 style="font-size: 13px; font-weight: 600; color: #333; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Route Information</h5>
-                        <table class="table-custom" style="margin-bottom: 20px;">
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px;">Select</th>
-                                    <th>Departure</th>
-                                    <th>Destination</th>
-                                    <th>Final Destination</th>
-                                    <th>Carrier</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr style="background: #fffdf2;" x-show="selectedQuote" x-cloak>
-                                    <td style="text-align: center;"><input type="radio" checked></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pol_name : ''"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pod_name : ''"></td>
-                                    <td x-text="selectedQuote ? selectedQuote.pod_name : ''"></td>
-                                    <td x-text="selectedQuote && selectedQuote.carrier_name ? selectedQuote.carrier_name : '-'"></td>
-                                </tr>
-                                <tr x-show="!selectedQuote">
-                                    <td colspan="5" style="text-align: center; color: #999; padding: 10px;">No route information in this quotation</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <h5 style="font-size: 13px; font-weight: 600; color: #333; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Fill in the Shipment Information</h5>
-                        <table class="table-custom">
-                            <tbody>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600; width: 15%;">MAWB No.</td>
-                                    <td style="width: 35%;">
-                                        <div style="display: flex; gap: 5px;">
-                                            <input type="text" class="form-control-gf" x-model="quoteForm.mawb_no" style="height: 24px; flex: 1;" placeholder="MAWB-...">
-                                        </div>
-                                    </td>
-                                    <td style="background: #f9fafb; font-weight: 600; width: 15%;"><span style="color: red;">*</span>HAWB No.</td>
-                                    <td style="width: 35%;">
-                                        <div style="display: flex; align-items: center; border: 1px solid #ccc;">
-                                            <div style="padding: 0 5px; border-right: 1px solid #ccc; background: #eee;"><input type="checkbox" checked></div>
-                                            <input type="text" class="form-control-gf" x-model="quoteForm.hawb_no" style="border: none; height: 22px; width: 100%;">
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600;"><span style="color: red;">*</span>Departure Date/Time</td>
-                                    <td>
-                                        <div style="display: flex; width: 100%;">
-                                            <input type="date" class="form-control-gf" x-model="quoteForm.etd" style="height: 24px; border-right: none;">
-                                            <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
-                                        </div>
-                                    </td>
-                                    <td style="background: #f9fafb; font-weight: 600;">Arrival Date/Time</td>
-                                    <td>
-                                        <div style="display: flex; width: 100%;">
-                                            <input type="date" class="form-control-gf" x-model="quoteForm.eta" style="height: 24px; border-right: none;">
-                                            <div class="cursor-pointer" style="background: #eee; border: 1px solid #ccc; padding: 0 8px; display: flex; align-items: center; color: #666;" @click="$el.previousElementSibling.showPicker()"><i class="fa fa-calendar"></i></div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600;"><span style="color: red;">*</span>Customer</td>
-                                    <td><input type="text" class="form-control-gf" x-model="quoteForm.customer" style="height: 24px;" readonly style="background-color: #fff;"></td>
-                                    <td style="background: #f9fafb; font-weight: 600;">Service Term</td>
-                                    <td x-text="quoteForm.service_term || '-'"></td>
-                                </tr>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600;">Oversea Agent</td>
-                                    <td x-text="quoteForm.oversea_agent_id ? 'Has Agent' : '-'"></td>
-                                    <td style="background: #f9fafb; font-weight: 600;">Incoterms</td>
-                                    <td x-text="quoteForm.incoterms_id ? 'Has Incoterm' : '-'"></td>
-                                </tr>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600;">Gross Weight</td>
-                                    <td><span x-text="quoteForm.gross_weight_kg || '0.00'"></span> KG</td>
-                                    <td style="background: #f9fafb; font-weight: 600;">Volume Weight</td>
-                                    <td><span x-text="quoteForm.volume_cbm || '0.00'"></span> CBM</td>
-                                </tr>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600;">Chargeable Weight</td>
-                                    <td><span x-text="quoteForm.chargeable_weight_kg || '0.00'"></span> KG</td>
-                                    <td style="background: #f9fafb; font-weight: 600;">Sales</td>
-                                    <td x-text="quoteForm.sales || '-'"></td>
-                                </tr>
-                                <tr>
-                                    <td style="background: #f9fafb; font-weight: 600;">OP</td>
-                                    <td colspan="3" x-text="quoteForm.op_id ? 'Has OP' : '-'"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Step 3 Content -->
-                    <div x-show="quoteStep === 3" x-cloak>
-                        <h5 style="font-size: 13px; font-weight: 600; color: #333; margin: 0 0 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Select Freight Item(s)</h5>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                            <label style="display: flex; align-items: center; gap: 5px; font-size: 11px;">
-                                <input type="checkbox"> Save as a draft invoice
-                            </label>
-                            <div style="display: flex; align-items: center; gap: 5px; font-size: 11px;">
-                                <span>Applied Unit</span> <i class="fa fa-info-circle" style="color: #4b77be;"></i>
-                                <select class="form-control-gf" style="width: 100px; height: 22px;">
-                                    <option value="">Select...</option>
-                                    @foreach($packageUnits as $unit)
-                                        <option value="{{ $unit->name }}">{{ $unit->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <table class="table-custom">
-                            <thead>
-                                <tr>
-                                    <th style="width: 70px;"><input type="checkbox" disabled> Select</th>
-                                    <th>Freight Code</th>
-                                    <th>Freight Description</th>
-                                    <th>Unit</th>
-                                    <th>Currency</th>
-                                    <th>Volume</th>
-                                    <th>Rate</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-if="selectedQuote && selectedQuote.items && selectedQuote.items.length > 0">
-                                    <template x-for="(item, index) in selectedQuote.items" :key="index">
-                                        <tr style="border-bottom: 1px solid #f1f3f6;">
-                                            <td style="text-align: center; padding: 6px;"><input type="checkbox" x-model="item.selected"></td>
-                                            <td style="padding: 6px;" x-text="item.charge_code || '-'"></td>
-                                            <td style="padding: 6px;" x-text="item.charge_name || '-'"></td>
-                                            <td style="padding: 6px;" x-text="item.unit || '-'"></td>
-                                            <td style="padding: 6px;" x-text="item.currency ? item.currency.code : 'USD'"></td>
-                                            <td style="padding: 6px;" x-text="item.qty || '1'"></td>
-                                            <td style="padding: 6px; text-align: right;" x-text="Number(item.rate || 0).toFixed(2)"></td>
-                                            <td style="padding: 6px; text-align: right; color: #4b77be;" x-text="Number(item.amount || 0).toFixed(2)"></td>
-                                        </tr>
-                                    </template>
-                                </template>
-                                <tr x-show="!selectedQuote || !selectedQuote.items || selectedQuote.items.length === 0">
-                                    <td colspan="8" style="text-align: center; color: #999; padding: 10px;">No charge items in this quotation</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <span :style="quoteStep >= 1 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select Quotation</span>
                 </div>
+                <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
 
-                <div class="modal-footer" style="padding: 15px; border-top: 1px solid #e5e5e5; display: flex; justify-content: flex-end; gap: 10px; background: #f9fafb; border-radius: 0 0 4px 4px;">
-                    <button type="button" class="btn-default-gf" style="padding: 6px 12px; font-size: 12px; border-radius: 4px;" @click="closeQuoteModal()">Cancel</button>
-                    <button type="button" class="btn-freightx" :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))" :style="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))) ? 'background: #ccc; border: none; color: #666; cursor: not-allowed; opacity: 0.7; padding: 6px 12px; font-size: 12px; border-radius: 4px;' : 'background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;'" x-show="quoteStep < 3" @click="quoteStep++">Next</button>
-                    <button type="button" class="btn-freightx" style="background: #1abc9c; padding: 6px 12px; font-size: 12px; border-radius: 4px;" x-show="quoteStep === 3" x-cloak @click="confirmQuoteSelection()">Confirm</button>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <div class="wizard-circle" :style="quoteStep >= 2 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
+                        <template x-if="quoteStep > 2"><i class="fa fa-check"></i></template>
+                        <template x-if="quoteStep <= 2"><span>2</span></template>
+                    </div>
+                    <span :style="quoteStep >= 2 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Fill in shipment data</span>
                 </div>
+                <div style="height: 1px; width: 20px; background: #e2e8f0;"></div>
+
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <div class="wizard-circle" :style="quoteStep >= 3 ? 'background: #3b82f6;' : 'background: #cbd5e1;'">
+                        <span>3</span>
+                    </div>
+                    <span :style="quoteStep >= 3 ? 'color: #1e293b; font-size: 10px; font-weight: 600;' : 'color: #94a3b8; font-size: 10px;'">Select invoice items</span>
                 </div>
             </div>
+
+            <!-- Step 1 Content -->
+            <div x-show="quoteStep === 1">
+                @php
+                    $agents = \App\Models\TradePartner::orderBy('name')->get();
+                    $ports = \App\Models\Port::orderBy('name')->get();
+                    $users = \App\Models\User::orderBy('name')->get();
+                @endphp
+                <!-- Ocean Style Grid -->
+                <div class="form-grid-4" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="main-grid">
+                        <div class="form-group-gf"><label class="form-label-gf">Customer</label><div class="form-input-container">
+                            <x-inline-select name="customer" :options="$agents" module="trade-partner" x-model="filters.customer" class="form-control-gf" />
+                        </div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Departure</label><div class="form-input-container">
+                            <x-inline-select name="pol" :options="$agents" module="trade-partner" x-model="filters.pol" class="form-control-gf" />
+                        </div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Quote No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="filters.quote_no"></div></div>
+                    </div>
+                    <div class="main-grid">
+                        <div class="form-group-gf"><label class="form-label-gf">Valid Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="filters.valid_date"></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Destination</label><div class="form-input-container">
+                            <select class="form-control-gf" x-model="filters.pod">
+                                <option value="">Select...</option>
+                                @foreach($ports as $port)
+                                    <option value="{{ $port->id }}">{{ $port->name }}</option>
+                                @endforeach
+                            </select>
+                        </div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Status</label><div class="form-input-container">
+                            <select class="form-control-gf" x-model="filters.status">
+                                <option value="">Select...</option>
+                                <option value="Won">Won</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Expired">Expired</option>
+                            </select>
+                        </div></div>
+                    </div>
+                    <div class="main-grid">
+                        <div class="form-group-gf"><label class="form-label-gf">Commodity</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="filters.commodity"></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container">
+                            <select class="form-control-gf" x-model="filters.sales">
+                                <option value="">Select...</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container">
+                            <select class="form-control-gf" x-model="filters.op">
+                                <option value="">Select...</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div></div>
+                    </div>
+                </div>
+
+                <!-- Ocean Style Search Buttons -->
+                <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 0;">
+                    <button type="button" class="btn-default-gf" @click="clearSearch()">Clear</button>
+                    <button type="button" class="btn-freightx" @click="applySearch()"><i class="fa fa-search"></i> Search</button>
+                </div>
+
+                <hr style="border-top: 1px solid #e2e8f0; margin: 10px 0;">
+
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
+                    <button type="button" class="btn-tool-secondary" style="background: #67809f; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 10px; border: none;" @click="showQuoteConfig = !showQuoteConfig"><i class="fa fa-cogs"></i> Config</button>
+                </div>
+
+                <!-- Ocean Style Interactive Table -->
+                <div class="table-responsive" style="margin-bottom: 10px; height: 280px; border: 1px solid #e7ecf1;">
+                    <table class="table-custom">
+                        <thead>
+                            <tr style="background: #888; color: #fff;">
+                                <th style="text-align: center;">Select</th>
+                                <th>Quote No.</th>
+                                <th>Valid Date <i class="fa fa-sort" style="float: right;"></i></th>
+                                <th>Status <i class="fa fa-sort" style="float: right;"></i></th>
+                                <th>Creation Date <i class="fa fa-sort" style="float: right;"></i></th>
+                                <th>Commodity</th>
+                                <th>Departure</th>
+                                <th>Destination</th>
+                                <th>Carrier</th>
+                                <th>Sales</th>
+                                <th>OP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($quotations as $quote)
+                            <tr class="cursor-pointer hover:bg-blue-50"
+                                :style="selectedQuote && selectedQuote.quote_no === '{{ addslashes($quote->quote_no) }}' ? 'background-color: #eff6ff;' : ''"
+                                @click="selectQuote({
+                                    quote_no: '{{ addslashes($quote->quote_no) }}',
+                                    mawb_no: 'MAWB-{{ addslashes($quote->quote_no) }}',
+                                    hawb_no: 'HAWB-{{ addslashes($quote->quote_no) }}',
+                                    eta: '{{ $quote->expiry_date ? $quote->expiry_date->format('Y-m-d') : '' }}',
+                                    etd: '{{ $quote->quote_date ? $quote->quote_date->format('Y-m-d') : '' }}',
+                                    customer: '{{ addslashes($quote->customer->name ?? '') }}',
+                                    customer_id: '{{ $quote->customer_id }}',
+                                    sales: '{{ addslashes($quote->salesPerson->name ?? '') }}',
+                                    sales_person_id: '{{ $quote->sales_person_id }}',
+                                    op: '{{ addslashes($quote->op->name ?? '') }}',
+                                    op_id: '{{ $quote->op_id }}',
+                                    pol_name: '{{ addslashes($quote->pol->name ?? '') }}',
+                                    pod_name: '{{ addslashes($quote->pod->name ?? '') }}',
+                                    pol_id: '{{ $quote->pol_id }}',
+                                    pod_id: '{{ $quote->pod_id }}',
+                                    carrier_name: '{{ addslashes($quote->carrier->name ?? '') }}',
+                                    carrier_id: '{{ $quote->carrier_id }}',
+                                    oversea_agent_id: '{{ $quote->agent_id }}',
+                                    service_term: '{{ addslashes($quote->service_term ?? '') }}',
+                                    incoterms_id: '{{ $quote->incoterms_id }}',
+                                    commodity: '{{ addslashes($quote->commodity ?? '') }}',
+                                    gross_weight_kg: '{{ $quote->weight_kg ?? '' }}',
+                                    gross_weight_lb: '{{ $quote->weight_lb ?? '' }}',
+                                    volume_cbm: '{{ $quote->volume_cbm ?? '' }}',
+                                    chargeable_weight_kg: '{{ $quote->chargeable_weight ?? '' }}',
+                                    ship_mode: '{{ addslashes($quote->ship_mode ?? '') }}',
+                                    items: (quoteItems && quoteItems['{{ $quote->quote_no }}']) ? quoteItems['{{ $quote->quote_no }}'].map(i => ({...i, selected: true})) : []
+                                })"
+                                x-show="matchFilters({quote_no: '{{ addslashes($quote->quote_no) }}', customer_id: '{{ $quote->customer_id }}', pol_id: '{{ $quote->pol_id }}', pod_id: '{{ $quote->pod_id }}', status: '{{ $quote->status }}', sales_person_id: '{{ $quote->sales_person_id }}', op: '{{ $quote->op_id }}', commodity: '{{ addslashes($quote->commodity ?? '') }}'})">
+                                
+                                <td style="text-align: center;"><input type="radio" name="quote_sel" :checked="selectedQuote && selectedQuote.quote_no === '{{ addslashes($quote->quote_no) }}'"></td>
+                                <td><span style="color: #3b82f6; font-weight: 600;">{{ $quote->quote_no }}</span></td>
+                                <td>{{ $quote->quote_date ? $quote->quote_date->format('m-d-Y') : '' }} ~ {{ $quote->expiry_date ? $quote->expiry_date->format('m-d-Y') : '' }}</td>
+                                <td><span style="background: {{ in_array(strtoupper($quote->status), ['WON', 'ACCEPTED']) ? '#10b981' : '#64748b' }}; color: #fff; padding: 1px 4px; border-radius: 2px; font-size: 9px; font-weight: 600;">{{ $quote->status }}</span></td>
+                                <td>{{ $quote->created_at ? $quote->created_at->format('Y-m-d') : '' }}</td>
+                                <td>{{ $quote->commodity ?: '-' }}</td>
+                                <td>{{ $quote->pol->name ?? '-' }}</td>
+                                <td>{{ $quote->pod->name ?? '-' }}</td>
+                                <td>{{ $quote->carrier->name ?? '-' }}</td>
+                                <td>{{ $quote->salesPerson->name ?? '-' }}</td>
+                                <td>{{ $quote->op->name ?? '-' }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Step 2 Content -->
+            <div x-show="quoteStep === 2" x-cloak>
+                <div class="hbl-header">Route Information</div>
+                <div class="table-responsive" style="margin-bottom: 20px;">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center; width: 50px;">Select</th>
+                                <th>Departure</th>
+                                <th>Destination</th>
+                                <th>Final Destination</th>
+                                <th>Carrier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-blue-50" x-show="selectedQuote">
+                                <td style="text-align: center;"><input type="radio" checked></td>
+                                <td x-text="selectedQuote ? selectedQuote.pol_name : ''"></td>
+                                <td x-text="selectedQuote ? selectedQuote.pod_name : ''"></td>
+                                <td x-text="selectedQuote ? selectedQuote.pod_name : ''"></td>
+                                <td x-text="selectedQuote && selectedQuote.carrier_name ? selectedQuote.carrier_name : '-'"></td>
+                            </tr>
+                            <tr x-show="!selectedQuote">
+                                <td colspan="5" style="text-align: center; color: #94a3b8; padding: 15px;">No route information in this quotation</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="hbl-header">Fill in the Shipment Information</div>
+                <div class="form-grid-4" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="main-grid">
+                        <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*MAWB No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.mawb_no" placeholder="MAWB-..."></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*Departure Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="quoteForm.etd"></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*Customer</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.customer" readonly style="background-color: #f8fafc;"></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Oversea Agent</label><div class="form-input-container"><span x-text="quoteForm.oversea_agent_id ? 'Has Agent' : '-'" style="font-size: 10px; color: #334155;"></span></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Gross Weight</label><div class="form-input-container"><span style="font-size: 10px; color: #334155;"><span x-text="quoteForm.gross_weight_kg || '0.00'"></span> KG</span></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Chargeable Weight</label><div class="form-input-container"><span style="font-size: 10px; color: #334155;"><span x-text="quoteForm.chargeable_weight_kg || '0.00'"></span> KG</span></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">OP</label><div class="form-input-container"><span x-text="quoteForm.op_id ? 'Has OP' : '-'" style="font-size: 10px; color: #334155;"></span></div></div>
+                    </div>
+                    <div class="main-grid">
+                        <div class="form-group-gf"><label class="form-label-gf" style="color: #ef4444;">*HAWB No.</label><div class="form-input-container"><input type="text" class="form-control-gf" x-model="quoteForm.hawb_no"></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Arrival Date</label><div class="form-input-container"><input type="date" class="form-control-gf" x-model="quoteForm.eta"></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Service Term</label><div class="form-input-container"><span x-text="quoteForm.service_term || '-'" style="font-size: 10px; color: #334155;"></span></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Incoterms</label><div class="form-input-container"><span x-text="quoteForm.incoterms_id ? 'Has Incoterm' : '-'" style="font-size: 10px; color: #334155;"></span></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Volume Weight</label><div class="form-input-container"><span style="font-size: 10px; color: #334155;"><span x-text="quoteForm.volume_cbm || '0.00'"></span> CBM</span></div></div>
+                        <div class="form-group-gf"><label class="form-label-gf">Sales</label><div class="form-input-container"><span x-text="quoteForm.sales || '-'" style="font-size: 10px; color: #334155;"></span></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 Content -->
+            <div x-show="quoteStep === 3" x-cloak>
+                <div class="hbl-header">Select Freight Item(s)</div>
+                <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" style="margin: 0; width: 12px; height: 12px; cursor: pointer; accent-color: #3b82f6;">
+                        <span style="font-size: 10px; color: #475569; font-weight: 600;">Save as a draft invoice</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 10px;">
+                        <span style="font-weight: 600;">Applied Unit</span> <i class="fa fa-info-circle" style="color: #4b77be;"></i>
+                        <select class="form-control-gf" style="width: 100px; height: 22px;">
+                            <option value="">Select...</option>
+                            @foreach($packageUnits as $unit)
+                                <option value="{{ $unit->name }}">{{ $unit->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="margin-bottom: 10px;">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center;">Select</th>
+                                <th>Freight Code</th>
+                                <th>Freight Description</th>
+                                <th>Unit</th>
+                                <th>Currency</th>
+                                <th>Volume</th>
+                                <th>Rate</th>
+                                <th style="text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-if="selectedQuote && selectedQuote.items && selectedQuote.items.length > 0">
+                                <template x-for="(item, index) in selectedQuote.items" :key="index">
+                                    <tr class="hover:bg-gray-50">
+                                        <td style="text-align: center;"><input type="checkbox" x-model="item.selected"></td>
+                                        <td x-text="item.charge_code || '-'"></td>
+                                        <td x-text="item.charge_name || '-'"></td>
+                                        <td x-text="item.unit || '-'"></td>
+                                        <td x-text="item.currency ? item.currency.code : 'USD'"></td>
+                                        <td x-text="item.qty || '1'"></td>
+                                        <td x-text="Number(item.rate || 0).toFixed(2)"></td>
+                                        <td style="text-align: right; font-weight: 600; color: #3b82f6;" x-text="Number(item.amount || 0).toFixed(2)"></td>
+                                    </tr>
+                                </template>
+                            </template>
+                            <tr x-show="!selectedQuote || !selectedQuote.items || selectedQuote.items.length === 0">
+                                <td colspan="8" style="text-align: center; color: #94a3b8; font-size: 11px; padding: 20px;">No charge items in this quotation. Items can be added after shipment creation.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ocean Style Footer -->
+        <div class="modal-footer">
+            <button type="button" class="btn-default-gf" @click="closeQuoteModal()">Cancel</button>
+            <button type="button" x-show="quoteStep > 1" class="btn-default-gf" @click="quoteStep--">Back</button>
+
+            <button type="button" x-show="quoteStep < 3"
+                    :class="((quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))) ? 'btn-freightx opacity-50 cursor-not-allowed' : 'btn-freightx'"
+                    :disabled="(quoteStep === 1 && !selectedQuote) || (quoteStep === 2 && (!quoteForm.mawb_no || !quoteForm.hawb_no || !quoteForm.customer || !quoteForm.etd))"
+                    @click="quoteStep++">Next <i class="fa fa-arrow-right"></i></button>
+
+            <button type="button" x-show="quoteStep === 3" class="btn-freightx" @click="confirmQuoteSelection()"><i class="fa fa-check"></i> Confirm</button>
+        </div>
+    </div>
+</div>
         </template>
 
         <!-- Document Package Modal (Report Type) -->
@@ -3081,7 +3031,7 @@
             </div>
         </div>
     </div>
-
+</div>
 <div id="toast-container" class="toast-container"></div>
 <script>
     function showToast(type, msg) {
