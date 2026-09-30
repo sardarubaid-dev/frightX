@@ -2,13 +2,13 @@
     @push('styles')
     <x-form-styles />
     <style>
-        .tab-content { background: #fff; border: 1px solid #e2e8f0; border-top: none; padding: 10px; }
-        .main-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; align-items: start; }
-        .form-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px 10px; margin-bottom: 4px; align-items: center; }
-        .form-group { display: flex; flex-direction: column; gap: 2px; }
-        .form-group label { font-size: 10px; color: #475569; font-weight: 600; }
-        .required:after { content: " *"; color: #ef4444; }
-        input, select, textarea {
+        .tp-create-page .tab-content { background: #fff; border: 1px solid #e2e8f0; border-top: none; padding: 10px; }
+        .tp-create-page .main-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; align-items: start; }
+        .tp-create-page .form-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px 10px; margin-bottom: 4px; align-items: center; }
+        .tp-create-page .form-group { display: flex; flex-direction: column; gap: 2px; }
+        .tp-create-page .form-group label { font-size: 10px; color: #475569; font-weight: 600; }
+        .tp-create-page .required:after { content: " *"; color: #ef4444; }
+        .tp-create-page input, .tp-create-page select, .tp-create-page textarea {
             height: 20px; padding: 0 4px; font-size: 10px;
             border: 1px solid #cbd5e1; border-radius: 2px; width: 100%;
             background-color: #fff; color: #1e293b;
@@ -16,48 +16,49 @@
             transition: all 0.2s ease;
             box-sizing: border-box;
         }
-        input:focus, select:focus, textarea:focus {
+        .tp-create-page input:focus, .tp-create-page select:focus, .tp-create-page textarea:focus {
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
-        textarea { height: auto; min-height: 40px; padding: 4px; resize: vertical; }
-        input:disabled, select:disabled, textarea:disabled { background-color: #f1f5f9 !important; cursor: not-allowed; color: #94a3b8; }
-        .select-custom-arrow {
+        .tp-create-page textarea { height: auto; min-height: 40px; padding: 4px; resize: vertical; }
+        .tp-create-page input:disabled, .tp-create-page select:disabled, .tp-create-page textarea:disabled { background-color: #f1f5f9 !important; cursor: not-allowed; color: #94a3b8; }
+        .tp-create-page .select-custom-arrow {
             appearance: none; -webkit-appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat; background-position: right 4px center; background-size: 8px; padding-right: 18px !important;
         }
-        .section-header-blue {
+        .tp-create-page .section-header-blue {
             background: #3b82f6 !important; color: #fff; padding: 5px 10px;
             font-weight: 700; text-transform: uppercase; font-size: 11px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .party-row-header { background: #fdfdfd; padding: 4px 10px; border: 1px solid #e2e8f0; border-top: none; display: flex; align-items: center; gap: 8px; }
-        .party-row-header span { font-weight: 700; font-size: 10px; color: #475569; min-width: 140px; }
-        .checkbox-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 8px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 3px; }
-        .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #475569; }
-        .checkbox-item input[type="checkbox"] { width: 12px; height: 12px; margin: 0; }
-        .btn-sm { padding: 2px 8px; font-size: 9px; height: 20px; border-radius: 2px; font-weight: 600; text-transform: uppercase; cursor: pointer; border: none; }
-        .btn-blue { background: #3b82f6; color: #fff; }
-        .btn-blue:hover { background: #2563eb; }
-        .btn-green { background: #32c5d2; color: #fff; }
-        .btn-green:hover { background: #26a1ab; }
-        .tp-save-btn { background: #3b82f6; color: #fff; padding: 6px 50px; border-radius: 20px; font-weight: 700; text-transform: uppercase; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; }
-        .tp-save-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59,130,246,0.25); }
+        .tp-create-page .party-row-header { background: #fdfdfd; padding: 4px 10px; border: 1px solid #e2e8f0; border-top: none; display: flex; align-items: center; gap: 8px; }
+        .tp-create-page .party-row-header span { font-weight: 700; font-size: 10px; color: #475569; min-width: 140px; }
+        .tp-create-page .checkbox-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 8px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 3px; }
+        .tp-create-page .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: #475569; }
+        .tp-create-page .checkbox-item input[type="checkbox"] { width: 12px; height: 12px; margin: 0; }
+        .tp-create-page .btn-sm { padding: 2px 8px; font-size: 9px; height: 20px; border-radius: 2px; font-weight: 600; text-transform: uppercase; cursor: pointer; border: none; }
+        .tp-create-page .btn-blue { background: #3b82f6; color: #fff; }
+        .tp-create-page .btn-blue:hover { background: #2563eb; }
+        .tp-create-page .btn-green { background: #32c5d2; color: #fff; }
+        .tp-create-page .btn-green:hover { background: #26a1ab; }
+        .tp-create-page .tp-save-btn { background: #3b82f6; color: #fff; padding: 6px 50px; border-radius: 20px; font-weight: 700; text-transform: uppercase; font-size: 12px; border: none; cursor: pointer; transition: all 0.2s; }
+        .tp-create-page .tp-save-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59,130,246,0.25); }
 
         @media (max-width: 1280px) {
-            .main-grid { grid-template-columns: 1fr !important; }
+            .tp-create-page .main-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 768px) {
-            .form-row { display: flex !important; flex-direction: column !important; gap: 6px !important; }
-            .form-row > .form-group { grid-column: span 12 !important; width: 100% !important; }
+            .tp-create-page .form-row { display: flex !important; flex-direction: column !important; gap: 6px !important; }
+            .tp-create-page .form-row > .form-group { grid-column: span 12 !important; width: 100% !important; }
         }
     </style>
     @endpush
 
 
     <script data-turbo-eval="yes">
+        // View cache breaker: 1
         function showToast(type, msg) {
             var icons = { success: 'check-circle', error: 'times-circle', warning: 'exclamation-triangle', info: 'info-circle' };
             var t = document.createElement('div');
@@ -161,6 +162,7 @@
                 selectedDocIds: [],
                 isDragging: false,
                 countries: @json($countries->map(fn($c) => ['id' => $c->id, 'name' => $c->name])),
+                portalEmailTouched: false,
 
                 init() {
                     this.$watch('activeTab', (value) => {
@@ -181,6 +183,13 @@
 
                     // Initialize previews
                     this.updatePreviews();
+
+                    // Watch email for portal sync
+                    this.$watch('form.email', (value) => {
+                        if (!this.form.id && !this.portalEmailTouched) {
+                            this.form.portal_email = value;
+                        }
+                    });
 
                     // Watchers for live preview update
                     this.$watch('form.name', () => this.updatePreviews());
@@ -230,6 +239,8 @@
                     fax: '{{ $tradePartner->fax ?? "" }}',
                     url: '{{ $tradePartner->url ?? "" }}',
                     email: '{{ $tradePartner->email ?? "" }}',
+                    portal_email: '{{ $tradePartner->user ? $tradePartner->user->email : "" }}',
+                    portal_password: '',
                     status: '{{ $tradePartner->status ?? "BUSINESS" }}',
                     sales_office_id: '{{ $tradePartner->sales_office_id ?? "" }}',
                     sales_person_id: '{{ $tradePartner->sales_person_id ?? "" }}',
@@ -575,6 +586,37 @@
                         this.checkingBond = false;
                     });
                 },
+                grantPortalAccess() {
+                    const email = document.getElementById('portal_email').value;
+                    const password = document.getElementById('portal_password').value;
+                    
+                    if (!email || !password) {
+                        showToast('warning', 'Please enter email and password for portal access.');
+                        return;
+                    }
+
+                    fetch(`/trade-partner/${this.form.id}/grant-access`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ email, password })
+                    })
+                    .then(async res => {
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            showToast('success', 'Portal access granted/updated successfully.');
+                            document.getElementById('portal_password').value = '';
+                        } else {
+                            showToast('error', data.message || (data.errors && data.errors[0]) || 'Failed to grant portal access.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showToast('error', 'An error occurred while granting portal access.');
+                    });
+                },
                 fetchLogs() {
                     if (!this.form.id) return;
                     fetch(`/trade-partner/${this.form.id}/activity-logs`)
@@ -757,7 +799,7 @@
     </script>
 
     <div id="toast-container" class="toast-container"></div>
-    <div class="page-content" x-data="window.tradePartnerForm()" x-cloak>
+    <div class="page-content tp-create-page" x-data="window.tradePartnerForm()" x-cloak>
         <!-- Breadcrumb -->
         <div class="page-bar" style="margin-bottom: 15px;">
             <ul class="page-breadcrumb">
@@ -1231,6 +1273,33 @@
                                 <label class="checkbox-item"><input type="checkbox" x-model="form.popup_tips.free_hand_cargo"> Free Hand Cargo</label>
                                 <label class="checkbox-item"><input type="checkbox" x-model="form.popup_tips.nomination"> Nomination</label>
                                 <label class="checkbox-item"><input type="checkbox" x-model="form.popup_tips.see_memo_remark"> See Memo Remark</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Portal Access -->
+                    <div class="portlet light" style="border: 2px solid #3b82f6; background-color: #eff6ff;">
+                        <div class="portlet-title" style="border-bottom: 1px solid #bfdbfe;">
+                            <span class="caption-subject" style="color: #1d4ed8; font-weight: bold;"><i class="fa fa-lock" style="color: #3b82f6;"></i> Customer Portal Access (Optional)</span>
+                        </div>
+                        <div class="portlet-body">
+                            <div class="form-row">
+                                <div class="form-group" style="grid-column: span 5">
+                                    <label style="color: #1e293b; font-weight: 600;">Email Address for Login</label>
+                                    <input type="email" x-model="form.portal_email" id="portal_email" @input="portalEmailTouched = true" placeholder="customer@example.com" style="border: 1px solid #cbd5e1; background: #fff;">
+                                </div>
+                                <div class="form-group" style="grid-column: span 5">
+                                    <label style="color: #1e293b; font-weight: 600;">Password <span style="font-weight: normal; color: #64748b;" x-show="form.id">(Leave blank to keep current)</span></label>
+                                    <input type="password" x-model="form.portal_password" id="portal_password" placeholder="Min 6 characters" style="border: 1px solid #cbd5e1; background: #fff;">
+                                </div>
+                                <div class="form-group" style="grid-column: span 2; display: flex; align-items: flex-end;" x-show="form.id">
+                                    <button type="button" class="btn-tool" style="width: 100%; height: 28px; line-height: 1; background-color: #3b82f6; color: white;" @click="grantPortalAccess()">
+                                        <i class="fa fa-key"></i> Update Access
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 12px; color: #475569;">
+                                <i class="fa fa-info-circle" style="color: #3b82f6;"></i> <strong>Note:</strong> If you are creating a new Trade Partner, simply fill in the email and password above and hit Save. The portal access will be created automatically. 
                             </div>
                         </div>
                     </div>

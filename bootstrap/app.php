@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'super-admin' => \App\Http\Middleware\SuperAdmin::class,
+            'check-status' => \App\Http\Middleware\CheckAccountStatus::class,
+            'module-access' => \App\Http\Middleware\CheckModuleAccess::class,
+            'customer-access' => \App\Http\Middleware\CheckCustomerAccess::class,
+        ]);
+        $middleware->appendToGroup('web', \App\Http\Middleware\CheckAccountStatus::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\CheckModuleAccess::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

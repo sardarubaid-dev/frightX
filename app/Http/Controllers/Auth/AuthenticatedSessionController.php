@@ -28,6 +28,18 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Record last login
+        $request->user()->update(['last_login_at' => now()]);
+
+        // Redirect based on role
+        if ($request->user()->isSuperAdmin()) {
+            return redirect()->intended(route('super-admin.dashboard', absolute: false));
+        }
+        
+        if ($request->user()->isCustomer()) {
+            return redirect()->route('customer.dashboard');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

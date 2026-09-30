@@ -1,3 +1,4 @@
+@props(['type' => 'admin'])
 <aside class="flex-shrink-0 z-[2000] relative h-screen overflow-hidden"
        x-data="{
     activeMenu: '{{ Request::segment(1) }}',
@@ -38,142 +39,169 @@ x-init="if(activeMenu) { openMenus.push(activeMenu); if(activeMenu === 'settings
                     </div>
                 </a>
 
+                @if($type === 'admin')
                 <a href="/action-center" class="sidebar-nav-item flex items-center transition-all duration-200 {{ request()->is('action-center') ? 'active-link' : 'nav-link' }}" style="text-decoration: none;" :class="isCollapsed ? 'justify-center px-0' : 'px-5'">
                     <div class="flex items-center" :class="isCollapsed ? 'justify-center w-full' : ''">
                         <i class="fa fa-rocket text-center text-[12px]" :class="isCollapsed ? '!mr-0 !w-auto' : 'mr-3 w-5'"></i>
                         <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Action Center</span>
                     </div>
                 </a>
+                @endif
 
                 <!-- Modules Header -->
-                <div x-show="!isCollapsed" class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">Modules</div>
+                <div x-show="!isCollapsed" class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">
+                    {{ $type === 'superadmin' ? 'Management' : 'Modules' }}
+                </div>
 
                 @php
-                    $menus = [
-                        ['id' => 'ocean-import', 'label' => 'Ocean Import', 'icon' => 'fa-ship', 'sub' => [
-                            ['url' => '/ocean-import/create', 'label' => 'New Shipment'],
-                            ['url' => '/ocean-import/create-quote', 'label' => 'New Shipment from Quote'],
-                            ['url' => '/ocean-import/list', 'label' => 'My Shipment List'],
-                            ['url' => '/ocean-import/list/mbl', 'label' => 'Master B/L List'],
-                            ['url' => '/ocean-import/list/hbl', 'label' => 'House B/L List'],
-                            // ['url' => '/ocean-import/list/containers', 'label' => 'My Containers'], // Hidden per client request
-                            // ['url' => '/edi-import', 'label' => 'EDI History'], // Hidden per client request
-                        ]],
-                        ['id' => 'ocean-export', 'label' => 'Ocean Export', 'icon' => 'fa-anchor', 'sub' => [
-                            ['url' => '/ocean-export/create', 'label' => 'New Shipment'],
-                            ['url' => '/ocean-export/create-quote', 'label' => 'New Shipment from Quote'],
-                            ['url' => '/ocean-export/list', 'label' => 'My Shipment List'],
-                            ['url' => '/ocean-export/list/mbl', 'label' => 'Master B/L List'],
-                            ['url' => '/ocean-export/list/hbl', 'label' => 'House B/L List'],
-                            ['url' => '/ocean-export/booking/create', 'label' => 'New Booking'],
-                            ['url' => '/ocean-export/create-quote-booking', 'label' => 'New Booking from Quote'],
-                            ['url' => '/ocean-export/booking/list', 'label' => 'Booking List'],
-                            ['url' => '/ocean-export/vessel-schedule/create', 'label' => 'New Vessel Schedule'],
-                            ['url' => '/ocean-export/vessel-schedule/list', 'label' => 'Vessel Schedule List'],
-                        ]],
-                        ['id' => 'air-import', 'label' => 'Air Import', 'icon' => 'fa-plane', 'sub' => [
-                            ['url' => '/air-import/create', 'label' => 'New Shipment'],
-                            ['url' => '/air-import/create-quote', 'label' => 'New Shipment from Quote'],
-                            ['url' => '/air-import/my-shipment-list', 'label' => 'My Shipment List'],
-                            ['url' => '/air-import/list', 'label' => 'MAWB List'],
-                            ['url' => '/air-import/list/hbl', 'label' => 'HAWB List'],
-                        ]],
-                        ['id' => 'air-export', 'label' => 'Air Export', 'icon' => 'fa-plane', 'sub' => [
-                            ['url' => '/air-export/create', 'label' => 'New Shipment'],
-                            ['url' => '/air-export/create?load_from_quotation=true', 'label' => 'New Shipment from Quote'],
-                            ['url' => '/air-export/list', 'label' => 'My Shipment List'],
-                            ['url' => '/air-export/list/mbl', 'label' => 'MAWB List'],
-                            ['url' => '/air-export/list/hbl', 'label' => 'HAWB List'],
-                            ['url' => '/air-export/booking/entry', 'label' => 'New Booking'],
-                            ['url' => '/air-export/booking/entry?load_from_quotation=true', 'label' => 'New Booking from Quote'],
-                            ['url' => '/air-export/booking/list', 'label' => 'Booking List'],
-                            ['url' => '/air-export/booking/mawb-stock', 'label' => 'MAWB Stock List'],
-                        ]],
-                        ['id' => 'truck', 'label' => 'Trucking', 'icon' => 'fa-truck', 'sub' => [
-                            ['url' => '/truck/create', 'label' => 'New Shipment'],
-                            ['url' => '/truck/create-quote', 'label' => 'New Shipment from Quote'],
-                            ['url' => '/truck/my-shipment-list', 'label' => 'My Shipment List'],
-                            ['url' => '/truck/list', 'label' => 'Master B/L List'],
-                        ]],
+                    if ($type === 'superadmin') {
+                        $menus = [
+                            ['id' => 'companies', 'label' => 'Companies', 'icon' => 'fa-building', 'url' => '/super-admin/companies', 'sub' => []],
+                            ['id' => 'audit-log', 'label' => 'Audit Log', 'icon' => 'fa-history', 'url' => '/super-admin/audit-log', 'sub' => []],
+                        ];
+                    } elseif ($type === 'customer') {
+                        $menus = [
+                            ['id' => 'shipments', 'label' => 'Shipments', 'icon' => 'fa-ship', 'sub' => [
+                                ['url' => '/customer-portal/shipments/ocean-import', 'label' => 'Ocean Import'],
+                                ['url' => '/customer-portal/shipments/ocean-export', 'label' => 'Ocean Export'],
+                                ['url' => '/customer-portal/shipments/air-import', 'label' => 'Air Import'],
+                                ['url' => '/customer-portal/shipments/air-export', 'label' => 'Air Export'],
+                                ['url' => '/customer-portal/shipments/truck', 'label' => 'Trucking'],
+                            ]],
+                            ['id' => 'quotes', 'label' => 'Quotes', 'icon' => 'fa-file-text-o', 'url' => '/customer-portal/quotes', 'sub' => []],
+                            ['id' => 'invoices', 'label' => 'Invoices', 'icon' => 'fa-calculator', 'url' => '/customer-portal/invoices', 'sub' => []],
+                        ];
+                    } else {
+                        $menus = [
+                            ['id' => 'ocean-import', 'label' => 'Ocean Import', 'icon' => 'fa-ship', 'sub' => [
+                                ['url' => '/ocean-import/create', 'label' => 'New Shipment'],
+                                // ['url' => '/ocean-import/create-quote', 'label' => 'New Shipment from Quote'],
+                                ['url' => '/ocean-import/list', 'label' => 'My Shipment List'],
+                                // ['url' => '/ocean-import/list/mbl', 'label' => 'Master B/L List'],
+                                ['url' => '/ocean-import/list/hbl', 'label' => 'House B/L List'],
+                            ]],
+                            ['id' => 'ocean-export', 'label' => 'Ocean Export', 'icon' => 'fa-anchor', 'sub' => [
+                                ['url' => '/ocean-export/create', 'label' => 'New Shipment'],
+                                ['url' => '/ocean-export/create-quote', 'label' => 'New Shipment from Quote'],
+                                ['url' => '/ocean-export/list', 'label' => 'My Shipment List'],
+                                ['url' => '/ocean-export/list/mbl', 'label' => 'Master B/L List'],
+                                ['url' => '/ocean-export/list/hbl', 'label' => 'House B/L List'],
+                                // ['url' => '/ocean-export/booking/create', 'label' => 'New Booking'],
+                                // ['url' => '/ocean-export/create-quote-booking', 'label' => 'New Booking from Quote'],
+                                // ['url' => '/ocean-export/booking/list', 'label' => 'Booking List'],
+                                // ['url' => '/ocean-export/vessel-schedule/create', 'label' => 'New Vessel Schedule'],
+                                // ['url' => '/ocean-export/vessel-schedule/list', 'label' => 'Vessel Schedule List'],
+                            ]],
+                            ['id' => 'air-import', 'label' => 'Air Import', 'icon' => 'fa-plane', 'sub' => [
+                                ['url' => '/air-import/create', 'label' => 'New Shipment'],
+                                ['url' => '/air-import/create-quote', 'label' => 'New Shipment from Quote'],
+                                ['url' => '/air-import/my-shipment-list', 'label' => 'My Shipment List'],
+                                ['url' => '/air-import/list', 'label' => 'MAWB List'],
+                                ['url' => '/air-import/list/hbl', 'label' => 'HAWB List'],
+                            ]],
+                            ['id' => 'air-export', 'label' => 'Air Export', 'icon' => 'fa-plane', 'sub' => [
+                                ['url' => '/air-export/create', 'label' => 'New Shipment'],
+                                ['url' => '/air-export/create?load_from_quotation=true', 'label' => 'New Shipment from Quote'],
+                                ['url' => '/air-export/list', 'label' => 'My Shipment List'],
+                                ['url' => '/air-export/list/mbl', 'label' => 'MAWB List'],
+                                ['url' => '/air-export/list/hbl', 'label' => 'HAWB List'],
+                                ['url' => '/air-export/booking/entry', 'label' => 'New Booking'],
+                                ['url' => '/air-export/booking/entry?load_from_quotation=true', 'label' => 'New Booking from Quote'],
+                                ['url' => '/air-export/booking/list', 'label' => 'Booking List'],
+                                ['url' => '/air-export/booking/mawb-stock', 'label' => 'MAWB Stock List'],
+                            ]],
+                            ['id' => 'truck', 'label' => 'Trucking', 'icon' => 'fa-truck', 'sub' => [
+                                ['url' => '/truck/create', 'label' => 'New Shipment'],
+                                ['url' => '/truck/create-quote', 'label' => 'New Shipment from Quote'],
+                                ['url' => '/truck/my-shipment-list', 'label' => 'My Shipment List'],
+                                ['url' => '/truck/list', 'label' => 'Master B/L List'],
+                            ]],
+                            ['id' => 'warehouse', 'label' => 'Warehouse', 'icon' => 'fa-building', 'sub' => [
+                                ['label' => 'Receipt', 'type' => 'group', 'items' => [
+                                    ['url' => '/warehouse/receipt/create', 'label' => 'New Receipt'],
+                                    ['url' => '/warehouse/receipt/list', 'label' => 'Receipt List'],
+                                ]],
+                                ['label' => 'Receiving & Shipping', 'type' => 'group', 'items' => [
+                                    ['url' => '/warehouse/receiving/create', 'label' => 'New Receiving'],
+                                    ['url' => '/warehouse/receiving/list', 'label' => 'Receiving List'],
+                                    ['url' => '/warehouse/shipping/create', 'label' => 'New Shipping'],
+                                    ['url' => '/warehouse/shipping/list', 'label' => 'Shipping List'],
+                                    ['url' => '/warehouse/items', 'label' => 'Item List'],
+                                    ['url' => '/warehouse/inventory/summary', 'label' => 'Inventory Summary'],
+                                    ['url' => '/warehouse/inventory/detail', 'label' => 'Inventory Detail'],
+                                ]],
+                                ['url' => '/warehouse/automobile', 'label' => 'Automobile List'],
+                            ]],
+                            ['id' => 'accounting', 'label' => 'Accounting', 'icon' => 'fa-calculator', 'sub' => [
+                                ['label' => 'Invoice/Cost', 'type' => 'group', 'items' => [
+                                    ['url' => '/accounting/invoice', 'label' => 'Invoice / Cost List'],
+                                    ['url' => '/accounting/ga-expense-list', 'label' => 'G&A Invoice / Expense List'],
+                                    ['url' => '/accounting/ga-expense/create', 'label' => 'Create G&A Expense'],
+                                    ['url' => '/accounting/ga-invoice/create', 'label' => 'Create G&A Invoice'],
+                                ]],
+                                ['label' => 'Payment', 'type' => 'group', 'items' => [
+                                    ['url' => '/accounting/payment/receive', 'label' => 'Receive Payment'],
+                                    ['url' => '/accounting/payment/make', 'label' => 'Make Payment'],
+                                    ['url' => '/accounting/payment/received-list', 'label' => 'Payment Received List (A/R)'],
+                                    ['url' => '/accounting/payment/made-list', 'label' => 'Payment Made List (A/P)'],
+                                ]],
+                                ['label' => 'Bank', 'type' => 'group', 'items' => [
+                                    ['url' => '/accounting/bank/book-balance', 'label' => 'Bank Book Balance'],
+                                    ['url' => '/accounting/bank/outstanding', 'label' => 'Bank Outstanding'],
+                                    ['url' => '/accounting/bank/reconciliation', 'label' => 'Bank Reconciliation'],
+                                    ['url' => '/accounting/bank/batch-process', 'label' => 'Batch Process'],
+                                    ['url' => '/accounting/bank/clear-check-by-excel', 'label' => 'Clear Check by Excel'],
+                                    ['url' => '/accounting/bank/check-deposit-report', 'label' => 'Check/Deposit Report'],
+                                ]],
+                                ['label' => 'Journal', 'type' => 'group', 'items' => [
+                                    ['url' => '/accounting/journal/entry', 'label' => 'Journal Entry'],
+                                    ['url' => '/accounting/general-journal', 'label' => 'General Journal'],
+                                    ['url' => '/accounting/journal/block', 'label' => 'Accounting Block / Unblock'],
+                                    ['url' => '/accounting/journal/block/maintenance', 'label' => 'Accounting Block Maintenance'],
+                                    ['url' => '/accounting/journal/block/history', 'label' => 'Accounting Block History'],
+                                    ['url' => '/accounting/year-end-closing', 'label' => 'Year End Closing'],
+                                ]],
+                                ['label' => 'Report', 'type' => 'group', 'items' => [
+                                    ['url' => '/accounting/report/balance-sheet', 'label' => 'Balance Sheet'],
+                                    ['url' => '/accounting/report/trial-balance', 'label' => 'Trial Balance'],
+                                    ['url' => '/accounting/report/general-ledger', 'label' => 'General Ledger Report'],
+                                    ['url' => '/accounting/report/aging-report', 'label' => 'Aging Report'],
+                                    ['url' => '/accounting/report/income-statement', 'label' => 'Income Statement'],
+                                    ['url' => '/accounting/report/revenue-cost', 'label' => 'Revenue / Cost Report'],
+                                    ['url' => '/accounting/report/agent-local-statement', 'label' => 'Agent / Local Statement'],
+                                    ['url' => '/accounting/report/freight-statement', 'label' => 'Freight Statement'],
+                                    ['url' => '/accounting/report/1099-report', 'label' => '1099 Report'],
+                                    ['url' => '/accounting/report/journal-report', 'label' => 'Journal Report'],
+                                ]],
+                            ]],
+                            ['id' => 'sales', 'label' => 'Sales', 'icon' => 'fa-briefcase', 'sub' => [
+                                ['url' => '/sales/quotation/create', 'label' => 'New Quotation'],
+                                ['url' => '/sales/quotation/list', 'label' => 'Quotation List'],
+                            ]],
+                            ['id' => 'trade-partners', 'label' => 'Customers', 'icon' => 'fa-handshake-o', 'sub' => [
+                                ['url' => '/trade-partner/create', 'label' => 'New Customer'],
+                                ['url' => '/trade-partner/credit-entry', 'label' => 'Customer Credit Entry'],
+                                ['url' => '/trade-partner/list', 'label' => 'Customer List'],
+                                ['url' => '/trade-partner/mapping-list', 'label' => 'Customer Mapping List'],
+                            ]],
+                            ['id' => 'reports', 'label' => 'Report', 'icon' => 'fa-bar-chart', 'sub' => [
+                                ['url' => '/report/advanced', 'label' => 'Advanced Report'],
+                                ['url' => '/report/volume-profit', 'label' => 'Volume & Profit Report'],
+                                ['url' => '/report/volume-profit-chart', 'label' => 'Volume & Profit Chart'],
+                                ['url' => '/report/employee-performance', 'label' => 'Employee Performance Report'],
+                                ['url' => '/report/user-log', 'label' => 'User Log In/Out Active Report'],
+                                ['url' => '/report/shipment', 'label' => 'Shipment Report'],
+                                ['url' => '/report/container-storage', 'label' => 'Container Storage Report'],
+                            ]],
+                        ];
+                    }
+                @endphp
 
-                        ['id' => 'warehouse', 'label' => 'Warehouse', 'icon' => 'fa-building', 'sub' => [
-                            ['label' => 'Receipt', 'type' => 'group', 'items' => [
-                                ['url' => '/warehouse/receipt/create', 'label' => 'New Receipt'],
-                                ['url' => '/warehouse/receipt/list', 'label' => 'Receipt List'],
-                            ]],
-                            ['label' => 'Receiving & Shipping', 'type' => 'group', 'items' => [
-                                ['url' => '/warehouse/receiving/create', 'label' => 'New Receiving'],
-                                ['url' => '/warehouse/receiving/list', 'label' => 'Receiving List'],
-                                ['url' => '/warehouse/shipping/create', 'label' => 'New Shipping'],
-                                ['url' => '/warehouse/shipping/list', 'label' => 'Shipping List'],
-                                ['url' => '/warehouse/items', 'label' => 'Item List'],
-                                ['url' => '/warehouse/inventory/summary', 'label' => 'Inventory Summary'],
-                                ['url' => '/warehouse/inventory/detail', 'label' => 'Inventory Detail'],
-                            ]],
-                            ['url' => '/warehouse/automobile', 'label' => 'Automobile List'],
-                        ]],
-                        ['id' => 'accounting', 'label' => 'Accounting', 'icon' => 'fa-calculator', 'sub' => [
-                            ['label' => 'Invoice/Cost', 'type' => 'group', 'items' => [
-                                ['url' => '/accounting/invoice', 'label' => 'Invoice / Cost List'],
-                                ['url' => '/accounting/ga-expense-list', 'label' => 'G&A Invoice / Expense List'],
-                                ['url' => '/accounting/ga-expense/create', 'label' => 'Create G&A Expense'],
-                                ['url' => '/accounting/ga-invoice/create', 'label' => 'Create G&A Invoice'],
-                            ]],
-                            ['label' => 'Payment', 'type' => 'group', 'items' => [
-                                ['url' => '/accounting/payment/receive', 'label' => 'Receive Payment'],
-                                ['url' => '/accounting/payment/make', 'label' => 'Make Payment'],
-                                ['url' => '/accounting/payment/received-list', 'label' => 'Payment Received List (A/R)'],
-                                ['url' => '/accounting/payment/made-list', 'label' => 'Payment Made List (A/P)'],
-                            ]],
-                            ['label' => 'Bank', 'type' => 'group', 'items' => [
-                                ['url' => '/accounting/bank/book-balance', 'label' => 'Bank Book Balance'],
-                                ['url' => '/accounting/bank/outstanding', 'label' => 'Bank Outstanding'],
-                                ['url' => '/accounting/bank/reconciliation', 'label' => 'Bank Reconciliation'],
-                                ['url' => '/accounting/bank/batch-process', 'label' => 'Batch Process'],
-                                ['url' => '/accounting/bank/clear-check-by-excel', 'label' => 'Clear Check by Excel'],
-                                ['url' => '/accounting/bank/check-deposit-report', 'label' => 'Check/Deposit Report'],
-                            ]],
-                            ['label' => 'Journal', 'type' => 'group', 'items' => [
-                                ['url' => '/accounting/journal/entry', 'label' => 'Journal Entry'],
-                                ['url' => '/accounting/general-journal', 'label' => 'General Journal'],
-                                ['url' => '/accounting/journal/block', 'label' => 'Accounting Block / Unblock'],
-                                ['url' => '/accounting/journal/block/maintenance', 'label' => 'Accounting Block Maintenance'],
-                                ['url' => '/accounting/journal/block/history', 'label' => 'Accounting Block History'],
-                                ['url' => '/accounting/year-end-closing', 'label' => 'Year End Closing'],
-                            ]],
-                            ['label' => 'Report', 'type' => 'group', 'items' => [
-                                ['url' => '/accounting/report/balance-sheet', 'label' => 'Balance Sheet'],
-                                ['url' => '/accounting/report/trial-balance', 'label' => 'Trial Balance'],
-                                ['url' => '/accounting/report/general-ledger', 'label' => 'General Ledger Report'],
-                                ['url' => '/accounting/report/aging-report', 'label' => 'Aging Report'],
-                                ['url' => '/accounting/report/income-statement', 'label' => 'Income Statement'],
-                                ['url' => '/accounting/report/revenue-cost', 'label' => 'Revenue / Cost Report'],
-                                ['url' => '/accounting/report/agent-local-statement', 'label' => 'Agent / Local Statement'],
-                                ['url' => '/accounting/report/freight-statement', 'label' => 'Freight Statement'],
-                                ['url' => '/accounting/report/1099-report', 'label' => '1099 Report'],
-                                ['url' => '/accounting/report/journal-report', 'label' => 'Journal Report'],
-                            ]],
-                        ]],
-                        ['id' => 'sales', 'label' => 'Sales', 'icon' => 'fa-briefcase', 'sub' => [
-                            ['url' => '/sales/quotation/create', 'label' => 'New Quotation'],
-                            ['url' => '/sales/quotation/list', 'label' => 'Quotation List'],
-                        ]],
-                        ['id' => 'trade-partners', 'label' => 'Trade Partners', 'icon' => 'fa-handshake-o', 'sub' => [
-                            ['url' => '/trade-partner/create', 'label' => 'New Trade Partner'],
-                            ['url' => '/trade-partner/credit-entry', 'label' => 'Trade Partner Credit Entry'],
-                            ['url' => '/trade-partner/list', 'label' => 'Trade Partner List'],
-                            ['url' => '/trade-partner/mapping-list', 'label' => 'Trade Partner Mapping List'],
-                        ]],
-                        ['id' => 'reports', 'label' => 'Report', 'icon' => 'fa-bar-chart', 'sub' => [
-                            ['url' => '/report/advanced', 'label' => 'Advanced Report'],
-                            ['url' => '/report/volume-profit', 'label' => 'Volume & Profit Report'],
-                            ['url' => '/report/volume-profit-chart', 'label' => 'Volume & Profit Chart'],
-                            ['url' => '/report/employee-performance', 'label' => 'Employee Performance Report'],
-                            ['url' => '/report/user-log', 'label' => 'User Log In/Out Active Report'],
-                            ['url' => '/report/shipment', 'label' => 'Shipment Report'],
-                            ['url' => '/report/container-storage', 'label' => 'Container Storage Report'],
-                        ]],
-                    ];
+                @php
+                    if (auth()->check() && !auth()->user()->isSuperAdmin() && auth()->user()->company) {
+                        $allowedModules = auth()->user()->company->moduleKeys();
+                        $menus = array_filter($menus, fn($m) => in_array($m['id'], $allowedModules));
+                    }
                 @endphp
 
                 @foreach($menus as $menu)
@@ -223,6 +251,7 @@ x-init="if(activeMenu) { openMenus.push(activeMenu); if(activeMenu === 'settings
                 </div>
                 @endforeach
 
+                @if($type === 'admin')
                 <!-- Intelligence Section -->
                 <div x-show="!isCollapsed" class="pt-6 pb-2 text-[8px] font-black uppercase tracking-widest border-b border-white/10 mb-1" style="color: #c3cbe4 !important; padding-left: 20px !important;">Intelligence</div>
 
@@ -319,6 +348,7 @@ x-init="if(activeMenu) { openMenus.push(activeMenu); if(activeMenu === 'settings
                         <span x-show="!isCollapsed" class="uppercase tracking-widest font-bold">Useful Links</span>
                     </div>
                 </a>
+                @endif
 
             </nav>
         </div>

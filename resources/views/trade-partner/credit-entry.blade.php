@@ -2,37 +2,37 @@
     @push('styles')
     <x-list-styles />
     <style>
-        .grid-wrapper { height: calc(100vh - 260px); min-height: 300px; overflow: auto; width: 100%; }
-        .grid-table input[type="text"],
-        .grid-table input[type="number"],
-        .grid-table select {
+        .tp-credit-entry-page .grid-wrapper { height: calc(100vh - 260px); min-height: 300px; overflow: auto; width: 100%; }
+        .tp-credit-entry-page .grid-table input[type="text"],
+        .tp-credit-entry-page .grid-table input[type="number"],
+        .tp-credit-entry-page .grid-table select {
             width: 100%; height: 22px; border: 1px solid #cbd5e1; padding: 0 6px;
             font-size: 10px; border-radius: 2px; outline: none; box-sizing: border-box;
             background: #fff; color: #1e293b;
         }
-        .grid-table input:focus,
-        .grid-table select:focus {
+        .tp-credit-entry-page .grid-table input:focus,
+        .tp-credit-entry-page .grid-table select:focus {
             border-color: #3b82f6; box-shadow: 0 0 0 1px rgba(59,130,246,0.25);
         }
-        .grid-table td.editable-cell { padding: 1px 2px; }
-        .summary-bar { background: #f8fafc; padding: 6px 12px; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 16px; font-size: 11px; color: #64748b; align-items: center; }
-        .summary-bar .val { color: #1e293b; font-weight: 600; }
-        .summary-bar .val.over { color: #dc2626; }
-        .sticky-save-bar { position: sticky; bottom: 0; background: #fff; border-top: 2px solid #3b82f6; padding: 8px 16px; display: flex; justify-content: center; gap: 10px; z-index: 50; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
-        .btn-primary-save { background: #3b82f6; color: #fff; border: none; padding: 6px 30px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-primary-save:hover { background: #2563eb; }
-        .btn-primary-save:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary { background: #fff; color: #475569; border: 1px solid #cbd5e1; padding: 6px 20px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .btn-secondary:hover { background: #f1f5f9; }
+        .tp-credit-entry-page .grid-table td.editable-cell { padding: 1px 2px; }
+        .tp-credit-entry-page .summary-bar { background: #f8fafc; padding: 6px 12px; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 16px; font-size: 11px; color: #64748b; align-items: center; }
+        .tp-credit-entry-page .summary-bar .val { color: #1e293b; font-weight: 600; }
+        .tp-credit-entry-page .summary-bar .val.over { color: #dc2626; }
+        .tp-credit-entry-page .sticky-save-bar { position: sticky; bottom: 0; background: #fff; border-top: 2px solid #3b82f6; padding: 8px 16px; display: flex; justify-content: center; gap: 10px; z-index: 50; box-shadow: 0 -4px 12px rgba(0,0,0,0.08); flex-wrap: wrap; }
+        .tp-credit-entry-page .btn-primary-save { background: #3b82f6; color: #fff; border: none; padding: 6px 30px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+        .tp-credit-entry-page .btn-primary-save:hover { background: #2563eb; }
+        .tp-credit-entry-page .btn-primary-save:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tp-credit-entry-page .btn-secondary { background: #fff; color: #475569; border: 1px solid #cbd5e1; padding: 6px 20px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .tp-credit-entry-page .btn-secondary:hover { background: #f1f5f9; }
 
         /* Validation styles */
-        .field-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 1px rgba(239,68,68,0.2) !important; }
-        .validation-error { font-size: 9px; color: #ef4444; display: block; line-height: 1.2; }
+        .tp-credit-entry-page .field-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 1px rgba(239,68,68,0.2) !important; }
+        .tp-credit-entry-page .validation-error { font-size: 9px; color: #ef4444; display: block; line-height: 1.2; }
 
         /* ── Ocean Module Tabs ── */
-        .ce-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid #cbd5e1; padding: 0 12px; background: #fff; margin: 0; list-style: none; overflow-x: auto; }
-        .ce-tabs li { margin-bottom: -1px; list-style: none; }
-        .ce-tabs li a {
+        .tp-credit-entry-page .ce-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid #cbd5e1; padding: 0 12px; background: #fff; margin: 0; list-style: none; overflow-x: auto; }
+        .tp-credit-entry-page .ce-tabs li { margin-bottom: -1px; list-style: none; }
+        .tp-credit-entry-page .ce-tabs li a {
             display: inline-flex; align-items: center; padding: 7px 16px; font-size: 11px; font-weight: 600;
             color: #64748b; text-decoration: none;
             border: 1px solid transparent; border-bottom: none;
@@ -40,47 +40,47 @@
             transition: all 0.15s ease;
             position: relative; white-space: nowrap;
         }
-        .ce-tabs li a:hover { color: #1e293b; background: #f1f5f9; }
-        .ce-tabs li.active a {
+        .tp-credit-entry-page .ce-tabs li a:hover { color: #1e293b; background: #f1f5f9; }
+        .tp-credit-entry-page .ce-tabs li.active a {
             color: #1e293b; background: #fff;
             border-color: #cbd5e1; border-bottom-color: #fff;
         }
-        .ce-tabs li.active a::after {
+        .tp-credit-entry-page .ce-tabs li.active a::after {
             content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
             height: 2px; background: #3b82f6;
         }
 
         /* ── Action Buttons ── */
-        .btn-action-icon {
+        .tp-credit-entry-page .btn-action-icon {
             display: inline-flex; align-items: center; justify-content: center;
             width: 22px; height: 22px; border-radius: 3px; border: 1px solid #cbd5e1;
             background: #ffffff; color: #475569; font-size: 11px; cursor: pointer;
             transition: all 0.15s ease; box-sizing: border-box; line-height: 1;
         }
-        .btn-action-icon:hover { background: #f1f5f9; border-color: #94a3b8; color: #1e293b; }
-        .btn-action-icon.edit:hover { background: #eff6ff; color: #2563eb; border-color: #93c5fd; }
-        .btn-action-icon.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; }
+        .tp-credit-entry-page .btn-action-icon:hover { background: #f1f5f9; border-color: #94a3b8; color: #1e293b; }
+        .tp-credit-entry-page .btn-action-icon.edit:hover { background: #eff6ff; color: #2563eb; border-color: #93c5fd; }
+        .tp-credit-entry-page .btn-action-icon.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; }
 
-        .btn-tool.danger-outline { background: #fff; color: #ef4444; border-color: #fca5a5; }
-        .btn-tool.danger-outline:hover:not(:disabled) { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
-        .btn-tool.danger-outline:disabled { background: #f8fafc; color: #cbd5e1; border-color: #e2e8f0; opacity: 0.6; cursor: not-allowed; }
+        .tp-credit-entry-page .btn-tool.danger-outline { background: #fff; color: #ef4444; border-color: #fca5a5; }
+        .tp-credit-entry-page .btn-tool.danger-outline:hover:not(:disabled) { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
+        .tp-credit-entry-page .btn-tool.danger-outline:disabled { background: #f8fafc; color: #cbd5e1; border-color: #e2e8f0; opacity: 0.6; cursor: not-allowed; }
 
         /* ── Responsive rules ── */
         @media (max-width: 768px) {
-            .portlet-title { flex-direction: column; align-items: flex-start; gap: 8px; }
-            .portlet-title .actions { width: 100%; justify-content: flex-start; }
-            .portlet-tool { flex-direction: column; align-items: stretch; gap: 8px; }
-            .summary-bar { font-size: 10px; gap: 8px; }
-            .grid-wrapper { height: calc(100vh - 340px); }
+            .tp-credit-entry-page .portlet-title { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .tp-credit-entry-page .portlet-title .actions { width: 100%; justify-content: flex-start; }
+            .tp-credit-entry-page .portlet-tool { flex-direction: column; align-items: stretch; gap: 8px; }
+            .tp-credit-entry-page .summary-bar { font-size: 10px; gap: 8px; }
+            .tp-credit-entry-page .grid-wrapper { height: calc(100vh - 340px); }
         }
 
         /* Fix overlay display conflict with Alpine x-show */
-        .portlet.light .overlay { display: flex; }
-        .portlet.light .overlay[x-cloak] { display: none !important; }
+        .tp-credit-entry-page .portlet.light .overlay { display: flex; }
+        .tp-credit-entry-page .portlet.light .overlay[x-cloak] { display: none !important; }
 
-        .group-name-link { color: #2563eb; font-weight: 600; text-decoration: none; cursor: pointer; }
-        .group-name-link:hover { text-decoration: underline; color: #1d4ed8; }
-        .members-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 6px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 10px; font-weight: 600; }
+        .tp-credit-entry-page .group-name-link { color: #2563eb; font-weight: 600; text-decoration: none; cursor: pointer; }
+        .tp-credit-entry-page .group-name-link:hover { text-decoration: underline; color: #1d4ed8; }
+        .tp-credit-entry-page .members-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; padding: 0 6px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 10px; font-weight: 600; }
     </style>
     @endpush
 
@@ -88,7 +88,7 @@
     <div class="toast-container" id="toast-container"></div>
 
     {{-- MAIN PAGE --}}
-    <div class="page-content">
+    <div class="page-content tp-credit-entry-page">
         <div class="page-bar">
             <ul class="page-breadcrumb">
                 <li><i class="fa fa-home"></i> <a href="/">Home</a> <i class="fa fa-angle-right"></i></li>

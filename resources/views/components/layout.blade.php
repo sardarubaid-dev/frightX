@@ -260,14 +260,14 @@
     @include('components.global-preloader')
     <div class="app-wrapper">
         <!-- Sidebar -->
-        <x-sidebar />
+        <x-sidebar :type="$type ?? 'admin'" />
 
         <div class="main-content-wrapper">
             <!-- Mobile Overlay -->
             <div onclick="document.body.classList.remove('sidebar-mobile-open')" class="fixed inset-0 bg-black/50 z-[1999] md:hidden transition-opacity cursor-pointer hidden [.sidebar-mobile-open_&]:block"></div>
             
             <!-- Top Navbar -->
-            <x-navbar />
+            <x-navbar :type="$type ?? 'admin'" />
 
             <!-- Content Area -->
             <main class="custom-scrollbar focus:outline-none">
