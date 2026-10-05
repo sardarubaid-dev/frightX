@@ -1,46 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\SuperAdmin;
-
+namespace Ap
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\CompanyModule;
-use App\Models\SuperAdminAuditLog;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
-
-class CompanyController extends Controller
-{
-    /**
-     * Super Admin Dashboard with stats.
-     */
-    public function dashboard()
-    {
-        $stats = [
-            'total_companies' => Company::count(),
-            'active_companies' => Company::where('status', 'active')->count(),
-            'inactive_companies' => Company::where('status', 'inactive')->count(),
-            'total_users' => User::where('role', '!=', 'SuperAdmin')->count(),
-            'recent_companies' => Company::latest()->take(5)->get(),
-            'recent_logs' => SuperAdminAuditLog::with('user')->latest('created_at')->take(10)->get(),
-        ];
-
-        return view('super-admin.dashboard', compact('stats'));
-    }
-
-    /**
-     * Company list with search, filter, pagination.
-     */
-    public function index(Request $request)
-    {
-        $query = Company::with(['users' => function ($q) {
-            $q->orderBy('id')->limit(1);
-        }, 'modules']);
-
-        // Search
+use A
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
